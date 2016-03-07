@@ -4,10 +4,6 @@ import kernels
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 
-# Set noise to be approximately 5%
-# noise = np.vstack(0.05*np.random.rand(N, 2))
-# noise_variance = np.var(noise)
-
 class Regression(object):
 
 	def __init__(self, X, Xn, Yn, noise_var, kernel=None, normalize=True):
