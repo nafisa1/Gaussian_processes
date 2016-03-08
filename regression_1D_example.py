@@ -10,13 +10,13 @@ true_f = np.sin(0.9*input_range)
 
 # Calculate noise of function values and noise variance
 # Noise variance is a parameter of the regression model
-noise = np.vstack(np.random.randn(50, 1))
+noise = np.vstack(0.4*np.random.randn(50, 1))
 noise_variance = np.var(noise)
 
 # Generate test values (data)
 # The posterior is generated using the test 
-X_train = np.vstack(5*np.random.rand(3, 1))
-train_noise = np.vstack(np.random.randn(3, 1))
+X_train = np.vstack(5*np.random.rand(5, 1))
+train_noise = np.vstack(0.05*np.random.randn(5, 1))
 Y_train = np.sin(0.9*X_train) + train_noise
 
 kern = kernels.RBF()
