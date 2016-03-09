@@ -5,85 +5,96 @@ from mpl_toolkits.mplot3d import Axes3D
 
 class Regression(object):
 
-	def __init__(self, X, Xn, Yn, noise_var, kernel=None, normalize=True):
-		self.X = X
-		self.Xn = Xn
-		self.Yn = Yn
+	def __init__(self, Xtest, Xtrain, Ytrain, noise_var, kernel=None, normalize=True):
+		self.Xtest = Xtest
+		self.Xtrain = Xtrain
+		self.Ytrain = Ytrain
 		self.kernel = kernel        
 		self.noise_var = noise_var
-		 
-		if normalize is True: # works on 1D and 2D input
-			mu = np.vstack(np.mean(Xn, axis=0))
-			s = np.vstack(Xn.std(axis=0))
-			centred = Xn.T - mu
-			div = centred/s                       
-			self.Xn = div.T   
+		
+		 # Normalize X values of training points and test points
+		if normalize is True:
+			mu = np.vstack(np.mean(Xtrain, axis=0))
+			s = np.vstack(Xtrain.std(axis=0))
+			train_centred = Xtrain.T - mu
+			train_div = train_centred/s                       
+			self.Xtrain = train_div.T   
 			# Normalize test points according to training points
-			test_centred = self.X.T - mu
+			test_centred = self.Xtest.T - mu
 			test_div = test_centred/s 
-			self.X = test_div.T 
+			self.Xtest = test_div.T 
 		
 		if kernel is None:
 			import warnings
 			warnings.warn("Kernel not specified, defaulting to RBF kernel...")
-			self.kernel = kernels.RBF()      
+			kernel = kernels.RBF()
+		
+		# Compute posterior mean vector
+		Xtrain_cov = self.kernel.compute(self.Xtrain, self.Xtrain) 
+ 		cross_cov = self.kernel.compute(self.Xtest, self.Xtrain)
+ 		inv = np.linalg.inv(Xtrain_cov + (self.noise_var*np.eye(Xtrain_cov.shape[0]))) 
+ 		cross_x_inv = np.dot(cross_cov, inv)
+ 		self.post_mean = (np.dot(cross_x_inv, self.Ytrain))
+		
+ 		# Compute posterior standard deviation and uncertainty bounds
+		test_cov = self.kernel.compute(self.Xtest, self.Xtest) 
+ 		cov_post = test_cov - np.dot(np.dot(cross_cov,inv),cross_cov.T)
+ 		self.post_s = np.sqrt(np.diag(cov_post)).reshape(-1,1)
+        
+	def predict(self):   
+		# Return the posterior mean and upper and lower 95% confidence bounds
+		return self.post_mean, self.post_mean+(2*self.post_s), self.post_mean-(2*self.post_s)
 
+	def plot_by_index(self, Ytest):
+		upper = (self.post_mean + (2*self.post_s)).flat
+		lower = (self.post_mean - (2*self.post_s)).flat
+		index = np.arange(1,(self.Xtest.shape[0]+1),1)#.reshape(-1,1)
+		        
+		# Plot index against posterior mean function, uncertainty and true test values
+		fig = plt.figure()
+		plt.xlim(0, max(index)+1)      
+		plt.plot(index, Ytest, 'ro')
+		plt.plot(index, self.post_mean, 'r--', lw=2)
+		plt.fill_between(index, lower, upper, color='#87cefa')
+		plt.show()
+
+	def r_squared(self, Ytest):
+		obs_mean = np.mean(Ytest)
+		ss_tot = np.sum((Ytest-obs_mean)**2)
+		ss_res = np.sum((Ytest-self.post_mean)**2)
+		r_sq = 1 - (ss_res/ss_tot)
+		return r_sq
+    
 	def plot_prior(self):
   		# Calculate the standard deviation of the prior
-		test_cov = self.kernel.compute(self.X, self.X)
+		test_cov = self.kernel.compute(self.Xtest, self.Xtest)
  		noisy_cov = test_cov + (self.noise_var * np.eye(test_cov.shape[0]))
-		s = np.sqrt(np.diag(noisy_cov))
+		prior_s = np.sqrt(np.diag(noisy_cov))
   		
-  		# Create mean vector and vectors bounding the 95% uncertainty region
- 		n = self.X[:,0].shape[0]
- 		mean = np.zeros(n)
-  		un = mean + (2*s)        
-  		unn = mean - (2*s) 
+  		# Create prior mean vector and vectors bounding the 95% uncertainty region
+ 		n = self.Xtest[:,0].shape[0]
+ 		prior_mean = np.zeros(n)
+  		upper = prior_mean + (2*prior_s)        
+  		lower = prior_mean - (2*prior_s) 
   		       
  		# Plot mean points and uncertainty
 		fig = plt.figure()
 		ax = fig.add_subplot(1,1,1, projection = '3d')
- 		ax.scatter(self.X[:,0], self.X[:,1], mean) 
-		ax.scatter(self.X[:,0], self.X[:,1], un, c= 'r')
-		ax.scatter(self.X[:,0], self.X[:,1], unn, c= 'r')
+ 		ax.scatter(self.Xtest[:,0], self.Xtest[:,1], prior_mean) 
+		ax.scatter(self.Xtest[:,0], self.Xtest[:,1], upper, c= 'r')
+		ax.scatter(self.Xtest[:,0], self.Xtest[:,1], lower, c= 'r')
 		plt.show() 
-
-	def predict(self):   
-		# Compute mean vector
-		Xn_cov = self.kernel.compute(self.Xn, self.Xn) 
- 		cross_cov = self.kernel.compute(self.X, self.Xn)
- 		inv = np.linalg.inv(Xn_cov + (self.noise_var*np.eye(Xn_cov.shape[0]))) 
- 		cross_x_inv = np.dot(cross_cov, inv)
- 		mean = np.dot(cross_x_inv, self.Yn)
-		
- 		# Compute posterior standard deviation and uncertainty bounds
-		test_cov = self.kernel.compute(self.X, self.X) 
- 		cov_post = test_cov - np.dot(np.dot(cross_cov,inv),cross_cov.T)
- 		s = np.sqrt(np.diag(cov_post)).reshape(-1,1)
- 		un = mean + (2*s)        
- 		unn = mean - (2*s)
-		return mean, un, unn
         
-	def plot_posterior(self):   
-		# Compute mean vector
-		Xn_cov = self.kernel.compute(self.Xn, self.Xn) 
- 		cross_cov = self.kernel.compute(self.X, self.Xn)
- 		inv = np.linalg.inv(Xn_cov + (self.noise_var*np.eye(Xn_cov.shape[0]))) 
- 		cross_x_inv = np.dot(cross_cov, inv)
- 		mean = np.dot(cross_x_inv, self.Yn)
+	def plot_posterior(self):
+		upper = self.post_mean + (2*self.post_s)
+		lower = self.post_mean - (2*self.post_s)
 		
- 		# Compute posterior standard deviation and uncertainty bounds
-		test_cov = self.kernel.compute(self.X, self.X) 
- 		cov_post = test_cov - np.dot(np.dot(cross_cov,inv),cross_cov.T)
- 		s = np.sqrt(np.diag(cov_post)).reshape(-1,1)
- 		un = mean + (2*s)        
- 		unn = mean - (2*s)
-		
-		# Plot mean points and uncertainty
+		# Plot posterior mean points and uncertainty
 		fig = plt.figure()
 		ax = fig.add_subplot(1,1,1, projection = '3d')
- 		ax.scatter(self.X[:,0], self.X[:,1], mean) 
- 		ax.scatter(self.X[:,0], self.X[:,1], un, c='r')
- 		ax.scatter(self.X[:,0], self.X[:,1], unn, c='r')
- 		ax.scatter(self.Xn[:,0], self.Xn[:,1], self.Yn, c='g',marker='^', s = 70)
+ 		ax.scatter(self.Xtest[:,0], self.Xtest[:,1], self.post_mean) 
+ 		ax.scatter(self.Xtest[:,0], self.Xtest[:,1], upper, c='r')
+ 		ax.scatter(self.Xtest[:,0], self.Xtest[:,1], lower, c='r')
+ 		ax.scatter(self.Xtrain[:,0], self.Xtrain[:,1], self.Ytrain, c='g',marker='^', s = 70)
 		plt.show()
+
