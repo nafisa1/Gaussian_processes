@@ -5,39 +5,41 @@ from mpl_toolkits.mplot3d import Axes3D
 
 class Regression(object):
 
-	def __init__(self, Xtest, Xtrain, Ytrain, noise_var, kernel=None, normalize=True):
+	def __init__(self, Xtest, Xtrain, Ytrain, kernel=None, normalize=True):
 		self.Xtest = Xtest
 		self.Xtrain = Xtrain
 		self.Ytrain = Ytrain
-		self.kernel = kernel        
-		self.noise_var = noise_var
-		
-		 # Normalize X values of training points and test points
+		self.kernel = kernel		
+
 		if normalize is True:
-			mu = np.vstack(np.mean(Xtrain, axis=0))
-			s = np.vstack(Xtrain.std(axis=0))
-			train_centred = Xtrain.T - mu
-			train_div = train_centred/s                       
+			# Normalize training inputs
+			X_mu = np.vstack(np.mean(Xtrain, axis=0))
+			X_s = np.vstack(Xtrain.std(axis=0))
+			train_centred = Xtrain.T - X_mu
+			train_div = train_centred/X_s                       
 			self.Xtrain = train_div.T   
-			# Normalize test points according to training points
-			test_centred = self.Xtest.T - mu
-			test_div = test_centred/s 
-			self.Xtest = test_div.T 
+			# Normalize test inputs according to training inputs
+			test_centred = self.Xtest.T - X_mu
+			test_div = test_centred/X_s 
+			self.Xtest = test_div.T
+			# Centre training outputs 
+			self.Y_mu = np.mean(Ytrain)
+			self.Ytrain = Ytrain - self.Y_mu
 		
 		if kernel is None:
 			import warnings
 			warnings.warn("Kernel not specified, defaulting to RBF kernel...")
-			kernel = kernels.RBF()
+			self.kernel = kernels.RBF()
 		
 		# Compute posterior mean vector
-		Xtrain_cov = self.kernel.compute(self.Xtrain, self.Xtrain) 
+		Xtrain_cov = self.kernel.compute_noisy(self.Xtrain, self.Xtrain)
  		cross_cov = self.kernel.compute(self.Xtest, self.Xtrain)
- 		inv = np.linalg.inv(Xtrain_cov + (self.noise_var*np.eye(Xtrain_cov.shape[0]))) 
+ 		inv = np.linalg.inv(Xtrain_cov) 
  		cross_x_inv = np.dot(cross_cov, inv)
  		self.post_mean = (np.dot(cross_x_inv, self.Ytrain))
 		
  		# Compute posterior standard deviation and uncertainty bounds
-		test_cov = self.kernel.compute(self.Xtest, self.Xtest) 
+		test_cov = self.kernel.compute_noisy(self.Xtest, self.Xtest)
  		cov_post = test_cov - np.dot(np.dot(cross_cov,inv),cross_cov.T)
  		self.post_s = np.sqrt(np.diag(cov_post)).reshape(-1,1)
         
@@ -46,9 +48,10 @@ class Regression(object):
 		return self.post_mean, self.post_mean+(2*self.post_s), self.post_mean-(2*self.post_s)
 
 	def plot_by_index(self, Ytest):
+		Ytest = Ytest - self.Y_mu
 		upper = (self.post_mean + (2*self.post_s)).flat
 		lower = (self.post_mean - (2*self.post_s)).flat
-		index = np.arange(1,(self.Xtest.shape[0]+1),1)#.reshape(-1,1)
+		index = np.arange(1,(self.Xtest.shape[0]+1),1)
 		        
 		# Plot index against posterior mean function, uncertainty and true test values
 		fig = plt.figure()
@@ -59,6 +62,7 @@ class Regression(object):
 		plt.show()
 
 	def r_squared(self, Ytest):
+		Ytest = Ytest - self.Y_mu
 		obs_mean = np.mean(Ytest)
 		ss_tot = np.sum((Ytest-obs_mean)**2)
 		ss_res = np.sum((Ytest-self.post_mean)**2)
@@ -67,9 +71,8 @@ class Regression(object):
     
 	def plot_prior(self):
   		# Calculate the standard deviation of the prior
-		test_cov = self.kernel.compute(self.Xtest, self.Xtest)
- 		noisy_cov = test_cov + (self.noise_var * np.eye(test_cov.shape[0]))
-		prior_s = np.sqrt(np.diag(noisy_cov))
+		test_cov = self.kernel.compute_noisy(self.Xtest, self.Xtest)
+		prior_s = np.sqrt(np.diag(test_cov))
   		
   		# Create prior mean vector and vectors bounding the 95% uncertainty region
  		n = self.Xtest[:,0].shape[0]
