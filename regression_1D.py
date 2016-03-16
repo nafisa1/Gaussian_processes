@@ -4,13 +4,12 @@ import matplotlib.pyplot as plt
 
 class Regression(object):
 
-	def __init__(self, X, Y, Xn, Yn, noise_var, kernel=None, normalize=True):
+	def __init__(self, X, Y, Xn, Yn, kernel=None, normalize=True):
 		self.X = X
 		self.Y = Y
 		self.Xn = Xn
 		self.Yn = Yn
-		self.kernel = kernel        
-		self.noise_var = noise_var
+		self.kernel = kernel
 		 
 		if normalize is True: # works on 1D and 2D input
 			mu = np.vstack(np.mean(X, axis=0))
@@ -28,15 +27,15 @@ class Regression(object):
 			kernel = kernels.RBF()
 
 		# Compute covariance matrix of test points
-		self.cov = kernel.compute(self.X, self.X)          
+		self.cov = kernel.compute_noisy(self.X, self.X)
+          
 	def plot_prior(self):
 		# Manipulate X for plotting       
 		X = np.hstack(self.X)
 		
 		# Set mean function, calculate covariance and standard deviation
 		mean = np.zeros(X.shape)
-		noisy_cov = self.cov + (self.noise_var * np.eye(self.cov.shape[0]))       
-		s = np.sqrt(np.diag(noisy_cov))
+		s = np.sqrt(np.diag(self.cov))
 		     
 		# Plot true function, mean function and uncertainty   
 		plt.figure()
@@ -67,11 +66,11 @@ class Regression(object):
 			Xn = div.T
 		
 		# Covariance of training points with themselves
-		Xn_cov = self.kernel.compute(Xn, Xn)
+		Xn_cov = self.kernel.compute_noisy(Xn, Xn)
 		# Covariance of test points with training points
 		cross_cov = self.kernel.compute(X_predict, Xn)
 		# Inverse of covariance of training points (with noise)
-		inv = np.linalg.inv(Xn_cov + (self.noise_var*np.eye(Xn_cov.shape[0])))
+		inv = np.linalg.inv(Xn_cov)
 		
 		# Calculate mean function
 		cross_x_inv = np.dot(cross_cov, inv)
