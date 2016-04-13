@@ -20,6 +20,6 @@ train_noise = np.vstack(0.05*np.random.randn(5, 1))
 Y_train = np.sin(0.9*X_train) + train_noise
 
 kern = kernels.RBF()
-m = regression_1D.Regression(input_range, true_f, X_train, Y_train, noise_variance, kernel=kern) # Optional: kernel, normalize
+m = regression_1D.Regression(input_range, true_f, X_train, Y_train, kernel=kern) # Optional: kernel, normalize
 m.plot_prior()
 m.plot_posterior(X_train, Y_train)
