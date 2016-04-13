@@ -2,13 +2,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import kernels
 from mpl_toolkits.mplot3d import Axes3D
+import random
 
 class Regression(object):
 
-	def __init__(self, Xtest, Xtrain, Ytrain, kernel=None, normalize=True):
+	def __init__(self, Xtest, Xtrain, Ytrain, add_noise=1, kernel=None, normalize=True):
 		self.Xtest = Xtest
 		self.Xtrain = Xtrain
 		self.Ytrain = Ytrain
+		self.add_noise = add_noise
 		self.kernel = kernel		
 
 		if normalize is True:
@@ -36,11 +38,14 @@ class Regression(object):
  		cross_cov = self.kernel.compute(self.Xtest, self.Xtrain)
  		inv = np.linalg.inv(Xtrain_cov) 
  		cross_x_inv = np.dot(cross_cov, inv)
- 		self.post_mean = (np.dot(cross_x_inv, self.Ytrain))
-		
+ 		post_mean = (np.dot(cross_x_inv, self.Ytrain)) 
+		noise = add_noise*np.reshape([random.gauss(0, np.sqrt(self.kernel.noise_var)) for i in range(0,post_mean.shape[0])],(-1,1))
+		self.post_mean = post_mean + noise
+
  		# Compute posterior standard deviation and uncertainty bounds
 		test_cov = self.kernel.compute_noisy(self.Xtest, self.Xtest)
  		cov_post = test_cov - np.dot(np.dot(cross_cov,inv),cross_cov.T)
+		cov_post = cov_post + (self.kernel.noise_var*np.eye((cov_post.shape[0])))
  		self.post_s = np.sqrt(np.diag(cov_post)).reshape(-1,1)
         
 	def predict(self):   
