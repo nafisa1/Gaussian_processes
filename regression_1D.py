@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 #%matplotlib inline
 
+# add noise to posterior mean, covariance
+
 class Regression(object):
 
 	def __init__(self, X, Y, Xn, Yn, kernel=None, normalize=True):
@@ -49,7 +51,7 @@ class Regression(object):
 		
 		# Plot draws from prior
 		mean = mean.reshape(X.shape[0],1)
-		f = mean + np.dot(noisy_cov, np.random.normal(size=(self.X.shape[0],10)))
+		f = mean + np.dot(self.cov, np.random.normal(size=(self.X.shape[0],10)))
 		plt.figure()
 		plt.xlim(min(X), max(X))
 		plt.plot(X, f)
