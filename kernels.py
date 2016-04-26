@@ -1,12 +1,10 @@
 import numpy as np
 
 #	Equivalent to:
-#       a = np.linalg.norm(a, axis=1).reshape(-1,1)
-#       b = np.linalg.norm(b, axis=1).reshape(-1,1)
 #       cov = np.zeros((a.shape[0],b.shape[0]))
 #       for i in range(0,a.shape[0]):
 #           for j in range(0,b.shape[0]):
-#               cov[i][j] = np.exp(-.5 * (1/0.1) * ((a[i]-b[j])**2))
+#               cov[i][j] = np.exp(-.5 * (1/lengthscale**2) * ((a[i]-b[j])**2))
 #       return cov
 
 class RBF(object):
