@@ -109,13 +109,12 @@ class GPLVM(object):
 			return -log_l
 
 		def opt_hyp(hyp):
-			X = self.X#[:250,:]
+			X = self.X
 			kern = kernels.RBF(lengthscale=hyp[0], sig_var=hyp[1], noise_var=hyp[2])
 			cov = kern.compute_noisy(X,X)
 			cov = cov + (0.1*self.kernel.noise_var*np.eye(cov.shape[1])) 
 			chol = np.linalg.cholesky(cov)
 			chol_inv = np.linalg.inv(chol)
-			#cove = cov + (0.01*self.kernel.noise_var*np.eye(cov.shape[1]))
 			inv_cov = np.dot(chol_inv.T, chol_inv)
 			YYt = np.dot(self.Y, self.Y.T)
 			c_cov = np.dot(chol, chol.T)
