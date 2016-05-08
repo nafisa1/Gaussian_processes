@@ -45,7 +45,8 @@ def plot_posterior_1D(Xtest, Xtrain, Ytrain, p_mean, p_sd, cov_post, Ytest=None)
 	plt.figure()
 	plt.plot(Xtrain, Ytrain, 'r+', ms=20) # training points
 	plt.xlim(min(Xtest), max(Xtest))
-	plt.ylim(min(mean_f-(2*p_sd)-(p_sd/2)), max(mean_f+(2*p_sd)+(p_sd/2)))  
+	plt.ylim(min(mean_f-(2*p_sd)-(p_sd/2)), max(mean_f+(2*p_sd)+(p_sd/2))) 
+ 
 	if Ytest is not None:      
 		plt.plot(Xtest, Ytest, 'b-', label='Y') # true function
 	plt.plot(Xtest, mean_f, 'r--', lw=2, label='mean') # mean function
