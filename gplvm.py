@@ -3,7 +3,7 @@ import kernels
 import numpy as np
 import GPy
 import utils
-import regression_2D
+import regression
 from scipy.optimize import minimize
 
 # GPLVM with the RBF kernel 
