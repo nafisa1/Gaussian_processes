@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import kernels
-from mpl_toolkits.mplot3d import Axes3D
 import random
 import plotting
 
@@ -75,7 +74,7 @@ class Regression(object):
 		# Plot index against posterior mean function, uncertainty and true test values
 		fig = plt.figure()
 		plt.xlim(0, max(index)+1) 
-		plt.ylim(-15,10)    
+#		plt.ylim(-15,10)    
 		plt.plot(index, Ytest, 'ro')
 		plt.plot(index, post_mean, 'r--', lw=2)
 		plt.fill_between(index, lower, upper, color='#87cefa')
@@ -90,39 +89,17 @@ class Regression(object):
     
 	def plot_prior(self):
 		if self.Xtrain.shape[1] == 1:
-			plotting.plot_prior_1D(self.Xtest, self.Xtrain, self.Ytrain, self.test_cov, Ytest=self.Ytest)
+			plotting.plot_prior_1D(self.Xtest, self.test_cov, Ytest=self.Ytest)
+		elif self.Xtrain.shape[1] == 2:
+			plotting.plot_prior_2D(self.Xtest, self.test_cov, Ytest=self.Ytest)
 		else:
-	  		# Calculate the standard deviation of the prior
-			test_cov = self.kernel.compute_noisy(self.Xtest, self.Xtest)
-			prior_s = np.sqrt(np.diag(test_cov))
-  		
-  			# Create prior mean vector and vectors bounding the 95% uncertainty region
- 			n = self.Xtest[:,0].shape[0]
- 			prior_mean = np.zeros(n)
-  			upper = prior_mean + (2*prior_s)        
-  			lower = prior_mean - (2*prior_s) 
-  		       
- 			# Plot mean points and uncertainty
-			fig = plt.figure()
-			ax = fig.add_subplot(1,1,1, projection = '3d')
- 			ax.scatter(self.Xtest[:,0], self.Xtest[:,1], prior_mean) 
-			ax.scatter(self.Xtest[:,0], self.Xtest[:,1], upper, c= 'r')
-			ax.scatter(self.Xtest[:,0], self.Xtest[:,1], lower, c= 'r')
-			plt.show() 
+			print "The dimensionality of the input space is too high to visualize."
         
 	def plot_posterior(self):
 		if self.Xtrain.shape[1] == 1:
 			plotting.plot_posterior_1D(self.Xtest, self.Xtrain, self.Ytrain, self.post_mean, self.post_s, self.cov_post, Ytest=self.Ytest)
+		elif self.Xtrain.shape[1] == 2:
+			plotting.plot_posterior_2D(self.Xtest, self.Xtrain, self.Ytrain, self.post_mean, self.post_s, Ytest=self.Ytest)
 		else:
-			upper = self.post_mean + (2*self.post_s)
-			lower = self.post_mean - (2*self.post_s)
-		
-			# Plot posterior mean points and uncertainty
-			fig = plt.figure()
-			ax = fig.add_subplot(1,1,1, projection = '3d')
- 			ax.scatter(self.Xtest[:,0], self.Xtest[:,1], self.post_mean) 
- 			ax.scatter(self.Xtest[:,0], self.Xtest[:,1], upper, c='r')
- 			ax.scatter(self.Xtest[:,0], self.Xtest[:,1], lower, c='r')
- 			ax.scatter(self.Xtrain[:,0], self.Xtrain[:,1], self.Ytrain, c='g',marker='^', s = 70)
-			plt.show()
+			print "The dimensionality of the input space is too high to visualize. Use plot_by_index instead."
 
