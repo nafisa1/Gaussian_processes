@@ -65,22 +65,28 @@ class GPLVM(object):
 
 		r_sq = []
 		kern = kernels.RBF()
+		regr = regression.Regression(X_test, X_train, Y_train, add_noise=0, kernel=kern, Ytest=Y_test)
+		init_rsq = regr.r_squared()
 
 		for i in xrange(lat_hyp.divisions):
 			kern.lengthscale = comb[i][0]
 			kern.sig_var = comb[i][1]
 			kern.noise_var = comb[i][2]
-			regr = regression_2D.Regression(X_test, X_train, Y_train, add_noise=0, kernel=kern)
-			r_sq.append(regr.r_squared(Y_test))
+			regr = regression.Regression(X_test, X_train, Y_train, add_noise=0, kernel=kern, Ytest=Y_test)
+			r_sq.append(regr.r_squared())
+		
+		if max(r_sq) > init_rsq:
+			ind = r_sq.index(max(r_sq))
+			best = comb[ind]
+			self.kernel.lengthscale = best[0]
+			self.kernel.sig_var = best[1]
+			self.kernel.noise_var = best[2]
 
-		ind = r_sq.index(max(r_sq))
-		best = comb[ind]
-		self.kernel.lengthscale = best[0]
-		self.kernel.sig_var = best[1]
-		self.kernel.noise_var = best[2]
-
-		if print_output is True:
-			print "The new kernel hyperparameters are: lengthscale=",self.kernel.lengthscale,", power=",self.kernel.sig_var," and noise variance=",self.kernel.noise_var,"."
+			if print_output is True:
+				print "The new kernel hyperparameters are: lengthscale=",self.kernel.lengthscale,", power=",self.kernel.sig_var," and noise variance=",self.kernel.noise_var,"."
+		
+		else:
+			print "The kernel hyperparameters will remain unchanged."
 
 	def opt_sep(self):
 		X = self.X
