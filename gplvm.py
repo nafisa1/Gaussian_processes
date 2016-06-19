@@ -109,7 +109,9 @@ class GPLVM(object):
 			X= np.array(X).reshape((-1, Q))
 			kern = self.kernel
 			cov = kern.compute_noisy(X,X)
-			inv_cov = np.linalg.inv(cov)
+			chol = np.linalg.cholesky(cov)
+			inv_chol = np.linalg.inv(chol)
+			inv_cov = np.dot(inv_chol.T, inv_chol)
 			YYt = np.dot(self.Y, self.Y.T)
 			log_l = (-0.5*D*N*np.log(2*math.pi))-(0.5*D*np.log(np.linalg.det(cov))) - (0.5*np.matrix.trace(np.dot(inv_cov,YYt)))  
 			return -log_l
@@ -118,16 +120,15 @@ class GPLVM(object):
 			X = self.X
 			kern = kernels.RBF(lengthscale=hyp[0], sig_var=hyp[1], noise_var=hyp[2])
 			cov = kern.compute_noisy(X,X)
-			cov = cov + (0.1*self.kernel.noise_var*np.eye(cov.shape[1])) 
+#			cov = cov + (0.1*self.kernel.noise_var*np.eye(cov.shape[1])) 
 			chol = np.linalg.cholesky(cov)
-			chol_inv = np.linalg.inv(chol)
-			inv_cov = np.dot(chol_inv.T, chol_inv)
+			inv_chol = np.linalg.inv(chol)
+			inv_cov = np.dot(inv_chol.T, inv_chol)
 			YYt = np.dot(self.Y, self.Y.T)
-			c_cov = np.dot(chol, chol.T)
-			det = np.linalg.det(c_cov)
-			if det == 0:
-				det = 0.1
-			print hyp
+			det = np.linalg.det(cov)
+#			if det == 0:
+#				det = 0.1
+#			print hyp
 			log_l = (-0.5*self.D*250*np.log(2*math.pi))-(0.5*D*np.log(det)) - (0.5*np.matrix.trace(np.dot(inv_cov,YYt)))  
 			return -log_l
 
@@ -138,14 +139,17 @@ class GPLVM(object):
 		diff = 1
 
 		print "Optimize latent space then hyperparameters, iterate:"
-		while diff > tol:
-#			min_X = minimize(opt_X, self.X.flat, method='l-bfgs-b', options={'disp':True})
-#			self.X = np.reshape(min_X.x, (N,Q))
-			min_hyp = minimize(opt_hyp, [self.kernel.lengthscale, self.kernel.sig_var, self.kernel.noise_var], method='l-bfgs-b', bounds=((0,None),(0,None),(0,None)), options={'disp':True})
+#		while diff > tol:
+		for i in xrange(1):
+			min_X = minimize(opt_X, self.X.flat, method='l-bfgs-b', options={'disp':True})
+			self.X = np.reshape(min_X.x, (N,Q))
+#			min_hyp = minimize(opt_hyp, [self.kernel.lengthscale, self.kernel.sig_var, self.kernel.noise_var], method='l-bfgs-b', bounds=((0.5,3),(0.5,3),(0.5,3)), options={'disp':True})
+
 	#		print log_lik()
-			diff = ll_old - log_lik()
-			ll_old = log_lik()
-		self.kernel.lengthscale, self.kernel.sig_var, self.kernel.noise_var = min_hyp.x[0], min_hyp.x[1], min_hyp.x[2]
+#			diff = ll_old - log_lik()
+#			ll_old = log_lik()
+
+#		self.kernel.lengthscale, self.kernel.sig_var, self.kernel.noise_var = min_hyp.x[0], min_hyp.x[1], min_hyp.x[2]
 
 		return self.X, min_hyp.x
 
