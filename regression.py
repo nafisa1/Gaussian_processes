@@ -39,7 +39,9 @@ class Regression(object):
 		# Compute posterior mean vector
 		Xtrain_cov = self.kernel.compute_noisy(self.Xtrain, self.Xtrain)
  		cross_cov = self.kernel.compute(self.Xtest, self.Xtrain)
- 		inv = np.linalg.inv(Xtrain_cov) 
+		tr_chol = np.linalg.cholesky(Xtrain_cov) 
+		tr_chol_inv = np.linalg.inv(tr_chol)
+		inv = np.dot(tr_chol_inv.T, tr_chol_inv) 
  		cross_x_inv = np.dot(cross_cov, inv)
  		post_mean = (np.dot(cross_x_inv, self.Ytrain)) 
 		noise = add_noise*np.reshape([random.gauss(0, np.sqrt(self.kernel.noise_var)) for i in range(0,post_mean.shape[0])],(-1,1))
