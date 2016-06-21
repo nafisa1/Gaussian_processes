@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 def plot_prior_1D(Xtest, test_cov, Ytest=None):
 
@@ -12,8 +11,6 @@ def plot_prior_1D(Xtest, test_cov, Ytest=None):
 
 	s = np.sqrt(np.diag(test_cov))
 	mean = np.reshape(mean, (-1,))
-	print mean.shape
-	print s.shape
 		     
 	# Plot true function, mean function and uncertainty   
 	plt.figure()
@@ -52,7 +49,6 @@ def plot_posterior_1D(Xtest, Xtrain, Ytrain, p_mean, p_sd, cov_post, Ytest=None)
 	plt.plot(Xtest, mean_f, 'r--', lw=2, label='mean') # mean function
 	plt.fill_between(Xtest, mean_f-(2*p_sd), mean_f+(2*p_sd), color='#87cefa') # uncertainty
 	plt.legend()
-	plt.show()
 		
 	# Plot 10 draws from posterior
 	f = p_mean + np.dot(cov_post, np.random.normal(size=(Xtest.shape[0],10)))
@@ -64,6 +60,7 @@ def plot_posterior_1D(Xtest, Xtrain, Ytrain, p_mean, p_sd, cov_post, Ytest=None)
 	plt.show()
         
 def plot_prior_2D(Xtest, test_cov, Ytest=None):
+	from mpl_toolkits.mplot3d import Axes3D
 
 	prior_s = np.sqrt(np.diag(test_cov))
 		
@@ -84,6 +81,8 @@ def plot_prior_2D(Xtest, test_cov, Ytest=None):
 	plt.show() 
 
 def plot_posterior_2D(Xtest, Xtrain, Ytrain, p_mean, p_sd, Ytest=None):
+	from mpl_toolkits.mplot3d import Axes3D
+
 	upper = p_mean + (2*p_sd)
 	lower = p_mean - (2*p_sd)
 		
@@ -96,4 +95,31 @@ def plot_posterior_2D(Xtest, Xtrain, Ytrain, p_mean, p_sd, Ytest=None):
 	ax.scatter(Xtest[:,0], Xtest[:,1], upper, c='r')
 	ax.scatter(Xtest[:,0], Xtest[:,1], lower, c='r')
 	ax.scatter(Xtrain[:,0], Xtrain[:,1], Ytrain, c='g',marker='^', s = 70)
+	plt.show()
+
+def plot_acq(Xtest, Xtrain, Ytrain, acq, p_mean, p_sd, Ytest=None):
+# Plot posterior of test set with acquisition function underneath
+# Check acquisition function X axis
+
+	plt.figure(1)
+	plt.subplot(211)
+	plt.title("Posterior over Test Set")
+
+	# Manipulate data for plotting
+	mean_f = p_mean.flat
+	p_sd = np.reshape(p_sd, (-1,))
+	Xtest = np.hstack(Xtest)
+		
+	# Plot true function, predicted mean and uncertainty (2s), and training points
+	plt.plot(Xtrain, Ytrain, 'r+', ms=20) # training points
+#	plt.xlim(min(Xtest), max(Xtest))
+	plt.ylim(min(mean_f-(2*p_sd)-(p_sd/2)), max(mean_f+(2*p_sd)+(p_sd/2))) 
+ 	if Ytest is not None:      
+		plt.plot(Xtest, Ytest, 'b-', label='Y') # true function
+	plt.plot(Xtest, mean_f, 'r--', lw=2, label='mean') # mean function
+	plt.fill_between(Xtest, mean_f-(2*p_sd), mean_f+(2*p_sd), color='#87cefa') # uncertainty
+	
+	plt.subplot(212)
+	plt.title("Acquisition function")
+	plt.plot(Xtest, acq, 'b-')
 	plt.show()
