@@ -6,7 +6,7 @@ import plotting
 
 class Regression(object):
 
-	def __init__(self, Xtest, Xtrain, Ytrain, add_noise=1, kernel=None, Ytest=None, normalize=True):
+	def __init__(self, Xtest, Xtrain, Ytrain, add_noise=1, kernel=None, Ytest=None, normalizeX=True, normalizeY=True):
 		self.Xtest = Xtest
 		self.Xtrain = Xtrain
 		self.Ytest = Ytest
@@ -14,7 +14,7 @@ class Regression(object):
 		self.add_noise = add_noise
 		self.kernel = kernel		
 
-		if normalize is True:
+		if normalizeX is True:
 			# Normalize training inputs
 			X_mu = np.vstack(np.mean(Xtrain, axis=0))
 			X_s = np.vstack(Xtrain.std(axis=0))
@@ -25,6 +25,7 @@ class Regression(object):
 			test_centred = self.Xtest.T - X_mu
 			test_div = test_centred/X_s 
 			self.Xtest = test_div.T
+		if normalizeY is True:
 			# Centre training outputs 
 			self.Y_mu = np.mean(Ytrain)
 			self.Ytrain = Ytrain - self.Y_mu
