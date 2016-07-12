@@ -13,7 +13,7 @@ def plot_prior_1D(Xtest, test_cov, Ytest=None):
 	mean = np.reshape(mean, (-1,))
 		     
 	# Plot true function, mean function and uncertainty   
-	plt.figure()
+	ax1 = plt.subplot(211)
 	plt.xlim(min(X), max(X))
 	plt.ylim(min(mean-(2*s)-(s/2)), max(mean+(2*s)+(s/2)))       
 
@@ -26,10 +26,10 @@ def plot_prior_1D(Xtest, test_cov, Ytest=None):
 	# Plot draws from prior
 	mean = mean.reshape(X.shape[0],1)
 	f = mean + np.dot(test_cov, np.random.normal(size=(X.shape[0],10)))
-	plt.figure()
-	plt.xlim(min(X), max(X))
+	ax2 = plt.subplot(212, sharex=ax1)
 	plt.plot(X, f)
 	plt.title('Ten samples')
+	plt.tight_layout()
 	plt.show() 
 
 def plot_posterior_1D(Xtest, Xtrain, Ytrain, p_mean, p_sd, cov_post, Ytest=None): 
@@ -40,23 +40,24 @@ def plot_posterior_1D(Xtest, Xtrain, Ytrain, p_mean, p_sd, cov_post, Ytest=None)
 	Xtest = np.hstack(Xtest)
 		
 	# Plot true function, predicted mean and uncertainty (2s), and training points
-	plt.figure()
+	ax1 = plt.subplot(211)
 	plt.plot(Xtrain, Ytrain, 'r+', ms=20) # training points
 	plt.xlim(min(Xtest), max(Xtest))
 	plt.ylim(min(mean_f-(2*p_sd)-(p_sd/2)), max(mean_f+(2*p_sd)+(p_sd/2))) 
  	if Ytest is not None:      
-		plt.plot(Xtest, Ytest, 'b-', label='Y') # true function
+		plt.plot(Xtest, Ytest, 'b', label='Y') # true function
 	plt.plot(Xtest, mean_f, 'r--', lw=2, label='mean') # mean function
 	plt.fill_between(Xtest, mean_f-(2*p_sd), mean_f+(2*p_sd), color='#87cefa') # uncertainty
 	plt.legend()
 		
 	# Plot 10 draws from posterior
 	f = p_mean + np.dot(cov_post, np.random.normal(size=(Xtest.shape[0],10)))
-	plt.figure()
+	ax2 = plt.subplot(212, sharex=ax1)
 	plt.xlim(min(Xtest), max(Xtest))
 	plt.plot(Xtest, f)
 	plt.plot(Xtrain, Ytrain, 'r+', ms=20) # new points
 	plt.title('Ten samples')
+	plt.tight_layout()
 	plt.show()
         
 def plot_prior_2D(Xtest, test_cov, Ytest=None):
@@ -80,7 +81,7 @@ def plot_prior_2D(Xtest, test_cov, Ytest=None):
 	ax.scatter(Xtest[:,0], Xtest[:,1], lower, c= 'r')
 	plt.show() 
 
-def plot_posterior_2D(Xtest, Xtrain, Ytrain, p_mean, p_sd, Ytest=None):
+def plot_posterior_2D(Xtest, Xtrain, Ytrain, p_mean, p_sd, acq1, Ytest=None):
 	from mpl_toolkits.mplot3d import Axes3D
 
 	upper = p_mean + (2*p_sd)
@@ -97,29 +98,35 @@ def plot_posterior_2D(Xtest, Xtrain, Ytrain, p_mean, p_sd, Ytest=None):
 	ax.scatter(Xtrain[:,0], Xtrain[:,1], Ytrain, c='g',marker='^', s = 70)
 	plt.show()
 
-def plot_acq(Xtest, Xtrain, Ytrain, acq, p_mean, p_sd, Ytest=None):
+def plot_acq(Xtest, acq, p_mean, p_sd, Ytest=None):
 # Plot posterior of test set with acquisition function underneath
-# Check acquisition function X axis
 
-	plt.figure(1)
-	plt.subplot(211)
+	# Plot true function, predicted mean and uncertainty (2s), and training points
+	ax1 = plt.subplot(211)
 	plt.title("Posterior over Test Set")
 
 	# Manipulate data for plotting
 	mean_f = p_mean.flat
 	p_sd = np.reshape(p_sd, (-1,))
-	Xtest = np.hstack(Xtest)
-		
-	# Plot true function, predicted mean and uncertainty (2s), and training points
-	plt.plot(Xtrain, Ytrain, 'r+', ms=20) # training points
-#	plt.xlim(min(Xtest), max(Xtest))
-	plt.ylim(min(mean_f-(2*p_sd)-(p_sd/2)), max(mean_f+(2*p_sd)+(p_sd/2))) 
+
+#	plt.xlim(min(Xtest), max(Xtest))		
+#	plt.plot(Xtrain, Ytrain, 'b+', ms=10) # training points
+
  	if Ytest is not None:      
-		plt.plot(Xtest, Ytest, 'b-', label='Y') # true function
-	plt.plot(Xtest, mean_f, 'r--', lw=2, label='mean') # mean function
-	plt.fill_between(Xtest, mean_f-(2*p_sd), mean_f+(2*p_sd), color='#87cefa') # uncertainty
+		plt.plot(Xtest, Ytest, 'ro', label='Y') # true function
+
+	Xtest,mean_f = zip(*sorted(zip(Xtest,mean_f),key=lambda Xtest: Xtest[0]))
+	X_next = Xtest[np.argmax(acq)]
+	plt.plot(X_next, mean_f[np.argmax(acq)], 'o', color='#ff3333')
+	plt.plot(Xtest, mean_f, '--', color='#000099', label='mean') # mean function
+	plt.fill_between(Xtest, mean_f-(2*p_sd), mean_f+(2*p_sd), color='#e6e6ff') # uncertainty
 	
-	plt.subplot(212)
+	ax2 = plt.subplot(212, sharex=ax1)
 	plt.title("Acquisition function")
-	plt.plot(Xtest, acq, 'b-')
+	Xtest,acq = zip(*sorted(zip(Xtest,acq),key=lambda Xtest: Xtest[0]))
+	plt.plot(Xtest, acq, color='#800000')
+	plt.plot(X_next, max(acq), 'o', color='#ff3333')
+	plt.ylim(0, max(acq)+0.2)
+
+	plt.tight_layout()
 	plt.show()
