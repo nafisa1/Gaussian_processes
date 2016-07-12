@@ -65,7 +65,7 @@ class GPLVM(object):
 
 		r_sq = []
 		kern = kernels.RBF()
-		regr = regression.Regression(X_test, X_train, Y_train, add_noise=0, kernel=kern, Ytest=Y_test)
+		regr = regression.Regression(X_test, X_train, Y_train, add_noise=0, kernel=kern, Ytest=Y_test, normalizeX=False)
 		init_rsq = regr.r_squared()
 
 		for i in xrange(lat_hyp.divisions):
