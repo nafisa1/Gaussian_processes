@@ -6,31 +6,13 @@ import plotting
 
 class Regression(object):
 
-	def __init__(self, Xtest, Xtrain, Ytrain, add_noise=1, kernel=None, Ytest=None, normalizeX=True, normalizeY=True):
+	def __init__(self, Xtest, Xtrain, Ytrain, add_noise=1, kernel=None, Ytest=None):
 		self.Xtest = Xtest
 		self.Xtrain = Xtrain
 		self.Ytest = Ytest
 		self.Ytrain = Ytrain
 		self.add_noise = add_noise
 		self.kernel = kernel		
-
-		if normalizeX is True:
-			# Normalize training inputs
-			X_mu = np.vstack(np.mean(Xtrain, axis=0))
-			X_s = np.vstack(Xtrain.std(axis=0))
-			train_centred = Xtrain.T - X_mu
-			train_div = train_centred/X_s                       
-			self.Xtrain = train_div.T   
-			# Normalize test inputs according to training inputs
-			test_centred = self.Xtest.T - X_mu
-			test_div = test_centred/X_s 
-			self.Xtest = test_div.T
-		if normalizeY is True:
-			# Centre training outputs 
-			self.Y_mu = np.mean(Ytrain)
-			self.Ytrain = Ytrain - self.Y_mu
-		if Ytest is not None:
-			self.Ytest = Ytest - self.Y_mu
 		
 		if kernel is None:
 			import warnings
