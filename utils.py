@@ -1,8 +1,6 @@
 import numpy as np
 
-# Latin hypercube sampling
-
-def normalize(A, B=None):
+def normalize_centre(A, B=None):
 	# Get mean and standard deviation
 	A_mu = np.vstack(np.mean(A, axis=0))
 	A_sd = np.vstack(A.std(axis=0))
@@ -10,16 +8,16 @@ def normalize(A, B=None):
 	# Centre and normalize array
 	if B is None:
 		A_centred = A.T - A_mu
-		A_normalized = A_centred/A_sd                       
-		normalized_array = A_normalized.T   
+		Acent_normalized = A_centred/A_sd                       
+		final_array = Acent_normalized.T   
 
 	# Centre and normalize second array using mean and standard deviation of first array
 	else:
 		B_centred = B.T - A_mu
-		B_normalized = B_centred/A_s 
-		normalized_array = B_normalized.T
+		Bcent_normalized = B_centred/A_sd
+		final_array = Bcent_normalized.T
 
-	return normalized_array		
+	return final_array		
 
 def centre(A, B=None):
 	# Get mean
@@ -36,6 +34,8 @@ def centre(A, B=None):
 		centred_array = B_centred.T
 
 	return centred_array	
+
+# Latin hypercube sampling
 
 class LHS(object):
 	def __init__(self, parameters=3, n_choices=15, lower=0.5, upper=2.5, divisions=6):
