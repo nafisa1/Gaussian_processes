@@ -1,7 +1,6 @@
 import numpy as np
 from utils import normalize_centre, centre
 import GPy
-import matplotlib.pyplot as plt
 
 class Model(object):
 
@@ -20,6 +19,9 @@ class Model(object):
 		# Normalise and centre X, perform PCA
 		X = normalize_centre(X)
 		X_pcs, W = GPy.util.linalg.pca(X, latent_dim)
+		jitter = 0.05*np.random.rand((X_pcs.shape[0]), (X_pcs.shape[1]))
+		jitter -= 0.025
+		X_pcs -= jitter
 	
 		if have_Ytest == True:
 			
