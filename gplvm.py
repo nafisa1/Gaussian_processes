@@ -20,7 +20,7 @@ class GPLVM(object):
 			warnings.warn("Kernel not specified, defaulting to RBF kernel...")
 			self.kernel = kernels.RBF()
 
-	def initialize(self):
+	def remove_zero_cols(self):
 	        # Calculate number of observations, N
  		self.N = self.Y.shape[0]
 
@@ -35,24 +35,8 @@ class GPLVM(object):
         
 		non_zero_cols = np.array(non_zero_cols)
 		self.Y = non_zero_cols.T
-
-		# Normalize
-		mu = np.vstack(np.mean(self.Y, axis=0))
-		s = np.vstack(self.Y.std(axis=0))
-		centred = self.Y.T - mu
-		div = centred/s                       
-		self.Y = div.T 
-
-		# Calculate number of observed dimensions, D
-		self.D = self.Y.shape[1]
-
-		# Initialize latent points using PCA
-		self.X,W = GPy.util.linalg.pca(self.Y, self.latent_dim)
-		jitter = 0.05*np.random.rand((self.X.shape[0]), (self.X.shape[1]))
-		jitter -= 0.025
-		self.X -= jitter
-		print self.D,"observed dimensions,",self.latent_dim,"latent dimensions."
-		return self.X
+		
+		return self.Y
 
 	def lhs(self, print_output=True):
 		lat_hyp = utils.LHS()
