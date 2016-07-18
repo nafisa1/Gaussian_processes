@@ -6,7 +6,7 @@ import plotting
 
 class Regression(object):
 
-	def __init__(self, Xtest, Xtrain, Ytrain, add_noise=1, kernel=None, Ytest=None):
+	def __init__(self, Xtest, Xtrain, Ytrain, add_noise=0.1, kernel=None, Ytest=None):
 		self.Xtest = Xtest
 		self.Xtrain = Xtrain
 		self.Ytest = Ytest
