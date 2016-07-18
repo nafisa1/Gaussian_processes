@@ -64,7 +64,7 @@ class LHS(object):
 
 		for i in xrange(self.divisions):
 			kern.lengthscale, kern.sig_var, kern.noise_var = self.combinations[i][0], self.combinations[i][1], self.combinations[i][2]
-			regr = regression.Regression(Xtest, Xtrain, Ytrain, add_noise=0, kernel=kern, Ytest=Ytest)
+			regr = regression.Regression(Xtest, Xtrain, Ytrain, kernel=kern, Ytest=Ytest)
 			r_sq.append(regr.r_squared())
 		
 		if max(r_sq) > init_rsq:
