@@ -38,23 +38,42 @@ def centre(A, B=None):
 # Latin hypercube sampling
 
 class LHS(object):
-	def __init__(self, parameters=3, n_choices=15, lower=0.5, upper=2.5, divisions=6):
+	def __init__(self, kernel, parameters=3, n_choices=15, lower=0.5, upper=2.5, divisions=6):
+		self.kernel = kernel
 		self.parameters = parameters
 		self.divisions = divisions
 		self.lower = lower
 		self.upper = upper
 
 		a = np.linspace(lower,upper,divisions)
-		options = len(a)
+		options = a.shape[0]
 
 		full = np.zeros(((options**3),parameters))
-
 		full[:,0] = np.concatenate(((options**2)*[a[0]], (options**2)*[a[1]], (options**2)*[a[2]], (options**2)*[a[3]], (options**2)*[a[4]], (options**2)*[a[5]]))
-
 		full[:,1] = np.concatenate(options*[np.concatenate((options*[a[0]], options*[a[1]], options*[a[2]], options*[a[3]], options*[a[4]], options*[a[5]]))])
-
 		full[:,2] = np.concatenate((options**2)*[a])
 
 		self.combinations = full[np.random.randint(full.shape[0], size=n_choices),:]
 
-	
+	def compute(self, Xtest, Xtrain, Ytrain, Ytest):
+		r_sq = []
+		kern = self.kernel
+		import regression
+		regr = regression.Regression(Xtest, Xtrain, Ytrain, add_noise=0, kernel=kern, Ytest=Ytest)
+		init_rsq = regr.r_squared()
+
+		for i in xrange(self.divisions):
+			kern.lengthscale, kern.sig_var, kern.noise_var = self.combinations[i][0], self.combinations[i][1], self.combinations[i][2]
+			regr = regression.Regression(Xtest, Xtrain, Ytrain, add_noise=0, kernel=kern, Ytest=Ytest)
+			r_sq.append(regr.r_squared())
+		
+		if max(r_sq) > init_rsq:
+			ind = np.argmax(r_sq)
+			best = self.combinations[ind]
+
+			print "The new kernel hyperparameters are: lengthscale=",best[0],", power=",best[1]," and noise variance=",best[2],"."
+		
+		else:
+			print "The kernel hyperparameters will remain unchanged."
+
+		return best[0], best[1], best[2]
