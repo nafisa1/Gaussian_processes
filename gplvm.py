@@ -38,40 +38,6 @@ class GPLVM(object):
 		
 		return self.Y
 
-	def lhs(self, print_output=True):
-		lat_hyp = utils.LHS()
-		comb = lat_hyp.combinations
-
-		X_train = self.X[:int((self.X.shape[0])*0.95),:]
-		X_test = self.X[int((self.X.shape[0])*0.95):,:]
-		Y_train = self.objective[:int((self.objective.shape[0])*0.95),:]
-		Y_test = self.objective[int((self.objective.shape[0])*0.95):,:]
-
-		r_sq = []
-		kern = kernels.RBF()
-		regr = regression.Regression(X_test, X_train, Y_train, add_noise=0, kernel=kern, Ytest=Y_test, normalizeX=False)
-		init_rsq = regr.r_squared()
-
-		for i in xrange(lat_hyp.divisions):
-			kern.lengthscale = comb[i][0]
-			kern.sig_var = comb[i][1]
-			kern.noise_var = comb[i][2]
-			regr = regression.Regression(X_test, X_train, Y_train, add_noise=0, kernel=kern, Ytest=Y_test)
-			r_sq.append(regr.r_squared())
-		
-		if max(r_sq) > init_rsq:
-			ind = r_sq.index(max(r_sq))
-			best = comb[ind]
-			self.kernel.lengthscale = best[0]
-			self.kernel.sig_var = best[1]
-			self.kernel.noise_var = best[2]
-
-			if print_output is True:
-				print "The new kernel hyperparameters are: lengthscale=",self.kernel.lengthscale,", power=",self.kernel.sig_var," and noise variance=",self.kernel.noise_var,"."
-		
-		else:
-			print "The kernel hyperparameters will remain unchanged."
-
 	def opt_sep(self):
 		X = self.X
 		N = self.N
