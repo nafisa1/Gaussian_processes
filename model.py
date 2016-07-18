@@ -1,6 +1,7 @@
 import numpy as np
-from utils import normalize_centre, centre
+from utils import normalize_centre, centre, LHS
 import GPy
+import regression
 
 class Model(object):
 
@@ -61,6 +62,16 @@ class Model(object):
 			prior_train = prior[:self.Xtrain.shape[0],:]
 			self.Ytrain = self.Ytrain - prior_train
 			self.prior_test = prior[self.Xtrain.shape[0]:,:]
+
+	def hyperparameters(self):
+		lat_hyp = LHS(self.kernel)
+
+		Xtrain = self.Xtrain[:((self.Xtrain.shape[0])*0.8),:]
+		Xtest = self.Xtrain[((self.Xtrain.shape[0])*0.8):,:]
+		Ytrain = self.Ytrain[:((self.Ytrain.shape[0])*0.8),:]
+		Ytest = self.Ytrain[((self.Ytrain.shape[0])*0.8):,:]
+		print Xtrain.shape, Xtest.shape, Ytrain.shape
+		self.kernel.lengthscale, self.kernel.sig_var, self.kernel.noise_var = lat_hyp.compute(Xtest, Xtrain, Ytrain, Ytest)
 
 	# This is done after regression etc			
 	def correction(self):
