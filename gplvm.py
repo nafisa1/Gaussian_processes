@@ -20,24 +20,6 @@ class GPLVM(object):
 			warnings.warn("Kernel not specified, defaulting to RBF kernel...")
 			self.kernel = kernels.RBF()
 
-	def remove_zero_cols(self):
-	        # Calculate number of observations, N
- 		self.N = self.Y.shape[0]
-
-		# Remove columns of zeros
-		zeros = np.zeros((1,self.N))[0]
-		transpose = self.Y.T
-
-		non_zero_cols = []
-		for column in transpose:
-    			if np.array_equal(column, zeros) == False:
-        			non_zero_cols.append(column)
-        
-		non_zero_cols = np.array(non_zero_cols)
-		self.Y = non_zero_cols.T
-		
-		return self.Y
-
 	def opt_sep(self):
 		X = self.X
 		N = self.N
