@@ -1,5 +1,23 @@
 import numpy as np
 
+def remove_zero_cols(A):
+        # Calculate number of observations, N
+	N = A.shape[0]
+
+	# Remove columns of zeros
+	zeros = np.zeros((1,N))[0]
+	transpose = A.T
+
+	non_zero_cols = []
+	for column in transpose:
+		if np.array_equal(column, zeros) == False:
+       			non_zero_cols.append(column)
+       
+	non_zero_cols = np.array(non_zero_cols)
+	A = non_zero_cols.T
+		
+	return A
+
 def normalize_centre(A, B=None):
 	# Get mean and standard deviation
 	A_mu = np.vstack(np.mean(A, axis=0))
