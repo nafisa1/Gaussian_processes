@@ -6,9 +6,10 @@ import regression
 # Run this file to see an example of a Gaussian process model being trained to learn about a
 # function of interest. 
 
-# Initially, with no information we assume the function is zero everywhere. This is our 'prior'.
-# The model learns using 'training points' (input values for which the function value is known).
-# After training, we obtain the 'posterior'. The model can make predictions of the function 
+# Initially, with no information we assume the function is zero for all input points. This is 
+# our 'prior'. The model learns using 'training points' (input values for which the function 
+# value is known).
+# After training, we obtain the 'posterior'. The model now has predictions of the function 
 # value at 'test points', input values for which the function value is unknown.
 
 # In this example, we have defined the output function, so we do know what it looks like over 
