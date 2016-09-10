@@ -117,13 +117,17 @@ def plot_acq(Xtest, acq, p_mean, p_sd, Ytest=None):
 
 	Xtest,mean_f = zip(*sorted(zip(Xtest,mean_f),key=lambda Xtest: Xtest[0]))
 	X_next = Xtest[np.argmax(acq)]
+	plt.ylabel('Predicted log(IC50)')
 	plt.plot(X_next, mean_f[np.argmax(acq)], 'o', color='#ff3333')
-	plt.plot(Xtest, mean_f, '--', color='#000099', label='mean') # mean function
-	plt.fill_between(Xtest, mean_f-(2*p_sd), mean_f+(2*p_sd), color='#e6e6ff') # uncertainty
+	plt.plot(Xtest, mean_f, '--', color='#000099', label='Posterior mean') # mean function
+	plt.fill_between(Xtest, mean_f-(2*p_sd), mean_f+(2*p_sd), color='#e6e6ff', label="95% credibility interval") # uncertainty
+	plt.legend(loc=0, fontsize='medium')
 	
 	ax2 = plt.subplot(212, sharex=ax1)
 	plt.title("Acquisition function")
 	Xtest,acq = zip(*sorted(zip(Xtest,acq),key=lambda Xtest: Xtest[0]))
+	plt.xlabel('First principal component')
+	plt.ylabel('Acquisition function')
 	plt.plot(Xtest, acq, color='#800000')
 	plt.plot(X_next, max(acq), 'o', color='#ff3333')
 	plt.ylim(0, max(acq)+0.2)
