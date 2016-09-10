@@ -2,7 +2,7 @@ import numpy as np
 import utils
 import GPy
 
-class Model(Regression):
+class Model(object):
 
 	def __init__(self, X, Y, latent_dim, have_Ytest=True, shuffle=True, split_train=0.8, kernel=None, prior=None, acq_func=None):
 		self.X = X
@@ -32,19 +32,21 @@ class Model(Regression):
 				p = np.random.permutation(X.shape[0])
 				X_pcs = X_pcs[p]
 				Y = Y[p]
+				# Also need to shuffle and cull SMILES
 
 				if prior is not None:
 					prior = prior[p]
 					
 			# Split
 			self.Xtrain = X_pcs[:(split_train*X.shape[0]),:]
-			Ytrain = Y[:(split_train*X.shape[0]),:]
+			self.Ytrain = Y[:(split_train*X.shape[0]),:]
 			self.Xtest = X_pcs[(split_train*X.shape[0]):,:]
-			Ytest = Y[(split_train*X.shape[0]):,:]
+			self.Ytest = Y[(split_train*X.shape[0]):,:]
 
 			# Centre Y
-			self.Ytrain = utils.centre(Ytrain)
-			self.Ytest = utils.centre(Ytrain, Ytest)
+#			self.Ytrain_mean = np.mean(Ytrain)
+#			self.Ytrain = utils.centre(Ytrain)
+#			self.Ytest = utils.centre(Ytrain, Ytest)
 
 		else:
 
@@ -67,10 +69,12 @@ class Model(Regression):
 	def hyperparameters(self):
 		lat_hyp = utils.LHS(self.kernel)
 
-		Xtrain = self.Xtrain[:((self.Xtrain.shape[0])*0.8),:]
-		Xtest = self.Xtrain[((self.Xtrain.shape[0])*0.8):,:]
-		Ytrain = self.Ytrain[:((self.Ytrain.shape[0])*0.8),:]
-		Ytest = self.Ytrain[((self.Ytrain.shape[0])*0.8):,:]
+		Xtrain = self.Xtrain #[:((self.Xtrain.shape[0])*0.8),:]
+		Xtest = self.Xtest #train[((self.Xtrain.shape[0])*0.8):,:]
+		Ytrain = utils.centre(self.Ytrain)
+		Ytest = utils.centre(self.Ytrain, self.Ytest)
+		#Ytrain = self.Ytrain[:((self.Ytrain.shape[0])*0.8),:]
+		#Ytest = self.Ytrain[((self.Ytrain.shape[0])*0.8):,:]
 
 		self.kernel.lengthscale, self.kernel.sig_var, self.kernel.noise_var = lat_hyp.compute(Xtest, Xtrain, Ytrain, Ytest)
 
@@ -78,16 +82,27 @@ class Model(Regression):
 		import regression
 
 		if self.have_Ytest == True:
-			regress = regression.Regression(self.Xtest, self.Xtrain, self.Ytrain, kernel=self.kernel, Ytest=self.Ytest)
+			# Centre Y
+			self.Ytrain_mean = np.mean(self.Ytrain)
+			Ytrain = utils.centre(self.Ytrain)
+			Ytest = utils.centre(self.Ytrain, self.Ytest)
+
+			regress = regression.Regression(self.Xtest, self.Xtrain, Ytrain, kernel=self.kernel, Ytest=Ytest)
 
 		else:
 			regress = regression.Regression(self.Xtest, self.Xtrain, self.Ytrain, kernel=self.kernel, Ytest=None)
 
 		return regress
 
-	def optimization(self):
+	def optimization(self, plot=False):
 
-		new_x, ind = self.acq_func.compute(self.Xtest, self.Xtrain, self.Ytrain, self.kernel)
+		Ytrain = utils.centre(self.Ytrain)
+		Ytest = utils.centre(self.Ytrain, self.Ytest)
+
+		if plot==False:
+			new_x, ind = self.acq_func.compute(self.Xtest, self.Xtrain, Ytrain, self.kernel, plot=False)
+		else:
+			new_x, ind = self.acq_func.compute(self.Xtest, self.Xtrain, Ytrain, self.kernel, plot=True)
 
 		new_obs = self.Ytest[ind]		
 
