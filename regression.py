@@ -6,7 +6,7 @@ import plotting
 
 class Regression(object):
 
-	def __init__(self, Xtest, Xtrain, Ytrain, add_noise=0.1, kernel=None, Ytest=None):
+	def __init__(self, Xtest, Xtrain, Ytrain, add_noise=0.01, kernel=None, Ytest=None):
 		self.Xtest = Xtest
 		self.Xtrain = Xtrain
 		self.Ytest = Ytest
@@ -59,7 +59,8 @@ class Regression(object):
 		# Plot index against posterior mean function, uncertainty and true test values
 		fig = plt.figure()
 		plt.xlim(0, max(index)+1) 
-#		plt.ylim(-15,10)    
+		plt.xlabel('Compound')
+		plt.ylabel('Centred log(IC50)')    
 		plt.plot(index, Ytest, 'ro')
 		plt.plot(index, post_mean, 'r--', lw=2)
 		plt.fill_between(index, lower, upper, color='#87cefa')
