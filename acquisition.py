@@ -5,9 +5,9 @@ from scipy.stats import norm
 
 class PI(object):
 
-	def compute(self, Xtest, Xtrain, Ytrain, kern):
+	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 		# Get posterior mean and standard deviation for test set
-		run = Regression(Xtest, Xtrain, Ytrain, add_noise=0.1, kernel=kern, Ytest=None)
+		run = Regression(Xtest, Xtrain, Ytrain, add_noise=0.01, kernel=kern, Ytest=None)
 		sd = run.post_s
 		p_mean = run.post_mean
 
@@ -39,15 +39,16 @@ class PI(object):
 #		Xtrain_axis = Xtrain[:,0].reshape(-1,1)
 
 		# Plot posterior and acquisition function, showing preferred next observation
-		plotting.plot_acq(Xtest_axis, acq, p_mean, sd, Ytest=None)
+		if plot==True:		
+			plotting.plot_acq(Xtest_axis, acq, p_mean, sd, Ytest=None)
 
 		return new_x, ind
 		
 class EI(object):
 
-	def compute(self, Xtest, Xtrain, Ytrain, kern):
+	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 		# Get posterior mean and standard deviation for test set
-		run = Regression(Xtest, Xtrain, Ytrain, add_noise=0.1, kernel=kern, Ytest=None)
+		run = Regression(Xtest, Xtrain, Ytrain, add_noise=0.01, kernel=kern, Ytest=None)
 		sd = run.post_s
 		p_mean = run.post_mean
 
@@ -84,16 +85,17 @@ class EI(object):
 		Xtest_axis = Xtest[:,0]	
 #		Xtrain_axis = Xtrain[:,0].reshape(-1,1)
 
+		if plot==True:
 		# Plot posterior and acquisition function, showing preferred next observation
-		plotting.plot_acq(Xtest_axis, acq, p_mean, sd, Ytest=None)
+			plotting.plot_acq(Xtest_axis, acq, p_mean, sd, Ytest=None)
 
 		return new_x, ind
 
 class LCB(object):
 
-	def compute(self, Xtest, Xtrain, Ytrain, kern, kappa=1):
+	def compute(self, Xtest, Xtrain, Ytrain, kern, kappa=0.2, plot=False):
 		# Get posterior mean and standard deviation for test set
-		run = Regression(Xtest, Xtrain, Ytrain, add_noise=0.1, kernel=kern, Ytest=None)
+		run = Regression(Xtest, Xtrain, Ytrain, add_noise=0.01, kernel=kern, Ytest=None)
 		sd = run.post_s
 		p_mean = run.post_mean
 
@@ -108,8 +110,9 @@ class LCB(object):
 		Xtest_axis = Xtest[:,0]	
 #		Xtrain_axis = Xtrain[:,0].reshape(-1,1)
 
+		if plot==True:
 		# Plot posterior and acquisition function, showing preferred next observation
-		plotting.plot_acq(Xtest_axis, acq, p_mean, sd, Ytest=None)
+			plotting.plot_acq(Xtest_axis, acq, p_mean, sd, Ytest=None)
 
 		return new_x, ind
 
