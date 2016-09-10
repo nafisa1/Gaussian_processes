@@ -92,6 +92,7 @@ class LHS(object):
 			print "The new kernel hyperparameters are: lengthscale=",best[0],", power=",best[1]," and noise variance=",best[2],"."
 		
 		else:
+			best = np.array((self.kernel.lengthscale, self.kernel.sig_var, self.kernel.noise_var))
 			print "The kernel hyperparameters will remain unchanged."
 
 		return best[0], best[1], best[2]
