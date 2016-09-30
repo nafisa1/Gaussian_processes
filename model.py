@@ -4,7 +4,7 @@ import GPy
 
 class Model(object):
 
-	def __init__(self, X, Y, latent_dim, have_Ytest=True, shuffle=True, split_train=0.8, kernel=None, prior=None, acq_func=None):
+	def __init__(self, X, Y, latent_dim, have_Ytest=True, shuffle=True, split_train=0.8, kernel=None, prior=None, acq_func=None, smiles=None):
 		self.X = X
 		self.Y = Y
 		self.kernel = kernel
@@ -12,10 +12,22 @@ class Model(object):
 		self.split_train = split_train
 		self.prior = prior
 		self.acq_func = acq_func
+		self.smiles = smiles
 
 		# Sanity check
 		if len(Y.shape) != 2:
 			Y = Y.reshape(-1,1)
+
+		# Get SMILES from text file
+		if smiles is not None:
+			with open(smiles,'r') as f:
+				names = []
+				filecontents = f.readlines()
+				for line in filecontents:
+					lin = line.strip('\n')      
+					items = lin.split()
+					names.append(str(items[1]))
+				names = np.asarray(names).reshape(-1,1)
 	
 		# Normalise and centre X, perform PCA
 		X = utils.remove_zero_cols(X)
@@ -24,15 +36,16 @@ class Model(object):
 		jitter = 0.05*np.random.rand((X_pcs.shape[0]), (X_pcs.shape[1]))
 		jitter -= 0.025
 		X_pcs -= jitter
-	
+
 		if have_Ytest == True:
 			
 			if shuffle == True:
-				# Shuffle X and Y (still corresponding)
+				# Shuffle X, Y and SMILES (in same order)
 				p = np.random.permutation(X.shape[0])
 				X_pcs = X_pcs[p]
 				Y = Y[p]
-				# Also need to shuffle and cull SMILES
+				if smiles is not None:
+					names = names[p]
 
 				if prior is not None:
 					prior = prior[p]
@@ -43,12 +56,16 @@ class Model(object):
 			self.Xtest = X_pcs[(split_train*X.shape[0]):,:]
 			self.Ytest = Y[(split_train*X.shape[0]):,:]
 
+			self.train_names = names[:(split_train*X.shape[0]),:]
+			self.test_names = names[(split_train*X.shape[0]):,:]
+
 			# Centre Y
 #			self.Ytrain_mean = np.mean(Ytrain)
 #			self.Ytrain = utils.centre(Ytrain)
 #			self.Ytest = utils.centre(Ytrain, Ytest)
 
 		else:
+			self.names = names
 
 			# Split X
 			self.Xtrain = X_pcs[:Y.shape[0],:]
@@ -56,6 +73,10 @@ class Model(object):
 
 			# Centre Y
 			self.Ytrain = utils.centre(Y)
+
+		# Split names
+		self.train_names = names[:(self.Xtrain.shape[0]),:]
+		self.test_names = names[(self.Xtrain.shape[0]):,:]
 
 		if prior is not None:
 			prior = prior.reshape(-1,1)
