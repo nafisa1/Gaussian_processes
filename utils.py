@@ -9,14 +9,31 @@ def remove_zero_cols(A):
 	transpose = A.T
 
 	non_zero_cols = []
-	for column in transpose:
-		if np.array_equal(column, zeros) == False:
-       			non_zero_cols.append(column)
+	for row in transpose:
+		if np.array_equal(row, zeros) == False:
+       			non_zero_cols.append(row)
        
 	non_zero_cols = np.array(non_zero_cols)
 	A = non_zero_cols.T
 		
 	return A
+
+def remove_identical(A):
+	# To examine each column, take the transpose
+	transpose = A.T
+	n = transpose.shape[1]
+	B = []
+
+	# Take each row of A.T and create array equal in length, where all elements are set to the first element of the original row
+	# Compare to identify rows where all elements are the same
+	for row in transpose:
+	        check = [] + n*[row[0]]
+	        check = np.asarray(check)
+        
+	        if np.array_equal(row,check) == False:
+			B.append(np.ndarray.tolist(row))
+            
+	return np.asarray(B).T
 
 def normalize_centre(A, B=None):
 	# Get mean and standard deviation
