@@ -31,6 +31,7 @@ class Model(object):
 	
 		# Normalise and centre X, perform PCA
 		X = utils.remove_zero_cols(X)
+		X = utils.remove_identical(X)
 		X = utils.normalize_centre(X)
 		X_pcs, W = GPy.util.linalg.pca(X, latent_dim)
 		jitter = 0.05*np.random.rand((X_pcs.shape[0]), (X_pcs.shape[1]))
