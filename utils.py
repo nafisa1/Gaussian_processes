@@ -70,6 +70,20 @@ def centre(A, B=None):
 
 	return centred_array	
 
+def get_SMILES(filename, n_lines):
+	with open(filename,'r') as f:
+		names = []
+		filecontents = f.readlines()
+		count = 0
+		for line in filecontents:
+			lin = line.strip('\n')      
+			items = lin.split()
+			names.append(str(items[1]))
+			count +=1
+			if count == n_lines:
+				break
+	return names
+
 # Latin hypercube sampling
 
 class LHS(object):
