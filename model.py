@@ -1,118 +1,89 @@
 import numpy as np
 import utils
 import GPy
+import kernels
 
 class Model(object):
 
-	def __init__(self, X, Y, latent_dim, have_Ytest=True, shuffle=True, split_train=0.8, kernel=None, prior=None, acq_func=None, smiles=None):
-		self.X = X
-		self.Y = Y
+	def __init__(self, Ytrain, Ytest, pca=True, latent_dim=None, Xtrain=None, Xtest=None, smiles_train=None, smiles_test=None, kernel=None, prior_train=None, prior_test=None, acq_func=None):
+
+		self.latent_dim = latent_dim
+		self.Xtrain = Xtrain
+		self.Xtest = Xtest
+		self.Ytrain = Ytrain
+		self.Ytest = Ytest
+		self.smiles_train = smiles_train
+		self.smiles_test = smiles_test
 		self.kernel = kernel
-		self.have_Ytest = have_Ytest
-		self.split_train = split_train
-		self.prior = prior
+		self.prior_train = prior_train
+		self.prior_test = prior_test
 		self.acq_func = acq_func
-		self.smiles = smiles
 
-		# Sanity check
-		if len(Y.shape) != 2:
-			Y = Y.reshape(-1,1)
+		# Sanity check	
+		if len(Ytrain.shape) != 2:
+			self.Ytrain = Ytrain.reshape(-1,1)	
+		if len(Ytest.shape) != 2:
+			self.Ytest = Ytest.reshape(-1,1)
 
-		# Get SMILES from text file
-		if smiles is not None:
-			with open(smiles,'r') as f:
-				names = []
-				filecontents = f.readlines()
-				for line in filecontents:
-					lin = line.strip('\n')      
-					items = lin.split()
-					names.append(str(items[1]))
-				names = np.asarray(names).reshape(-1,1)
+		if Xtrain is not None: #self.kernel.datatype == 'numerical':
+			print Xtrain.shape, Xtest.shape
+			Xtrain, Xtest = utils.remove_identical(Xtrain, Xtest)
+			print Xtrain.shape, Xtest.shape
+
+			# Normalise and centre X, perform PCA
+			Xtrain_nc = utils.normalize_centre(Xtrain)
+			print np.vstack(Xtrain_nc.std(axis=0))
+			Xtest_nc = utils.normalize_centre(Xtrain, Xtest)
+			print np.vstack(Xtest_nc.std(axis=0))
+
+			if pca == True:
+				Xtrain, W = GPy.util.linalg.pca(Xtrain_nc, self.latent_dim)
+				jitter = 0.05*np.random.rand((Xtrain.shape[0]), (Xtrain.shape[1]))
+				jitter -= 0.025
+				self.Xtrain = Xtrain - jitter
 	
-		# Normalise and centre X, perform PCA
-		X = utils.remove_zero_cols(X)
-		X = utils.remove_identical(X)
-		X = utils.normalize_centre(X)
-		X_pcs, W = GPy.util.linalg.pca(X, latent_dim)
-		jitter = 0.05*np.random.rand((X_pcs.shape[0]), (X_pcs.shape[1]))
-		jitter -= 0.025
-		X_pcs -= jitter
+				Xtest = np.dot(W,Xtest_nc.T).T
+				jitter = 0.05*np.random.rand((Xtest.shape[0]), (Xtest.shape[1]))
+				jitter -= 0.025
+				self.Xtest = Xtest - jitter
 
-		if have_Ytest == True:
-			
-			if shuffle == True:
-				# Shuffle X, Y and SMILES (in same order)
-				p = np.random.permutation(X.shape[0])
-				X_pcs = X_pcs[p]
-				Y = Y[p]
-				if smiles is not None:
-					names = names[p]
+			else:
+				self.Xtrain = Xtrain_nc
+				self.Xtest = Xtest_nc
 
-				if prior is not None:
-					prior = prior[p]
-					
-			# Split
-			self.Xtrain = X_pcs[:(split_train*X.shape[0]),:]
-			self.Ytrain = Y[:(split_train*X.shape[0]),:]
-			self.Xtest = X_pcs[(split_train*X.shape[0]):,:]
-			self.Ytest = Y[(split_train*X.shape[0]):,:]
-
-			self.train_names = names[:(split_train*X.shape[0]),:]
-			self.test_names = names[(split_train*X.shape[0]):,:]
-
-			# Centre Y
-#			self.Ytrain_mean = np.mean(Ytrain)
-#			self.Ytrain = utils.centre(Ytrain)
-#			self.Ytest = utils.centre(Ytrain, Ytest)
-
-		else:
-			self.names = names
-
-			# Split X
-			self.Xtrain = X_pcs[:Y.shape[0],:]
-			self.Xtest = X_pcs[Y.shape[0]:,:]
-
-			# Centre Y
-			self.Ytrain = utils.centre(Y)
-
-		# Split names
-		self.train_names = names[:(self.Xtrain.shape[0]),:]
-		self.test_names = names[(self.Xtrain.shape[0]):,:]
-
-		if prior is not None:
-			prior = prior.reshape(-1,1)
-			assert prior.shape[0] == X.shape[0], "There must be one prior mean value for each input value (regardless of whether it is for training or testing)."
-			# have prior mean values for Xtrain and Xtest
+		if prior_train is not None:
+			prior_train = prior_train.reshape(-1,1)
 			# subtract training prior mean from Ytrain values
-			prior_train = prior[:self.Xtrain.shape[0],:]
 			self.Ytrain = self.Ytrain - prior_train
-			self.prior_test = prior[self.Xtrain.shape[0]:,:]
 
 	def hyperparameters(self):
 		lat_hyp = utils.LHS(self.kernel)
 
-		Xtrain = self.Xtrain #[:((self.Xtrain.shape[0])*0.8),:]
-		Xtest = self.Xtest #train[((self.Xtrain.shape[0])*0.8):,:]
+		Xtrain = self.Xtrain
+		Xtest = self.Xtest 
 		Ytrain = utils.centre(self.Ytrain)
 		Ytest = utils.centre(self.Ytrain, self.Ytest)
-		#Ytrain = self.Ytrain[:((self.Ytrain.shape[0])*0.8),:]
-		#Ytest = self.Ytrain[((self.Ytrain.shape[0])*0.8):,:]
 
 		self.kernel.lengthscale, self.kernel.sig_var, self.kernel.noise_var = lat_hyp.compute(Xtest, Xtrain, Ytrain, Ytest)
 
 	def regression(self):
 		import regression
 
-		if self.have_Ytest == True:
-			# Centre Y
-			self.Ytrain_mean = np.mean(self.Ytrain)
-			Ytrain = utils.centre(self.Ytrain)
-			Ytest = utils.centre(self.Ytrain, self.Ytest)
+		log_Ytrain = np.log(self.Ytrain)
+		Ytrain_mean = np.mean(log_Ytrain)
+		Ytrain = utils.centre(log_Ytrain)
 
-			regress = regression.Regression(self.Xtest, self.Xtrain, Ytrain, kernel=self.kernel, Ytest=Ytest)
+		log_Ytest = np.log(self.Ytest)
+		Ytest = utils.centre(log_Ytrain, log_Ytest)
+
+		if self.Xtrain is None:
+			regress = regression.Regression(Ytrain, Ytest, smiles_train=self.smiles_train, smiles_test=self.smiles_test, kernel=self.kernel)
+
+		elif self.smiles_train is None:
+			regress = regression.Regression(Ytrain, Ytest, Xtrain=self.Xtrain, Xtest=self.Xtest, kernel=self.kernel)
 
 		else:
-			regress = regression.Regression(self.Xtest, self.Xtrain, self.Ytrain, kernel=self.kernel, Ytest=None)
+			regress = regression.Regression(Ytrain, Ytest, Xtrain=self.Xtrain, Xtest=self.Xtest, smiles_train=self.smiles_train, smiles_test=self.smiles_test, kernel=self.kernel)
 
 		return regress
 
@@ -145,6 +116,6 @@ class Model(object):
 
 	def classify(self, threshold):
 		# separate into compounds below and above threshold
-		assert have_Ytest == True, "Experimental output values for the test set are required to calculate ROC plot."
 		# using real Ytest values, calculate true positives, false positives, true negatives, false negatives
 		# ROC plot (add function to plotting module)
+		pass
