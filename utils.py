@@ -1,4 +1,5 @@
 import numpy as np
+from rdkit import Chem
 
 def remove_zero_cols(A, B=None):
         # Calculate number of observations, N
@@ -173,6 +174,12 @@ def shuffle(X, Y, split=0.8, smiles=None, prior=None):
 
 	else:
 		return Xtrain, Xtest, Ytrain, Ytest
+
+def get_fps(smiles):
+	mols = [Chem.MolFromSmiles(compound) for compound in smiles]
+	fingerprints = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in mols]
+	
+	return fingerprints
 
 # Latin hypercube sampling
 
