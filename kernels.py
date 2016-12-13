@@ -1,4 +1,6 @@
 import numpy as np
+from rdkit import Chem
+from rdkit import DataStructs
 
 class RBF(object):
 #	Equivalent to:
@@ -8,31 +10,57 @@ class RBF(object):
 #               cov[i][j] = np.exp(-.5 * (1/lengthscale**2) * ((a[i]-b[j])**2))
 #       return cov
 
-    def __init__(self, lengthscale=1, sig_var=1, noise_var=1):
-	self.lengthscale = lengthscale
-	self.sig_var = sig_var
-	self.noise_var = noise_var
-
-    def compute(self, a, b):	       		
-	sq_dist = np.sum(a**2, 1).reshape(-1, 1) + np.sum(b**2, 1) - 2*np.dot(a, b.T)
-        cov = np.exp(-.5 * (1/(self.lengthscale**2)) * sq_dist)
-	cov = (self.sig_var*cov)
-	return cov
-
-    def compute_noisy(self, a, b):	       		
-	sq_dist = np.sum(a**2, 1).reshape(-1, 1) + np.sum(b**2, 1) - 2*np.dot(a, b.T)
-        cov = np.exp(-.5 * (1/(self.lengthscale**2)) * sq_dist)
-	noisy_cov = (self.sig_var*cov) + (self.noise_var*np.eye(cov.shape[1]))
-	return noisy_cov
-
-# Kernels to be completed
-
-class Tanimoto(object):
-	def __init__(self, lengthscale=None):
+	def __init__(self, lengthscale=1, sig_var=1, noise_var=1, datatype='numerical'):
 		self.lengthscale = lengthscale
+		self.sig_var = sig_var
+		self.noise_var = noise_var
+		self.datatype = datatype
+
+	def compute(self, a, b):	       		
+		sq_dist = np.sum(a**2, 1).reshape(-1, 1) + np.sum(b**2, 1) - 2*np.dot(a, b.T)
+	        cov = np.exp(-.5 * (1/(self.lengthscale**2)) * sq_dist)
+		cov = (self.sig_var*cov)
+		return cov
+
+	def compute_noisy(self, a, b):	       		
+		sq_dist = np.sum(a**2, 1).reshape(-1, 1) + np.sum(b**2, 1) - 2*np.dot(a, b.T)
+        	cov = np.exp(-.5 * (1/(self.lengthscale**2)) * sq_dist)
+		noisy_cov = (self.sig_var*cov) + (self.noise_var*np.eye(cov.shape[1]))
+		return noisy_cov
+
+class OU_num(object):
+#	Equivalent to:
+#       cov = np.zeros((a.shape[0],b.shape[0]))
+#       for i in range(0,a.shape[0]):
+#           for j in range(0,b.shape[0]):
+#               cov[i][j] = np.exp(-.5 * (1/lengthscale**2) * ((a[i]-b[j])**2))
+#       return cov
+
+	def __init__(self, lengthscale=1, sig_var=1, noise_var=1, datatype='numerical'):
+		self.lengthscale = lengthscale
+		self.sig_var = sig_var
+		self.noise_var = noise_var
+		self.datatype = datatype
+
+	def compute(self, a, b):	       		
+		distances = np.absolute(np.sum(a, 1).reshape(-1, 1) - np.sum(b, 1))
+		cov = self.sig_var*np.exp(-distances * (1/(self.lengthscale)))
+		return cov
+
+	def compute_noisy(self, a, b):
+		distances = np.absolute(np.sum(a, 1).reshape(-1, 1) - np.sum(b, 1))	   
+		cov = self.sig_var*np.exp(-distances * (1/(self.lengthscale)))
+		noisy_cov = cov + (self.noise_var*np.eye(cov.shape[1]))
+		return noisy_cov
+
+class SMILES_RBF(object):
+	def __init__(self, lengthscale=1, sig_var=1, noise_var=1, datatype='string'):
+		self.lengthscale = lengthscale
+		self.sig_var = sig_var
+		self.noise_var = noise_var
+		self.datatype = datatype
 
 	def compute(self, smilesA, smilesB):
-		from rdkit import Chem
 
 		molsA = [Chem.MolFromSmiles(compound) for compound in smilesA]
 		fingerprintsA = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsA]
@@ -40,7 +68,6 @@ class Tanimoto(object):
 		molsB = [Chem.MolFromSmiles(compound) for compound in smilesB]
 		fingerprintsB = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsB]
 
-		from rdkit import DataStructs
 		sims = []
 		for i in xrange(len(smilesA)):
 			sim_row = []
@@ -49,11 +76,11 @@ class Tanimoto(object):
 			sims.append(sim_row)
 		similarities = np.asarray(sims)
 		distances = 1 - similarities
-		cov = np.exp(-.5 * distances)
+		sq_dist = distances**2
+		cov = np.exp(-.5 * sq_dist)
 		return cov
 
 	def compute_noisy(self, smilesA, smilesB):
-		from rdkit import Chem
 
 		molsA = [Chem.MolFromSmiles(compound) for compound in smilesA]
 		fingerprintsA = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsA]
@@ -61,7 +88,6 @@ class Tanimoto(object):
 		molsB = [Chem.MolFromSmiles(compound) for compound in smilesB]
 		fingerprintsB = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsB]
 
-		from rdkit import DataStructs
 		sims = []
 		for i in xrange(len(smilesA)):
 			sim_row = []
@@ -70,10 +96,145 @@ class Tanimoto(object):
 			sims.append(sim_row)
 		similarities = np.asarray(sims)
 		distances = 1 - similarities
-		cov = np.exp(-.5 * distances)
-		cov = cov + np.eye(distances.shape[1])
+		sq_dist = distances**2
+		cov = np.exp(-.5 * sq_dist * (1/(self.lengthscale**2)))
+		cov = (self.sig_var*cov) + np.eye(self.noise_var*sq_dist.shape[1])
 		return cov
 
+class OU(object):
+	def __init__(self, metric=DataStructs.TanimotoSimilarity, lengthscale=1, sig_var=1, noise_var=1, datatype='string'):
+		self.metric = metric 
+		self.lengthscale = lengthscale
+		self.sig_var = sig_var
+		self.noise_var = noise_var
+		self.datatype = datatype
+
+	def compute(self, smilesA, smilesB):
+
+		molsA = [Chem.MolFromSmiles(compound) for compound in smilesA]
+		fingerprintsA = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsA]
+
+		molsB = [Chem.MolFromSmiles(compound) for compound in smilesB]
+		fingerprintsB = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsB]
+
+		sims = []
+		for i in xrange(len(smilesA)):
+			sim_row = []
+			for j in xrange(len(smilesB)):
+				sim_row.append(DataStructs.FingerprintSimilarity(fingerprintsA[i],fingerprintsB[j], metric=self.metric))
+			sims.append(sim_row)
+		similarities = np.asarray(sims)
+		distances = 1 - similarities
+		cov = self.sig_var*np.exp(-distances * (1/(self.lengthscale)))
+		return cov
+
+	def compute_noisy(self, smilesA, smilesB):
+
+		molsA = [Chem.MolFromSmiles(compound) for compound in smilesA]
+		fingerprintsA = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsA]
+
+		molsB = [Chem.MolFromSmiles(compound) for compound in smilesB]
+		fingerprintsB = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsB]
+
+		sims = []
+		for i in xrange(len(smilesA)):
+			sim_row = []
+			for j in xrange(len(smilesB)):
+				sim_row.append(DataStructs.FingerprintSimilarity(fingerprintsA[i],fingerprintsB[j], metric=self.metric))
+			sims.append(sim_row)
+		similarities = np.asarray(sims)
+		distances = 1 - similarities
+		cov = self.sig_var*np.exp(-distances * (1/(self.lengthscale)))
+		cov = cov + np.eye(self.noise_var*distances.shape[1])
+		return cov
+
+class RQ(object):
+	def __init__(self, lengthscale=0.5, noise_var=1, datatype='string'):
+		self.lengthscale = lengthscale
+		self.noise_var = noise_var
+		self.datatype = datatype
+
+	def compute(self, smilesA, smilesB):
+
+		molsA = [Chem.MolFromSmiles(compound) for compound in smilesA]
+		fingerprintsA = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsA]
+
+		molsB = [Chem.MolFromSmiles(compound) for compound in smilesB]
+		fingerprintsB = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsB]
+
+		sims = []
+		for i in xrange(len(smilesA)):
+			sim_row = []
+			for j in xrange(len(smilesB)):
+				sim_row.append(DataStructs.FingerprintSimilarity(fingerprintsA[i],fingerprintsB[j], metric=DataStructs.TanimotoSimilarity))
+			sims.append(sim_row)
+		similarities = np.asarray(sims)
+		distances = 1 - similarities
+		sq_dist = distances ** 2
+		cov = (1 + sq_dist)**(-self.lengthscale)
+		return cov
+
+	def compute_noisy(self, smilesA, smilesB):
+
+		molsA = [Chem.MolFromSmiles(compound) for compound in smilesA]
+		fingerprintsA = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsA]
+
+		molsB = [Chem.MolFromSmiles(compound) for compound in smilesB]
+		fingerprintsB = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsB]
+
+		sims = []
+		for i in xrange(len(smilesA)):
+			sim_row = []
+			for j in xrange(len(smilesB)):
+				sim_row.append(DataStructs.FingerprintSimilarity(fingerprintsA[i],fingerprintsB[j], metric=DataStructs.TanimotoSimilarity))
+			sims.append(sim_row)
+		similarities = np.asarray(sims)
+		distances = 1 - similarities
+		sq_dist = distances**2
+		cov = (1 + sq_dist)**(-self.lengthscale)
+		cov = cov + np.eye(self.noise_var*sq_dist.shape[1])
+		return cov
+
+class Composite(object):
+	def __init__(self, kern1, kern2, noise_var=1, kern3=None, kern4=None, kern5=None, kern6=None):
+		self.noise_var = noise_var
+		self.kern1 = kern1
+		self.kern2 = kern2
+		self.kern3 = kern3
+		self.kern4 = kern4
+		self.kern5 = kern5
+		self.kern6 = kern6
+
+		self.kers = [self.kern1, self.kern2, self.kern3, self.kern4, self.kern5, self.kern6]
+	
+	def compute(self, numA=None, numB=None, smilesA=None, smilesB=None):
+		covs = []
+		for item in self.kers:
+				if item is not None:
+					if item.datatype == 'numerical':
+						item_cov = item.compute(numA, numB)
+						covs.append(item_cov)
+					else:
+						item_cov = item.compute(smilesA, smilesB)
+						covs.append(item_cov)
+		covs = np.asarray(covs)
+		cov = np.sum(covs, axis=0)
+		return cov
+
+	def compute_noisy(self, numA=None, numB=None, smilesA=None, smilesB=None):
+		covs = []
+		for item in self.kers:
+				if item is not None:
+					if item.datatype == 'numerical':
+						item_cov = item.compute(numA, numB)
+						covs.append(item_cov)
+					else:
+						item_cov = item.compute(smilesA, smilesB)
+						covs.append(item_cov)
+		covs = np.asarray(covs)
+		cov = np.sum(covs, axis=0)
+		noisy_cov = cov + np.eye(self.noise_var*cov.shape[1])
+		return noisy_cov
 
 class ARD(object):
 	def __init__(self, params):
