@@ -1,6 +1,7 @@
 import numpy as np
 from rdkit import Chem
 from rdkit import DataStructs
+import utils 
 
 class RBF(object):
 #	Equivalent to:
@@ -29,12 +30,6 @@ class RBF(object):
 		return noisy_cov
 
 class OU_num(object):
-#	Equivalent to:
-#       cov = np.zeros((a.shape[0],b.shape[0]))
-#       for i in range(0,a.shape[0]):
-#           for j in range(0,b.shape[0]):
-#               cov[i][j] = np.exp(-.5 * (1/lengthscale**2) * ((a[i]-b[j])**2))
-#       return cov
 
 	def __init__(self, lengthscale=1, sig_var=1, noise_var=1, datatype='numerical'):
 		self.lengthscale = lengthscale
@@ -54,45 +49,40 @@ class OU_num(object):
 		return noisy_cov
 
 class SMILES_RBF(object):
-	def __init__(self, lengthscale=1, sig_var=1, noise_var=1, datatype='string'):
+	def __init__(self, metric=DataStructs.TanimotoSimilarity, lengthscale=1, sig_var=1, noise_var=1, datatype='string'):
 		self.lengthscale = lengthscale
 		self.sig_var = sig_var
 		self.noise_var = noise_var
 		self.datatype = datatype
+		self.metric = metric
 
 	def compute(self, smilesA, smilesB):
 
-		molsA = [Chem.MolFromSmiles(compound) for compound in smilesA]
-		fingerprintsA = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsA]
-
-		molsB = [Chem.MolFromSmiles(compound) for compound in smilesB]
-		fingerprintsB = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsB]
+		fingerprintsA = utils.get_fps(smilesA)
+		fingerprintsB = utils.get_fps(smilesB) 
 
 		sims = []
 		for i in xrange(len(smilesA)):
 			sim_row = []
 			for j in xrange(len(smilesB)):
-				sim_row.append(DataStructs.FingerprintSimilarity(fingerprintsA[i],fingerprintsB[j], metric=DataStructs.TanimotoSimilarity))
+				sim_row.append(DataStructs.FingerprintSimilarity(fingerprintsA[i],fingerprintsB[j], metric=self.metric))
 			sims.append(sim_row)
 		similarities = np.asarray(sims)
 		distances = 1 - similarities
 		sq_dist = distances**2
-		cov = np.exp(-.5 * sq_dist)
+		cov = self.sig_var*np.exp(-.5 * sq_dist * (1/(self.lengthscale**2)))
 		return cov
 
 	def compute_noisy(self, smilesA, smilesB):
 
-		molsA = [Chem.MolFromSmiles(compound) for compound in smilesA]
-		fingerprintsA = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsA]
-
-		molsB = [Chem.MolFromSmiles(compound) for compound in smilesB]
-		fingerprintsB = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsB]
+		fingerprintsA = utils.get_fps(smilesA)
+		fingerprintsB = utils.get_fps(smilesB) 
 
 		sims = []
 		for i in xrange(len(smilesA)):
 			sim_row = []
 			for j in xrange(len(smilesB)):
-				sim_row.append(DataStructs.FingerprintSimilarity(fingerprintsA[i],fingerprintsB[j], metric=DataStructs.TanimotoSimilarity))
+				sim_row.append(DataStructs.FingerprintSimilarity(fingerprintsA[i],fingerprintsB[j], metric=self.metric))
 			sims.append(sim_row)
 		similarities = np.asarray(sims)
 		distances = 1 - similarities
@@ -101,21 +91,20 @@ class SMILES_RBF(object):
 		cov = (self.sig_var*cov) + np.eye(self.noise_var*sq_dist.shape[1])
 		return cov
 
-class OU(object):
-	def __init__(self, metric=DataStructs.TanimotoSimilarity, lengthscale=1, sig_var=1, noise_var=1, datatype='string'):
+class Matern(object):
+	def __init__(self, metric=DataStructs.TanimotoSimilarity, nu=0, lengthscale=1, sig_var=1, noise_var=1, datatype='string'):
 		self.metric = metric 
+		self.nu = nu
 		self.lengthscale = lengthscale
 		self.sig_var = sig_var
 		self.noise_var = noise_var
 		self.datatype = datatype
+		self.metric = metric
 
 	def compute(self, smilesA, smilesB):
 
-		molsA = [Chem.MolFromSmiles(compound) for compound in smilesA]
-		fingerprintsA = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsA]
-
-		molsB = [Chem.MolFromSmiles(compound) for compound in smilesB]
-		fingerprintsB = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsB]
+		fingerprintsA = utils.get_fps(smilesA)
+		fingerprintsB = utils.get_fps(smilesB) 
 
 		sims = []
 		for i in xrange(len(smilesA)):
@@ -125,16 +114,19 @@ class OU(object):
 			sims.append(sim_row)
 		similarities = np.asarray(sims)
 		distances = 1 - similarities
-		cov = self.sig_var*np.exp(-distances * (1/(self.lengthscale)))
+		
+		if self.nu==0:
+			cov = self.sig_var*np.exp(-distances * (1/(self.lengthscale)))
+		elif self.nu==1:
+			cov = self.sig_var*((1+((3**0.5)*distances/self.lengthscale))*np.exp(-distances* (3**0.5) * (1/(self.lengthscale))))
+		elif self.nu==2:
+			cov = self.sig_var*(1+((5**0.5)*distances/self.lengthscale)+((5*(distances**2))/(3*(self.lengthscale**2))))*np.exp(-distances* (5**0.5) * (1/(self.lengthscale)))
 		return cov
 
 	def compute_noisy(self, smilesA, smilesB):
 
-		molsA = [Chem.MolFromSmiles(compound) for compound in smilesA]
-		fingerprintsA = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsA]
-
-		molsB = [Chem.MolFromSmiles(compound) for compound in smilesB]
-		fingerprintsB = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsB]
+		fingerprintsA = utils.get_fps(smilesA)
+		fingerprintsB = utils.get_fps(smilesB)
 
 		sims = []
 		for i in xrange(len(smilesA)):
@@ -144,15 +136,22 @@ class OU(object):
 			sims.append(sim_row)
 		similarities = np.asarray(sims)
 		distances = 1 - similarities
-		cov = self.sig_var*np.exp(-distances * (1/(self.lengthscale)))
+		if self.nu==0:
+			cov = self.sig_var*np.exp(-distances * (1/(self.lengthscale)))
+		elif self.nu==1:
+			cov = self.sig_var*((1+((3**0.5)*distances/self.lengthscale))*np.exp(-distances* (3**0.5) * (1/(self.lengthscale))))
+		elif self.nu==2:
+			cov = self.sig_var*(1+((5**0.5)*distances/self.lengthscale)+((5*(distances**2))/(3*(self.lengthscale**2))))*np.exp(-distances* (5**0.5) * (1/(self.lengthscale)))
+
 		cov = cov + np.eye(self.noise_var*distances.shape[1])
 		return cov
 
 class RQ(object):
-	def __init__(self, lengthscale=0.5, noise_var=1, datatype='string'):
+	def __init__(self, metric=DataStructs.TanimotoSimilarity, lengthscale=0.5, noise_var=1, datatype='string'):
 		self.lengthscale = lengthscale
 		self.noise_var = noise_var
 		self.datatype = datatype
+		self.metric = metric
 
 	def compute(self, smilesA, smilesB):
 
@@ -166,7 +165,7 @@ class RQ(object):
 		for i in xrange(len(smilesA)):
 			sim_row = []
 			for j in xrange(len(smilesB)):
-				sim_row.append(DataStructs.FingerprintSimilarity(fingerprintsA[i],fingerprintsB[j], metric=DataStructs.TanimotoSimilarity))
+				sim_row.append(DataStructs.FingerprintSimilarity(fingerprintsA[i],fingerprintsB[j], metric=self.metric))
 			sims.append(sim_row)
 		similarities = np.asarray(sims)
 		distances = 1 - similarities
@@ -186,7 +185,7 @@ class RQ(object):
 		for i in xrange(len(smilesA)):
 			sim_row = []
 			for j in xrange(len(smilesB)):
-				sim_row.append(DataStructs.FingerprintSimilarity(fingerprintsA[i],fingerprintsB[j], metric=DataStructs.TanimotoSimilarity))
+				sim_row.append(DataStructs.FingerprintSimilarity(fingerprintsA[i],fingerprintsB[j], metric=self.metric))
 			sims.append(sim_row)
 		similarities = np.asarray(sims)
 		distances = 1 - similarities
@@ -240,9 +239,6 @@ class ARD(object):
 	def __init__(self, params):
 		self.params = params
 
-class Matern(object):
-	def __init__(self, params):
-		self.params = params
 
 class Graph(object):
 	def __init__(self, params):
