@@ -6,38 +6,66 @@ import plotting
 
 class Regression(object):
 
-	def __init__(self, Xtest, Xtrain, Ytrain, add_noise=0.01, kernel=None, Ytest=None):
+	def __init__(self, Ytrain, Ytest, kernel=kernels.RBF(), add_noise=0.01, Xtest=None, Xtrain=None, smiles_train=None, smiles_test=None):
 		self.Xtest = Xtest
 		self.Xtrain = Xtrain
+		self.smiles_train = smiles_train
+		self.smiles_test = smiles_test
 		self.Ytest = Ytest
 		self.Ytrain = Ytrain
 		self.add_noise = add_noise
 		self.kernel = kernel		
 		
-		if kernel is None:
-			import warnings
-			warnings.warn("Kernel not specified, defaulting to RBF kernel...")
-			self.kernel = kernels.RBF()
-		
 		# Compute posterior mean vector
-		Xtrain_cov = self.kernel.compute_noisy(self.Xtrain, self.Xtrain)
- 		cross_cov = self.kernel.compute(self.Xtest, self.Xtrain)
+		if isinstance(self.kernel, kernels.Composite):
+			if self.Xtrain is not None and self.smiles_train is not None:
+				Xtrain_cov = self.kernel.compute_noisy(numA=self.Xtrain, numB=self.Xtrain, smilesA=self.smiles_train, smilesB=self.smiles_train)
+ 				cross_cov = self.kernel.compute(numA=self.Xtest, numB=self.Xtrain, smilesA=self.smiles_test, smilesB=self.smiles_train)
+			
+			elif self.Xtrain is None and self.smiles_train is not None:
+				Xtrain_cov = self.kernel.compute_noisy(smilesA=self.smiles_train, smilesB=self.smiles_train)
+ 				cross_cov = self.kernel.compute(smilesA=self.smiles_test, smilesB=self.smiles_train)
+
+			elif self.Xtrain is not None and self.smiles_train is None:
+				Xtrain_cov = self.kernel.compute_noisy(numA=self.Xtrain, numB=self.Xtrain)
+ 				cross_cov = self.kernel.compute(numA=self.Xtest, numB=self.Xtrain)
+
+		elif self.Xtrain is not None:
+			Xtrain_cov = self.kernel.compute_noisy(self.Xtrain, self.Xtrain)
+ 			cross_cov = self.kernel.compute(self.Xtest, self.Xtrain)
+
+		else:
+			Xtrain_cov = self.kernel.compute_noisy(self.smiles_train, self.smiles_train)
+ 			cross_cov = self.kernel.compute(self.smiles_test, self.smiles_train)
+
 		tr_chol = np.linalg.cholesky(Xtrain_cov) 
 		tr_chol_inv = np.linalg.inv(tr_chol)
 		inv = np.dot(tr_chol_inv.T, tr_chol_inv) 
  		cross_x_inv = np.dot(cross_cov, inv)
- 		post_mean = (np.dot(cross_x_inv, self.Ytrain)) 
-		noise = add_noise*np.reshape([random.gauss(0, np.sqrt(self.kernel.noise_var)) for i in range(0,post_mean.shape[0])],(-1,1))
-		self.post_mean = post_mean + noise
+ 		self.post_mean = (np.dot(cross_x_inv, self.Ytrain))
+		noise = add_noise*np.reshape([random.gauss(0, np.sqrt(self.kernel.noise_var)) for i in range(0,self.post_mean.shape[0])],(-1,1))
+		self.post_mean = self.post_mean + noise
 
  		# Compute posterior standard deviation and uncertainty bounds
-		test_cov = self.kernel.compute_noisy(self.Xtest, self.Xtest)
-		self.test_cov = test_cov
- 		cov_post = test_cov - np.dot(np.dot(cross_cov,inv),cross_cov.T)
-		cov_post = cov_post + (self.kernel.noise_var*np.eye((cov_post.shape[0])))
-		self.cov_post = cov_post
- 		self.post_s = np.sqrt(np.diag(cov_post)).reshape(-1,1)
-        
+		if isinstance(self.kernel, kernels.Composite):
+			if self.Xtrain is not None and self.smiles_train is not None:
+				test_cov = self.kernel.compute_noisy(numA=self.Xtest, numB=self.Xtest, smilesA=self.smiles_test, smilesB=self.smiles_test)
+			
+			elif self.Xtrain is None and self.smiles_train is not None:
+				test_cov = self.kernel.compute_noisy(smilesA=self.smiles_test, smilesB=self.smiles_test)
+
+			elif self.Xtrain is not None and self.smiles_train is None:
+				test_cov = self.kernel.compute_noisy(numA=self.Xtest, numB=self.Xtest)
+
+		elif self.Xtrain is not None:
+			test_cov = self.kernel.compute_noisy(self.Xtest, self.Xtest)
+
+		else:
+			test_cov = self.kernel.compute_noisy(self.smiles_test, self.smiles_test)
+	
+ 		self.cov_post = test_cov - np.dot(np.dot(cross_cov,inv),cross_cov.T)
+ 		self.post_s = np.sqrt(np.diag(self.cov_post)).reshape(-1,1)
+
 	def predict(self):   
 		# Return the posterior mean and upper and lower 95% confidence bounds
 		return self.post_mean, self.post_mean+(2*self.post_s), self.post_mean-(2*self.post_s)
@@ -45,7 +73,7 @@ class Regression(object):
 	def plot_by_index(self):
 		upper = (self.post_mean + (2*self.post_s)).flat
 		lower = (self.post_mean - (2*self.post_s)).flat
-		index = np.arange(1,(self.Xtest.shape[0]+1),1)
+		index = np.arange(1,(self.Ytest.shape[0]+1),1)
 
 		Y = self.Ytest
 		Y1 = self.Ytest
