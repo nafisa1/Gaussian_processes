@@ -143,7 +143,7 @@ class Matern(object):
 		elif self.nu==2:
 			cov = self.sig_var*(1+((5**0.5)*distances/self.lengthscale)+((5*(distances**2))/(3*(self.lengthscale**2))))*np.exp(-distances* (5**0.5) * (1/(self.lengthscale)))
 
-		cov = cov + np.eye(self.noise_var*distances.shape[1])
+		cov = cov + (self.noise_var*np.eye(cov.shape[1]))
 		return cov
 
 class RQ(object):
