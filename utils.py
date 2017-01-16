@@ -143,37 +143,51 @@ def remove_500s(X, Y, smiles):
 	return np.asarray(newX), np.asarray(newY), newSmiles
 
 
-def shuffle(X, Y, split=0.8, smiles=None, prior=None):
-	p = np.random.permutation(X.shape[0])
-	X = X[p]
+def shuffle(Y, split=0.8, X=None, smiles=None, prior=None):
+	p = np.random.permutation(Y.shape[0])
 	Y = Y[p]
 	
+	if X is not None:
+		X = X[p]
+		Xtrain = X[:int(round(split*X.shape[0])),:]	
+		Xtest = X[int(round(split*X.shape[0])):,:]
+
 	if smiles is not None:
 		smiles = [smiles[i] for i in p]
-		smiles_train = smiles[:int(round(split*X.shape[0]))]
-		smiles_test = smiles[int(round(split*X.shape[0])):]
+		smiles_train = smiles[:int(round(split*Y.shape[0]))]
+		smiles_test = smiles[int(round(split*Y.shape[0])):]
 	if prior is not None:
 		prior = prior[p]
-		prior_train = prior[:(split*X.shape[0]),:]
-		prior_test = prior[(split*X.shape[0]):,:]
+		prior_train = prior[:(split*Y.shape[0]),:]
+		prior_test = prior[(split*Y.shape[0]):,:]
 					
-	
-	Xtrain = X[:int(round(split*X.shape[0])),:]
-	Ytrain = Y[:int(round(split*X.shape[0]))]
-	Xtest = X[int(round(split*X.shape[0])):,:]
-	Ytest = Y[int(round(split*X.shape[0])):]
+	Ytrain = np.asarray(Y[:int(round(split*Y.shape[0]))])
+	Ytest = np.asarray(Y[int(round(split*Y.shape[0])):])
 	
 	if smiles is not None and prior is not None:
-		return Xtrain, Xtest, Ytrain, Ytest, smiles_train, smiles_test, prior_train, prior_test
+		if X is not None:
+			return Xtrain, Xtest, Ytrain, Ytest, smiles_train, smiles_test, prior_train, prior_test
+		else:
+			return Ytrain, Ytest, smiles_train, smiles_test, prior_train, prior_test
+
 
 	elif smiles is not None and prior is None:
-		return Xtrain, Xtest, Ytrain, Ytest, smiles_train, smiles_test
+		if X is not None:
+			return Xtrain, Xtest, Ytrain, Ytest, smiles_train, smiles_test
+		else:
+			return Ytrain, Ytest, smiles_train, smiles_test
 
 	elif smiles is None and prior is not None:
-		return Xtrain, Xtest, Ytrain, Ytest, prior_train, prior_test
+		if X is not None:
+			return Xtrain, Xtest, Ytrain, Ytest, prior_train, prior_test
+		else:
+			return Ytrain, Ytest, prior_train, prior_test
 
 	else:
-		return Xtrain, Xtest, Ytrain, Ytest
+		if X is not None:
+			return Xtrain, Xtest, Ytrain, Ytest
+		else:
+			return Ytrain, Ytest
 
 def get_fps(smiles):
 	mols = [Chem.MolFromSmiles(compound) for compound in smiles]
