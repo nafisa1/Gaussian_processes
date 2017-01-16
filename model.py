@@ -5,7 +5,7 @@ import kernels
 
 class Model(object):
 
-	def __init__(self, Ytrain, Ytest, pca=True, latent_dim=None, Xtrain=None, Xtest=None, smiles_train=None, smiles_test=None, kernel=None, prior_train=None, prior_test=None, acq_func=None):
+	def __init__(self, Ytrain, Ytest, pca=False, latent_dim=None, Xtrain=None, Xtest=None, smiles_train=None, smiles_test=None, kernel=None, prior_train=None, prior_test=None, acq_func=None):
 
 		self.latent_dim = latent_dim
 		self.Xtrain = Xtrain
@@ -69,12 +69,12 @@ class Model(object):
 	def regression(self):
 		import regression
 
-		log_Ytrain = np.log(self.Ytrain)
-		Ytrain_mean = np.mean(log_Ytrain)
-		Ytrain = utils.centre(log_Ytrain)
+#		log_Ytrain = np.log(self.Ytrain)
+#		Ytrain_mean = np.mean(self.Ytrain)
+		Ytrain = utils.centre(self.Ytrain)
 
-		log_Ytest = np.log(self.Ytest)
-		Ytest = utils.centre(log_Ytrain, log_Ytest)
+#		log_Ytest = np.log(self.Ytest)
+		Ytest = utils.centre(self.Ytrain, self.Ytest)
 
 		if self.Xtrain is None:
 			regress = regression.Regression(Ytrain, Ytest, smiles_train=self.smiles_train, smiles_test=self.smiles_test, kernel=self.kernel)
