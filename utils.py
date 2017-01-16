@@ -198,7 +198,7 @@ def get_fps(smiles):
 # Latin hypercube sampling
 
 class LHS(object):
-	def __init__(self, kernel, parameters=3, n_choices=15, lower=0.5, upper=2.5, divisions=6):
+	def __init__(self, kernel, parameters=3, n_choices=15, lower=0.5, upper=5, divisions=6):
 		self.kernel = kernel
 		self.parameters = parameters
 		self.divisions = divisions
@@ -215,16 +215,24 @@ class LHS(object):
 
 		self.combinations = full[np.random.randint(full.shape[0], size=n_choices),:]
 
-	def compute(self, Xtest, Xtrain, Ytrain, Ytest):
+	def compute(self, Ytrain, Ytest, Xtrain=None, Xtest=None, smiles_train=None, smiles_test=None):
 		r_sq = []
 		kern = self.kernel
 		import regression
-		regr = regression.Regression(Xtest, Xtrain, Ytrain, add_noise=0, kernel=kern, Ytest=Ytest)
+		if Xtrain is not None:
+			regr = regression.Regression(Ytrain, Ytest, kernel=self.kernel, Xtrain=Xtrain, Xtest=Xtest)
+		if smiles_train is not None:
+			regr = regression.Regression(Ytrain, Ytest, kernel=self.kernel, smiles_train=smiles_train, smiles_test=smiles_test)
 		init_rsq = regr.r_squared()
 
 		for i in xrange(self.divisions):
 			kern.lengthscale, kern.sig_var, kern.noise_var = self.combinations[i][0], self.combinations[i][1], self.combinations[i][2]
-			regr = regression.Regression(Xtest, Xtrain, Ytrain, kernel=kern, Ytest=Ytest)
+
+			if Xtrain is None:
+				regress = regression.Regression(Ytrain, Ytest, smiles_train=smiles_train, smiles_test=smiles_test, kernel=kern)
+
+			elif smiles_train is None:
+				regress = regression.Regression(Ytrain, Ytest, Xtrain=Xtrain, Xtest=Xtest, kernel=kern)
 			r_sq.append(regr.r_squared())
 		
 		if max(r_sq) > init_rsq:
