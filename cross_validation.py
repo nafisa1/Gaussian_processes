@@ -1,12 +1,25 @@
 import numpy as np
 import model
 
-def get_folds_and_test_set(data, n_folds, fraction_test):
-    number_of_samples = data.shape[0]
-    number_for_cv = int((number_of_samples*(1-fraction_test))//n_folds)*n_folds
-    cv_data = data[:number_for_cv]
-    test_set = data[number_for_cv:]
-    
+def get_test_set(data, fraction_test):
+    step = int(round(1/fraction_test))
+    print step
+    test_set = np.array(data[::step])
+    if isinstance(data,list):
+        del data[::step]
+        cv_data = data    
+    elif isinstance(data,np.ndarray):
+        cv_data = []
+        count=0
+        for index, row in enumerate(data):
+            if index != count:
+                cv_data.append(row)
+            else:
+                count += step
+    cv_data = np.asarray(cv_data)
+    return test_set, cv_data
+
+def get_stratified_folds(cv_data, n_folds=10):
     all_folds = []
     for fold_number in xrange(n_folds):
         position = fold_number
@@ -22,15 +35,13 @@ def get_folds_and_test_set(data, n_folds, fraction_test):
         training = []
         for fold in xrange(n_folds):
             if i == fold:
-                val_set = all_folds[fold]
+                validation_sets.append(all_folds[fold])
             else:
                 training.append(all_folds[fold])
-        validation_sets.append(val_set)
         training_sets.append(training)
     validation_sets = np.asarray(validation_sets)
     training_sets = np.asarray(training_sets)
-    return validation_sets, training_sets, test_set
-
+    return validation_sets, training_sets
 
 def perform_cv(kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets):
     n_folds = x_validation_sets.shape[0]
@@ -41,3 +52,10 @@ def perform_cv(kern, x_validation_sets, x_training_sets, y_validation_sets, y_tr
         run_regression.plot_by_index()
         r_sq.append(run_regression.r_squared())
     print max(r_sq), kern.sig_var, kern.lengthscale, kern.noise_var
+
+def order(x, y):
+	y1 = y
+	y_sorted = sorted(y1)
+	x_sorted = [x for y,x in sorted(zip(y,x))]
+	return x_sorted, y_sorted
+	
