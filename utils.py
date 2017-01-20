@@ -112,31 +112,23 @@ def centre(A, B=None):
 
 	return centred_array	
 
-def get_SMILES(filename, n_lines):
+def get_SMILES(filename):
 	with open(filename,'r') as f:
 		names = []
 		filecontents = f.readlines()
-		count = 0
 		for line in filecontents:
 			lin = line.strip('\n')      
 			names.append(str(lin))
-			count +=1
-			if count == n_lines:
-				break
 	return names
 
-def get_SMILES_old(filename, n_lines):
+def get_SMILES_old(filename):
 	with open(filename,'r') as f:
 		names = []
 		filecontents = f.readlines()
-		count = 0
 		for line in filecontents:
 			lin = line.strip('\n')      
 			items = lin.split()
 			names.append(str(items[1]))
-			count +=1
-			if count == n_lines:
-				break
 	return names
 
 def get_sdf_property(filename, sdf_property):
@@ -217,7 +209,9 @@ def get_fps(smiles):
 	return fingerprints
 
 def pIC50(values, power):
-	pass
+	values = np.asarray(values)
+	pIC50s = -np.log10(values*(10**power))
+	return pIC50s
 
 # Latin hypercube sampling
 
