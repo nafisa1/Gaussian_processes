@@ -76,10 +76,7 @@ def normalize_centre(A, B=None):
 	# Get mean and standard deviation
 	A_mu = np.vstack(np.mean(A, axis=0))
 	A_sd = np.vstack(A.std(axis=0))
-#	print A_mu
 	np.set_printoptions(threshold=np.nan)
-#	print A_sd.shape
-#	print A.shape
 
 	# Centre and normalize array
 	if B is None:
@@ -122,6 +119,19 @@ def get_SMILES(filename, n_lines):
 		count = 0
 		for line in filecontents:
 			lin = line.strip('\n')      
+			names.append(str(lin))
+			count +=1
+			if count == n_lines:
+				break
+	return names
+
+def get_SMILES_old(filename, n_lines):
+	with open(filename,'r') as f:
+		names = []
+		filecontents = f.readlines()
+		count = 0
+		for line in filecontents:
+			lin = line.strip('\n')      
 			items = lin.split()
 			names.append(str(items[1]))
 			count +=1
@@ -129,13 +139,24 @@ def get_SMILES(filename, n_lines):
 				break
 	return names
 
-def remove_500s(X, Y, smiles):
+def get_sdf_property(filename, sdf_property):
+	molecules = [x for x in Chem.SDMolSupplier(filename)]
+	sdf_property_values = []
+
+	for x in molecules:
+		atoms = x.GetAtoms()
+		props = x.GetPropNames()
+		sdf_property_values.append(x.GetProp(sdf_property))
+
+	return sdf_property_values
+
+def remove_number(X, Y, smiles, number):
 	newX = []
 	newY = []
 	newSmiles = []
 
 	for Xrow, Ynum, smile in zip(X, Y, smiles):
-		if Ynum != 50000:
+		if Ynum != number:
 			newX.append(Xrow)
 			newY.append(Ynum)
 			newSmiles.append(smile)
@@ -195,6 +216,9 @@ def get_fps(smiles):
 	
 	return fingerprints
 
+def pIC50(values, power):
+	pass
+
 # Latin hypercube sampling
 
 class LHS(object):
@@ -204,8 +228,16 @@ class LHS(object):
 		self.divisions = divisions
 		self.lower = lower
 		self.upper = upper
-
+		
 		a = np.linspace(lower,upper,divisions)
+		new_list = []
+
+		for i in xrange(parameters):
+			b = sorted(a, key = lambda x: random.random())
+			new_list.append(b)
+
+		new_array = np.asarray(new_list).T # gives same number of choices as divisions = not n_choices
+
 		options = a.shape[0]
 
 		full = np.zeros(((options**3),parameters))
@@ -218,25 +250,28 @@ class LHS(object):
 	def compute(self, Ytrain, Ytest, Xtrain=None, Xtest=None, smiles_train=None, smiles_test=None):
 		r_sq = []
 		kern = self.kernel
+		print kern.sig_var
 		import regression
 		if Xtrain is not None:
 			regr = regression.Regression(Ytrain, Ytest, kernel=self.kernel, Xtrain=Xtrain, Xtest=Xtest)
 		if smiles_train is not None:
 			regr = regression.Regression(Ytrain, Ytest, kernel=self.kernel, smiles_train=smiles_train, smiles_test=smiles_test)
 		init_rsq = regr.r_squared()
+		print init_rsq
 
 		for i in xrange(self.divisions):
 			kern.lengthscale, kern.sig_var, kern.noise_var = self.combinations[i][0], self.combinations[i][1], self.combinations[i][2]
 
 			if Xtrain is None:
-				regress = regression.Regression(Ytrain, Ytest, smiles_train=smiles_train, smiles_test=smiles_test, kernel=kern)
+				regr = regression.Regression(Ytrain, Ytest, smiles_train=smiles_train, smiles_test=smiles_test, kernel=kern)
 
 			elif smiles_train is None:
-				regress = regression.Regression(Ytrain, Ytest, Xtrain=Xtrain, Xtest=Xtest, kernel=kern)
+				regr = regression.Regression(Ytrain, Ytest, Xtrain=Xtrain, Xtest=Xtest, kernel=kern)
 			r_sq.append(regr.r_squared())
 		
 		if max(r_sq) > init_rsq:
 			ind = np.argmax(r_sq)
+			print max(r_sq)
 			best = self.combinations[ind]
 
 			print "The new kernel hyperparameters are: lengthscale=",best[0],", power=",best[1]," and noise variance=",best[2],"."
