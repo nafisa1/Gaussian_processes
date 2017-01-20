@@ -1,23 +1,41 @@
 import numpy as np
 import model
 
-def get_test_set(data, fraction_test):
+def order(x, y):
+	y1 = y
+	y_sorted = sorted(y1)
+	x_sorted = [x for y,x in sorted(zip(y,x))]
+	return x_sorted, y_sorted
+
+def get_test_set(x, y, fraction_test):
     step = int(round(1/fraction_test))
-    print step
-    test_set = np.array(data[::step])
-    if isinstance(data,list):
-        del data[::step]
-        cv_data = data    
-    elif isinstance(data,np.ndarray):
-        cv_data = []
-        count=0
-        for index, row in enumerate(data):
-            if index != count:
-                cv_data.append(row)
+    x_test_set = np.array(x[::step])
+    y_test_set = np.array(y[::step])
+    if isinstance(x,list):
+        del x[::step]
+        cv_x = x    
+    elif isinstance(x,np.ndarray):
+        cv_x = []
+        position=0
+        for index, row in enumerate(x):
+            if index != position:
+                cv_x.append(row)
             else:
-                count += step
-    cv_data = np.asarray(cv_data)
-    return test_set, cv_data
+                position += step
+    if isinstance(y,list):
+        del y[::step]
+        cv_y = y    
+    elif isinstance(y,np.ndarray):
+        cv_y = []
+        position=0
+        for index, row in enumerate(y):
+            if index != position:
+                cv_y.append(row)
+            else:
+                position += step
+    cv_x = np.asarray(cv_x)
+    cv_y = np.asarray(cv_y)
+    return x_test_set, y_test_set, cv_x, cv_y
 
 def get_stratified_folds(cv_data, n_folds=10):
     all_folds = []
@@ -51,11 +69,5 @@ def perform_cv(kern, x_validation_sets, x_training_sets, y_validation_sets, y_tr
         run_regression = run.regression()
         run_regression.plot_by_index()
         r_sq.append(run_regression.r_squared())
-    print max(r_sq), kern.sig_var, kern.lengthscale, kern.noise_var
+    return r_sq #, kern.sig_var, kern.lengthscale, kern.noise_var
 
-def order(x, y):
-	y1 = y
-	y_sorted = sorted(y1)
-	x_sorted = [x for y,x in sorted(zip(y,x))]
-	return x_sorted, y_sorted
-	
