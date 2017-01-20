@@ -25,7 +25,8 @@ class Model(object):
 		if len(Ytest.shape) != 2:
 			self.Ytest = Ytest.reshape(-1,1)
 
-		if Xtrain is not None: #self.kernel.datatype == 'numerical':
+		if Xtrain is not None: 
+			Xtrain = np.asarray(Xtrain)
 			print Xtrain.shape, Xtest.shape
 			Xtrain, Xtest = utils.remove_identical(Xtrain, Xtest)
 			print Xtrain.shape, Xtest.shape
@@ -59,12 +60,14 @@ class Model(object):
 	def hyperparameters(self):
 		lat_hyp = utils.LHS(self.kernel)
 
-		Xtrain = self.Xtrain
-		Xtest = self.Xtest 
 		Ytrain = utils.centre(self.Ytrain)
 		Ytest = utils.centre(self.Ytrain, self.Ytest)
 
-		self.kernel.lengthscale, self.kernel.sig_var, self.kernel.noise_var = lat_hyp.compute(Xtest, Xtrain, Ytrain, Ytest)
+		if self.Xtrain is not None and self.smiles_train is None:
+			self.kernel.lengthscale, self.kernel.sig_var, self.kernel.noise_var = lat_hyp.compute(Ytrain, Ytest, Xtrain=self.Xtrain, Xtest=self.Xtest)
+
+		elif self.Xtrain is None and self.smiles_train is not None:
+			self.kernel.lengthscale, self.kernel.sig_var, self.kernel.noise_var = lat_hyp.compute(Ytrain, Ytest, smiles_train=self.smiles_train, smiles_test=self.smiles_test)
 
 	def regression(self):
 		import regression
