@@ -22,6 +22,7 @@ def get_test_set(x, y, fraction_test):
                 cv_x.append(row)
             else:
                 position += step
+	cv_x = np.asarray(cv_x)
     if isinstance(y,list):
         del y[::step]
         cv_y = y    
@@ -33,36 +34,59 @@ def get_test_set(x, y, fraction_test):
                 cv_y.append(row)
             else:
                 position += step
-    cv_x = np.asarray(cv_x)
     cv_y = np.asarray(cv_y)
     return x_test_set, y_test_set, cv_x, cv_y
 
-def get_stratified_folds(cv_data, n_folds=10):
-    all_folds = []
+def get_stratified_folds(cv_x, cv_y, n_folds=10):
+    x_all_folds = []
+    y_all_folds = []
     for fold_number in xrange(n_folds):
-        position = fold_number
-        fold = []
-        for number in xrange(cv_data.shape[0]/n_folds):
-            fold.append(cv_data[position])    
-            position += n_folds
-        all_folds.append(fold)
+        x_fold = []
+	y_fold = []
+	
+	if isinstance(cv_x,np.ndarray):
+		position = fold_number
+		for number in xrange(cv_x.shape[0]/n_folds):
+			x_fold.append(cv_x[position])    
+            		position += n_folds	
+	elif isinstance(cv_x, list):
+		position = fold_number
+		for number in xrange(len(cv_x)/n_folds):
+			x_fold.append(cv_x[position])    
+            		position += n_folds
+        for number in xrange(cv_y.shape[0]/n_folds):
+		position = fold_number
+		y_fold.append(cv_y[position])    
+		position += n_folds
+        x_all_folds.append(x_fold)
+	y_all_folds.append(y_fold)
         
-    validation_sets = []
-    training_sets = []
+    x_validation_sets = []
+    x_training_sets = []
+    y_validation_sets = []
+    y_training_sets = []
     for i in xrange(n_folds):
-        training = []
+        x_training = []
+	y_training = []
         for fold in xrange(n_folds):
             if i == fold:
-                validation_sets.append(all_folds[fold])
+                x_validation_sets.append(x_all_folds[fold])
+		y_validation_sets.append(y_all_folds[fold])
             else:
-                training.append(all_folds[fold])
-        training_sets.append(training)
-    validation_sets = np.asarray(validation_sets)
-    training_sets = np.asarray(training_sets)
-    return validation_sets, training_sets
+                x_training.append(x_all_folds[fold])
+		y_training.append(y_all_folds[fold])
+        x_training_sets.append(x_training)
+	y_training_sets.append(y_training)
+
+    x_validation_sets = np.asarray(x_validation_sets)
+    x_training_sets = np.asarray(x_training_sets)
+    y_validation_sets = np.asarray(y_validation_sets)
+    y_training_sets = np.asarray(y_training_sets)
+
+    return x_validation_sets, x_training_sets, y_validation_sets, y_training_sets
 
 def perform_cv(kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets):
-    n_folds = x_validation_sets.shape[0]
+    n_folds = y_validation_sets.shape[0]
     r_sq = []
     for i in xrange(n_folds):
         run = model.Model(y_training_sets[i], y_validation_sets[i], smiles_train=x_training_sets[i], smiles_test=x_validation_sets[i], kernel=kern)
