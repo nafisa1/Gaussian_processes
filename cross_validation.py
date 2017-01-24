@@ -185,7 +185,7 @@ def perform_cv(kern, x_validation_sets, x_training_sets, y_validation_sets, y_tr
     print r_sq
     return np.mean(r_sq) # modified to return mean instead of lists
 
-def repeated_CV(kern, cv_data_x, cv_data_y, iterations, threshold, nfolds=10)
+def repeated_CV(kern, cv_data_x, cv_data_y, iterations, threshold, nfolds=10):
 	means = []
 	for i in xrange(iterations):
 	    x_validation_sets, x_training_sets, y_validation_sets, y_training_sets = get_binned_folds(cv_data_x, cv_data_y, threshold, n_folds=nfolds)
