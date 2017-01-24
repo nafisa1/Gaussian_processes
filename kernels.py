@@ -23,12 +23,6 @@ class RBF(object):
 		cov = (self.sig_var*cov)
 		return cov
 
-	def compute_noisy(self, a, b):	       		
-		sq_dist = np.sum(a**2, 1).reshape(-1, 1) + np.sum(b**2, 1) - 2*np.dot(a, b.T)
-        	cov = np.exp(-.5 * (1/(self.lengthscale**2)) * sq_dist)
-		noisy_cov = (self.sig_var*cov) + (self.noise_var*np.eye(cov.shape[1]))
-		return noisy_cov
-
 class OU_num(object):
 
 	def __init__(self, lengthscale=1, sig_var=1, noise_var=1, datatype='numerical'):
@@ -41,12 +35,6 @@ class OU_num(object):
 		distances = np.absolute(np.sum(a, 1).reshape(-1, 1) - np.sum(b, 1))
 		cov = self.sig_var*np.exp(-distances * (1/(self.lengthscale)))
 		return cov
-
-	def compute_noisy(self, a, b):
-		distances = np.absolute(np.sum(a, 1).reshape(-1, 1) - np.sum(b, 1))	   
-		cov = self.sig_var*np.exp(-distances * (1/(self.lengthscale)))
-		noisy_cov = cov + (self.noise_var*np.eye(cov.shape[1]))
-		return noisy_cov
 
 class SMILES_RBF(object):
 	def __init__(self, metric=DataStructs.TanimotoSimilarity, lengthscale=1, sig_var=1, noise_var=1, datatype='string'):
@@ -71,24 +59,6 @@ class SMILES_RBF(object):
 		distances = 1 - similarities
 		sq_dist = distances**2
 		cov = self.sig_var*np.exp(-.5 * sq_dist * (1/(self.lengthscale**2)))
-		return cov
-
-	def compute_noisy(self, smilesA, smilesB):
-
-		fingerprintsA = utils.get_fps(smilesA)
-		fingerprintsB = utils.get_fps(smilesB) 
-
-		sims = []
-		for i in xrange(len(smilesA)):
-			sim_row = []
-			for j in xrange(len(smilesB)):
-				sim_row.append(DataStructs.FingerprintSimilarity(fingerprintsA[i],fingerprintsB[j], metric=self.metric))
-			sims.append(sim_row)
-		similarities = np.asarray(sims)
-		distances = 1 - similarities
-		sq_dist = distances**2
-		cov = np.exp(-.5 * sq_dist * (1/(self.lengthscale**2)))
-		cov = (self.sig_var*cov) + np.eye(self.noise_var*sq_dist.shape[1])
 		return cov
 
 class Matern(object):
@@ -123,29 +93,6 @@ class Matern(object):
 			cov = self.sig_var*(1+((5**0.5)*distances/self.lengthscale)+((5*(distances**2))/(3*(self.lengthscale**2))))*np.exp(-distances* (5**0.5) * (1/(self.lengthscale)))
 		return cov
 
-	def compute_noisy(self, smilesA, smilesB):
-
-		fingerprintsA = utils.get_fps(smilesA)
-		fingerprintsB = utils.get_fps(smilesB)
-
-		sims = []
-		for i in xrange(len(smilesA)):
-			sim_row = []
-			for j in xrange(len(smilesB)):
-				sim_row.append(DataStructs.FingerprintSimilarity(fingerprintsA[i],fingerprintsB[j], metric=self.metric))
-			sims.append(sim_row)
-		similarities = np.asarray(sims)
-		distances = 1 - similarities
-		if self.nu==0:
-			cov = self.sig_var*np.exp(-distances * (1/(self.lengthscale)))
-		elif self.nu==1:
-			cov = self.sig_var*((1+((3**0.5)*distances/self.lengthscale))*np.exp(-distances* (3**0.5) * (1/(self.lengthscale))))
-		elif self.nu==2:
-			cov = self.sig_var*(1+((5**0.5)*distances/self.lengthscale)+((5*(distances**2))/(3*(self.lengthscale**2))))*np.exp(-distances* (5**0.5) * (1/(self.lengthscale)))
-
-		cov = cov + (self.noise_var*np.eye(cov.shape[1]))
-		return cov
-
 class RQ(object):
 	def __init__(self, metric=DataStructs.TanimotoSimilarity, lengthscale=0.5, noise_var=1, datatype='string'):
 		self.lengthscale = lengthscale
@@ -171,27 +118,6 @@ class RQ(object):
 		distances = 1 - similarities
 		sq_dist = distances ** 2
 		cov = (1 + sq_dist)**(-self.lengthscale)
-		return cov
-
-	def compute_noisy(self, smilesA, smilesB):
-
-		molsA = [Chem.MolFromSmiles(compound) for compound in smilesA]
-		fingerprintsA = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsA]
-
-		molsB = [Chem.MolFromSmiles(compound) for compound in smilesB]
-		fingerprintsB = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in molsB]
-
-		sims = []
-		for i in xrange(len(smilesA)):
-			sim_row = []
-			for j in xrange(len(smilesB)):
-				sim_row.append(DataStructs.FingerprintSimilarity(fingerprintsA[i],fingerprintsB[j], metric=self.metric))
-			sims.append(sim_row)
-		similarities = np.asarray(sims)
-		distances = 1 - similarities
-		sq_dist = distances**2
-		cov = (1 + sq_dist)**(-self.lengthscale)
-		cov = cov + np.eye(self.noise_var*sq_dist.shape[1])
 		return cov
 
 class Composite(object):
@@ -226,22 +152,6 @@ class Composite(object):
 		covs = np.asarray(covs)
 		cov = np.sum(covs, axis=0)
 		return cov
-
-	def compute_noisy(self, numA=None, numB=None, smilesA=None, smilesB=None):
-		covs = []
-		for i in xrange(self.nkers):
-			for item in self.kers:
-	#			if item is not None:
-				if item.datatype == 'numerical':
-					item_cov = item.compute(numA, numB)
-					covs.append(item_cov)
-				else:
-					item_cov = item.compute(smilesA, smilesB)
-					covs.append(item_cov)
-		covs = np.asarray(covs)
-		cov = np.sum(covs, axis=0)
-		noisy_cov = cov + np.eye(self.noise_var*cov.shape[1])
-		return noisy_cov
 
 class ARD(object):
 	def __init__(self, params):
