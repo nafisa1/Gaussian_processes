@@ -216,35 +216,27 @@ def pIC50(values, power):
 # Latin hypercube sampling
 
 class LHS(object):
-	def __init__(self, kernel, parameters=3, n_choices=15, lower=0.5, upper=5, divisions=6):
+	def __init__(self, kernel, parameters=3, n_choices=10, lower=0, upper=[3,7,3], divisions=11):
 		self.kernel = kernel
 		self.parameters = parameters
 		self.divisions = divisions
 		self.lower = lower
 		self.upper = upper
 		
-		a = np.linspace(lower,upper,divisions)
-		new_list = []
-
+		import itertools
+		scales = []
 		for i in xrange(parameters):
-			b = sorted(a, key = lambda x: random.random())
-			new_list.append(b)
+			scale = np.linspace(lower,upper[i],divisions)
+			scales.append(scale)
+		
+		all_combs = np.asarray(list(itertools.product(*scales)))
 
-		new_array = np.asarray(new_list).T # gives same number of choices as divisions = not n_choices
-
-		options = a.shape[0]
-
-		full = np.zeros(((options**3),parameters))
-		full[:,0] = np.concatenate(((options**2)*[a[0]], (options**2)*[a[1]], (options**2)*[a[2]], (options**2)*[a[3]], (options**2)*[a[4]], (options**2)*[a[5]]))
-		full[:,1] = np.concatenate(options*[np.concatenate((options*[a[0]], options*[a[1]], options*[a[2]], options*[a[3]], options*[a[4]], options*[a[5]]))])
-		full[:,2] = np.concatenate((options**2)*[a])
-
-		self.combinations = full[np.random.randint(full.shape[0], size=n_choices),:]
+		self.combinations = all_combs[np.random.randint(all_combs.shape[0], size=n_choices),:]
+		
 
 	def compute(self, Ytrain, Ytest, Xtrain=None, Xtest=None, smiles_train=None, smiles_test=None):
 		r_sq = []
 		kern = self.kernel
-		print kern.sig_var
 		import regression
 		if Xtrain is not None:
 			regr = regression.Regression(Ytrain, Ytest, kernel=self.kernel, Xtrain=Xtrain, Xtest=Xtest)
