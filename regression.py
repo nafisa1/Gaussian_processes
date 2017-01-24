@@ -20,54 +20,49 @@ class Regression(object):
 		if isinstance(self.kernel, kernels.Composite):
 			if self.Xtrain is not None and self.smiles_train is not None:
 				Xtrain_cov = self.kernel.compute_noisy(numA=self.Xtrain, numB=self.Xtrain, smilesA=self.smiles_train, smilesB=self.smiles_train)
- 				cross_cov = self.kernel.compute(numA=self.Xtest, numB=self.Xtrain, smilesA=self.smiles_test, smilesB=self.smiles_train)
+ 				train_test_cov = self.kernel.compute(numA=self.Xtrain, numB=self.Xtest, smilesA=self.smiles_train, smilesB=self.smiles_test)
 			
 			elif self.Xtrain is None and self.smiles_train is not None:
 				Xtrain_cov = self.kernel.compute_noisy(smilesA=self.smiles_train, smilesB=self.smiles_train)
- 				cross_cov = self.kernel.compute(smilesA=self.smiles_test, smilesB=self.smiles_train)
+ 				train_test_cov = self.kernel.compute(smilesA=self.smiles_train, smilesB=self.smiles_test)
 
 			elif self.Xtrain is not None and self.smiles_train is None:
 				Xtrain_cov = self.kernel.compute_noisy(numA=self.Xtrain, numB=self.Xtrain)
- 				cross_cov = self.kernel.compute(numA=self.Xtest, numB=self.Xtrain)
+ 				train_test_cov = self.kernel.compute(numA=self.Xtrain, numB=self.Xtest)
 
 		elif self.Xtrain is not None:
 			Xtrain_cov = self.kernel.compute_noisy(self.Xtrain, self.Xtrain)
- 			cross_cov = self.kernel.compute(self.Xtest, self.Xtrain)
+ 			train_test_cov = self.kernel.compute(self.Xtrain, self.Xtest)
 
 		else:
 			Xtrain_cov = self.kernel.compute_noisy(self.smiles_train, self.smiles_train)
- 			cross_cov = self.kernel.compute(self.smiles_test, self.smiles_train)
+ 			train_test_cov = self.kernel.compute(self.smiles_train, self.smiles_test)
 		
-		print np.linalg.det(Xtrain_cov)
-		if np.linalg.det(Xtrain_cov) <= 0:
-			Xtrain_cov = Xtrain_cov + (0.01*np.eye(Xtrain_cov.shape[1]))
-		print np.linalg.det(Xtrain_cov)
 		tr_chol = np.linalg.cholesky(Xtrain_cov) 
-		tr_chol_inv = np.linalg.inv(tr_chol)
-		inv = np.dot(tr_chol_inv.T, tr_chol_inv)
- 		cross_x_inv = np.dot(cross_cov, inv)
- 		post_mean = (np.dot(cross_x_inv, self.Ytrain))
+		trtecov_div_trchol = np.linalg.solve(tr_chol,train_test_cov)
+ 		ytr_div_trchol = np.linalg.solve(tr_chol,self.Ytrain)
+ 		post_mean = np.dot(trtecov_div_trchol.T, ytr_div_trchol)
 		noise = add_noise*np.reshape([random.gauss(0, np.sqrt(self.kernel.noise_var)) for i in range(0,post_mean.shape[0])],(-1,1))
 		self.post_mean = post_mean + noise
 
  		# Compute posterior standard deviation and uncertainty bounds
 		if isinstance(self.kernel, kernels.Composite):
 			if self.Xtrain is not None and self.smiles_train is not None:
-				test_cov = self.kernel.compute(numA=self.Xtest, numB=self.Xtest, smilesA=self.smiles_test, smilesB=self.smiles_test)#compute_noisy(numA=self.Xtest, numB=self.Xtest, smilesA=self.smiles_test, smilesB=self.smiles_test)
+				test_cov = self.kernel.compute_noisy(numA=self.Xtest, numB=self.Xtest, smilesA=self.smiles_test, smilesB=self.smiles_test)
 			
 			elif self.Xtrain is None and self.smiles_train is not None:
-				test_cov = self.kernel.compute(smilesA=self.smiles_test, smilesB=self.smiles_test)#compute_noisy(smilesA=self.smiles_test, smilesB=self.smiles_test)
+				test_cov = self.kernel.compute_noisy(smilesA=self.smiles_test, smilesB=self.smiles_test)
 
 			elif self.Xtrain is not None and self.smiles_train is None:
-				test_cov = self.kernel.compute(numA=self.Xtest, numB=self.Xtest)#compute_noisy(numA=self.Xtest, numB=self.Xtest)
+				test_cov = self.kernel.compute_noisy(numA=self.Xtest, numB=self.Xtest)
 
 		elif self.Xtrain is not None:
-			test_cov = self.kernel.compute(self.Xtest,self.Xtest)#compute_noisy(self.Xtest, self.Xtest)
+			test_cov = self.kernel.compute_noisy(self.Xtest,self.Xtest)
 
 		else:
-			test_cov = self.kernel.compute(self.smiles_test, self.smiles_test)#compute_noisy(self.smiles_test, self.smiles_test)
+			test_cov = self.kernel.compute_noisy(self.smiles_test, self.smiles_test)
 	
- 		self.cov_post = test_cov - np.dot(np.dot(cross_cov,inv),cross_cov.T)
+ 		self.cov_post = (test_cov) - np.dot(trtecov_div_trchol.T,trtecov_div_trchol)
  		self.post_s = np.sqrt(np.diag(self.cov_post)).reshape(-1,1)
 
 	def predict(self):   
@@ -92,7 +87,7 @@ class Regression(object):
 		fig = plt.figure()
 		plt.xlim(0, max(index)+1) 
 		plt.xlabel('Compound')
-		plt.ylabel('Centred pIC50')    
+		plt.ylabel('Centred output')    
 		plt.plot(index, Ytest, 'ro')
 		plt.plot(index, post_mean, 'r--', lw=2)
 		plt.fill_between(index, lower, upper, color='#87cefa')
