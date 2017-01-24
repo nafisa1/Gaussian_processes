@@ -177,9 +177,18 @@ def get_binned_folds(cv_data_x, cv_data_y, threshold, n_folds=10):
 def perform_cv(kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets):
     n_folds = y_validation_sets.shape[0]
     r_sq = []
+
     for i in xrange(n_folds):
         run = model.Model(y_training_sets[i], y_validation_sets[i], smiles_train=x_training_sets[i], smiles_test=x_validation_sets[i], kernel=kern)
         run_regression = run.regression()
         r_sq.append(run_regression.r_squared())
-    return r_sq #, kern.sig_var, kern.lengthscale, kern.noise_var
+    print r_sq
+    return np.mean(r_sq) # modified to return mean instead of lists
 
+def repeated_CV(kern, cv_data_x, cv_data_y, iterations, threshold, nfolds=10)
+	means = []
+	for i in xrange(iterations):
+	    x_validation_sets, x_training_sets, y_validation_sets, y_training_sets = get_binned_folds(cv_data_x, cv_data_y, threshold, n_folds=nfolds)
+	    r_sq = perform_cv(kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets)
+	    means.append(r_sq)
+	return means, np.mean(means)
