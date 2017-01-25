@@ -216,8 +216,7 @@ def pIC50(values, power):
 # Latin hypercube sampling
 
 class LHS(object):
-	def __init__(self, kernel, parameters=3, n_choices=10, lower=[0.5,0.5,0.5], upper=[3,7,3], divisions=[11,11,11]):
-		self.kernel = kernel
+	def __init__(self, parameters=3, n_choices=10, lower=[0.5,0.5,0.5], upper=[3,7,3], divisions=[11,11,11]):
 		self.parameters = parameters
 		self.divisions = divisions
 		self.lower = lower
@@ -232,16 +231,15 @@ class LHS(object):
 		all_combs = np.asarray(list(itertools.product(*scales)))
 
 		self.combinations = all_combs[np.random.randint(all_combs.shape[0], size=n_choices),:]
-		print a.combinations
+		# print a.combinations
 
-	def compute(self, Ytrain, Ytest, Xtrain=None, Xtest=None, smiles_train=None, smiles_test=None):
+	def compute(self, kern, Ytrain, Ytest, Xtrain=None, Xtest=None, smiles_train=None, smiles_test=None):
 		r_sq = []
-		kern = self.kernel
 		import regression
 		if Xtrain is not None:
-			regr = regression.Regression(Ytrain, Ytest, kernel=self.kernel, Xtrain=Xtrain, Xtest=Xtest)
+			regr = regression.Regression(Ytrain, Ytest, kernel=kern, Xtrain=Xtrain, Xtest=Xtest)
 		if smiles_train is not None:
-			regr = regression.Regression(Ytrain, Ytest, kernel=self.kernel, smiles_train=smiles_train, smiles_test=smiles_test)
+			regr = regression.Regression(Ytrain, Ytest, kernel=kern, smiles_train=smiles_train, smiles_test=smiles_test)
 		init_rsq = regr.r_squared()
 		print init_rsq
 
