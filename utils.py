@@ -216,7 +216,7 @@ def pIC50(values, power):
 # Latin hypercube sampling
 
 class LHS(object):
-	def __init__(self, kernel, parameters=3, n_choices=10, lower=[0.5,0.5,0.5], upper=[3,7,3], divisions=11):
+	def __init__(self, kernel, parameters=3, n_choices=10, lower=[0.5,0.5,0.5], upper=[3,7,3], divisions=[11,11,11]):
 		self.kernel = kernel
 		self.parameters = parameters
 		self.divisions = divisions
@@ -226,7 +226,7 @@ class LHS(object):
 		import itertools
 		scales = []
 		for i in xrange(parameters):
-			scale = np.linspace(lower[i],upper[i],divisions)
+			scale = np.linspace(lower[i],upper[i],divisions[i])
 			scales.append(scale)
 		
 		all_combs = np.asarray(list(itertools.product(*scales)))
