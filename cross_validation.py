@@ -10,9 +10,7 @@ class Cross_Validation(object):
 		self.fraction_test = fraction_test
 		self.n_folds = n_folds
 		self.lhs = lhs
-		self.threshold = threshold
-
-		
+		self.threshold = threshold	
 
 		if lhs == True:
 			change_vars = raw_input("Would you like to change values of the default latin hypercube sampling variables? Enter y or n: ")
@@ -113,7 +111,7 @@ class Cross_Validation(object):
 	
 	    return x_validation_sets, x_training_sets, y_validation_sets, y_training_sets
 	
-	def get_binned_folds(self, cv_data_x, cv_data_y):
+	def get_binned_folds(self, cv_data_x, cv_data_y, iteration=0):
 	    active_x = []
 	    inactive_x = []
 	    active_y = []
@@ -127,7 +125,8 @@ class Cross_Validation(object):
 	        else:
 	            inactive_y.append(number)
 	            inactive_x.append(cv_data_x[i])
-	    print "active x:", len(active_x), "inactive x:", len(inactive_x), "active y:", len	(active_y), "inactive y:", len(inactive_y)
+	    if iteration == 0:
+		    print "active x:", len(active_x), "inactive x:", len(inactive_x), "active y:", len	(active_y), "inactive y:", len(inactive_y)
   
 	    p = np.random.permutation(len(active_y))
 	    shuf_active_x = [active_x[i] for i in p]
@@ -212,24 +211,25 @@ class Cross_Validation(object):
 	    # print r_sq
 	    return np.mean(r_sq)
 
-	def repeated_CV(self, kern, cv_data_x, cv_data_y, iterations):
-		all_means = []
-		means = [] # n_iterations results, each the mean over n_folds
+	def repeated_CV(self, kern, cv_data_x, cv_data_y, iterations=10):
+		
+		iteration_means = []
+		
 		for i in xrange(iterations):
-		    x_validation_sets, x_training_sets, y_validation_sets, y_training_sets = 	self.get_binned_folds(cv_data_x, cv_data_y)
-		    r_sq = self.perform_cv(kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets)
-		    means.append(r_sq)
-
-		    if self.lhs is True:
-			all_means.append(means)
-			for j in xrange(len(self.hparameter_choices)):
-				kern.lengthscale=self.hparameter_choices[j][0]
-				kern.sig_var=self.hparameter_choices[j][1]
-				kern.noise_var=self.hparameter_choices[j][1]
-		    		r_sq = self.perform_cv(kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets)
-		    		means.append(r_sq)
-
-		    else:
-			all_means = means
-
-		return all_means, np.mean(means)	
+			print "Iteration ", i
+			iteration_mean = []
+			x_validation_sets, x_training_sets, y_validation_sets, y_training_sets = 	self.get_binned_folds(cv_data_x, cv_data_y, iteration=i)
+			r_sq = self.perform_cv(kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets)
+			iteration_mean.append(r_sq)
+			    
+			if self.lhs is True:
+				for j in xrange(len(self.hparameter_choices)):
+					kern.lengthscale=self.hparameter_choices[j][0]
+					kern.sig_var=self.hparameter_choices[j][1]
+					kern.noise_var=self.hparameter_choices[j][1]
+		    			r_sq = self.perform_cv(kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets)
+					iteration_mean.append(r_sq)
+		    	iteration_means.append(iteration_mean)	
+		means = (np.asarray(iteration_means)).T
+		means_over_iters = np.mean(means, axis=1)
+		return means, means_over_iters	
