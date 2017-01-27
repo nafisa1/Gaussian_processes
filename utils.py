@@ -216,7 +216,7 @@ def pIC50(values, power):
 # Latin hypercube sampling
 
 class LHS(object):
-	def __init__(self, parameters=2, n_choices=10, lower=[0.5,3,0.5], upper=[3,7,3], divisions=[11,11,11]):
+	def __init__(self, parameters=2, n_choices=15, lower=[0.5,3,0.5], upper=[2,7,2], divisions=[11,11,11]):
 		self.parameters = parameters
 		self.divisions = divisions
 		self.lower = lower
