@@ -211,23 +211,23 @@ class Cross_Validation(object):
 	    # print r_sq
 	    return np.mean(r_sq)
 
-	def repeated_CV(self, kern, cv_data_x, cv_data_y, iterations=10):
+	def repeated_CV(self, default_kern, lhs_kern, cv_data_x, cv_data_y, iterations=10):
 		
 		iteration_means = []
-		
 		for i in xrange(iterations):
 			print "Iteration ", i
 			iteration_mean = []
-			x_validation_sets, x_training_sets, y_validation_sets, y_training_sets = 	self.get_binned_folds(cv_data_x, cv_data_y, iteration=i)
-			r_sq = self.perform_cv(kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets)
-			iteration_mean.append(r_sq)
+			x_validation_sets, x_training_sets, y_validation_sets, y_training_sets = self.get_binned_folds(cv_data_x, cv_data_y, iteration=i)
+			default_r_sq = self.perform_cv(default_kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets)
+			iteration_mean.append(default_r_sq)
 			    
 			if self.lhs is True:
 				for j in xrange(len(self.hparameter_choices)):
-					kern.lengthscale=self.hparameter_choices[j][0]
-					kern.sig_var=self.hparameter_choices[j][1]
-					kern.noise_var=self.hparameter_choices[j][1]
-		    			r_sq = self.perform_cv(kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets)
+					lhs_kern.lengthscale=self.hparameter_choices[j][0]
+					lhs_kern.sig_var=self.hparameter_choices[j][1]
+					lhs_kern.noise_var=self.hparameter_choices[j][2]
+		    			r_sq = self.perform_cv(lhs_kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets)
+					print r_sq
 					iteration_mean.append(r_sq)
 		    	iteration_means.append(iteration_mean)	
 		means = (np.asarray(iteration_means)).T
