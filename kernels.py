@@ -63,7 +63,6 @@ class SMILES_RBF(object):
 
 class Matern(object):
 	def __init__(self, sim_metric=DataStructs.TanimotoSimilarity, nu=0, lengthscale=1, sig_var=1, noise_var=1, datatype='string', circ_radius=2, circular=True):
-		self.metric = metric 
 		self.nu = nu
 		self.lengthscale = lengthscale
 		self.sig_var = sig_var
@@ -75,14 +74,14 @@ class Matern(object):
 
 	def compute(self, smilesA, smilesB):
 
-		fingerprintsA = utils.get_fps(smilesA, circular=self.circular, radius=circ_radius)
-		fingerprintsB = utils.get_fps(smilesB, circular=self.circular, radius=circ_radius) 
+		fingerprintsA = utils.get_fps(smilesA, circular=self.circular, radius=self.circ_radius)
+		fingerprintsB = utils.get_fps(smilesB, circular=self.circular, radius=self.circ_radius) 
 
 		sims = []
 		for i in xrange(len(smilesA)):
 			sim_row = []
 			for j in xrange(len(smilesB)):
-				sim_row.append(DataStructs.FingerprintSimilarity(fingerprintsA[i],fingerprintsB[j], metric=self.sim_metric))
+				sim_row.append(self.sim_metric(fingerprintsA[i],fingerprintsB[j]))
 			sims.append(sim_row)
 		similarities = np.asarray(sims)
 		distances = 1 - similarities
