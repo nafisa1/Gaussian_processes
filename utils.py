@@ -1,5 +1,6 @@
 import numpy as np
 from rdkit import Chem
+from rdkit.Chem import AllChem
 
 def remove_zero_cols(A, B=None):
         # Calculate number of observations, N
@@ -205,7 +206,7 @@ def shuffle(Y, split=0.8, X=None, smiles=None, prior=None):
 def get_fps(smiles, radius=2, circular=True):
 	mols = [Chem.MolFromSmiles(compound) for compound in smiles]
 	if circular is True:
-		fingerprints = [Chem.AllChem.GetMorganFingerprint(compound, 2) for compound in mols]
+		fingerprints = [AllChem.GetMorganFingerprint(compound, 2) for compound in mols]
 	else:
 		fingerprints = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in mols]
 	
