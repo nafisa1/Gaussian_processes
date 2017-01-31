@@ -202,9 +202,12 @@ def shuffle(Y, split=0.8, X=None, smiles=None, prior=None):
 		else:
 			return Ytrain, Ytest
 
-def get_fps(smiles):
+def get_fps(smiles, radius=2, circular=True):
 	mols = [Chem.MolFromSmiles(compound) for compound in smiles]
-	fingerprints = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in mols]
+	if circular is True:
+		fingerprints = [Chem.AllChem.GetMorganFingerprint(compound, 2) for compound in mols]
+	else:
+		fingerprints = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in mols]
 	
 	return fingerprints
 
@@ -216,7 +219,7 @@ def pIC50(values, power):
 # Latin hypercube sampling
 
 class LHS(object):
-	def __init__(self, parameters=2, n_choices=15, lower=[0.5,3,0.5], upper=[2,7,2], divisions=[11,11,11]):
+	def __init__(self, parameters=2, n_choices=15, lower=[0.5,3,0.01], upper=[2,7,0.5], divisions=[11,11,11]):
 		self.parameters = parameters
 		self.divisions = divisions
 		self.lower = lower
