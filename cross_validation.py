@@ -35,14 +35,14 @@ class Cross_Validation(object):
 
 	def get_test_set(self):
 	    step = int(round(1/self.fraction_test))
-	    x_test_set = np.array(self.x[::step])
-	    y_test_set = np.array(self.y[::step])
+	    x_test_set = np.array(self.x[4::step])
+	    y_test_set = np.array(self.y[4::step])
 	    if isinstance(self.x,list):
-	        del self.x[::step]
+	        del self.x[4::step]
 	        cv_x = self.x    
 	    elif isinstance(self.x,np.ndarray):
 	        cv_x = []
-	        position=0
+	        position=4
 	        for index, row in enumerate(x):
 	            if index != position:
 	                cv_x.append(row)
@@ -50,11 +50,11 @@ class Cross_Validation(object):
 	                position += step
 		cv_x = np.asarray(cv_x)
 	    if isinstance(self.y,list):
-	        del self.y[::step]
+	        del self.y[4::step]
 	        cv_y = self.y    
 	    elif isinstance(self.y,np.ndarray):
 	        cv_y = []
-	        position=0
+	        position=4
 	        for index, row in enumerate(y):
 	            if index != position:
 	                cv_y.append(row)
@@ -211,7 +211,7 @@ class Cross_Validation(object):
 	    # print r_sq
 	    return np.mean(r_sq)
 
-	def repeated_CV(self, default_kern, lhs_kern, cv_data_x, cv_data_y, iterations=10):
+	def repeated_CV(self, default_kern, cv_data_x, cv_data_y, iterations=10, lhs_kern=None):
 		
 		iteration_means = []
 		for i in xrange(iterations):
@@ -227,7 +227,6 @@ class Cross_Validation(object):
 					lhs_kern.sig_var=self.hparameter_choices[j][1]
 					lhs_kern.noise_var=self.hparameter_choices[j][2]
 		    			r_sq = self.perform_cv(lhs_kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets)
-					print r_sq
 					iteration_mean.append(r_sq)
 		    	iteration_means.append(iteration_mean)	
 		means = (np.asarray(iteration_means)).T
