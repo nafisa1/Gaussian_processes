@@ -37,17 +37,18 @@ class OU_num(object):
 		return cov
 
 class SMILES_RBF(object):
-	def __init__(self, metric=DataStructs.TanimotoSimilarity, lengthscale=1, sig_var=1, noise_var=1, datatype='string'):
+	def __init__(self, metric=DataStructs.TanimotoSimilarity, lengthscale=1, sig_var=1, noise_var=1, datatype='string', circular=True):
 		self.lengthscale = lengthscale
 		self.sig_var = sig_var
 		self.noise_var = noise_var
 		self.datatype = datatype
 		self.metric = metric
+		self.circular = circular
 
 	def compute(self, smilesA, smilesB):
 
-		fingerprintsA = utils.get_fps(smilesA)
-		fingerprintsB = utils.get_fps(smilesB) 
+		fingerprintsA = utils.get_fps(smilesA, circular=self.circular)
+		fingerprintsB = utils.get_fps(smilesB, circular=self.circular) 
 
 		sims = []
 		for i in xrange(len(smilesA)):
