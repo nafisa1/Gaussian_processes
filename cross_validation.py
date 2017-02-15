@@ -36,11 +36,11 @@ class Cross_Validation(object):
 
 	def get_test_set(self):
 	    step = int(round(1/self.fraction_test))
-	    x_test_set = np.array(self.x[4::step])
-	    y_test_set = np.array(self.y[4::step])
+	    self.x_test_set = np.array(self.x[4::step])
+	    self.y_test_set = np.array(self.y[4::step])
 	    if isinstance(self.x,list):
 	        del self.x[4::step]
-	        cv_x = self.x    
+	        self.cv_x = self.x    
 	    elif isinstance(self.x,np.ndarray):
 	        cv_x = []
 	        position=4
@@ -49,7 +49,7 @@ class Cross_Validation(object):
 	                cv_x.append(row)
 	            else:
 	                position += step
-		cv_x = np.asarray(cv_x)
+		self.cv_x = np.asarray(cv_x)
 	    if isinstance(self.y,list):
 	        del self.y[4::step]
 	        cv_y = self.y    
@@ -61,29 +61,29 @@ class Cross_Validation(object):
 	                cv_y.append(row)
 	            else:
 	                position += step
-	    cv_y = np.asarray(cv_y)
-	    return x_test_set, y_test_set, cv_x, cv_y
+	    self.cv_y = np.asarray(cv_y)
+	    return self.x_test_set, self.y_test_set, self.cv_x, self.cv_y
 
-	def get_stratified_folds(self, cv_x, cv_y):
+	def get_stratified_folds(self):
 	    x_all_folds = []
 	    y_all_folds = []
 	    for fold_number in xrange(self.n_folds):
 	        x_fold = []
 		y_fold = []
 		
-		if isinstance(cv_x,np.ndarray):
+		if isinstance(self.cv_x,np.ndarray):
 			position = fold_number
-			for number in xrange(cv_x.shape[0]/self.n_folds):
-				x_fold.append(cv_x[position])    
+			for number in xrange(self.cv_x.shape[0]/self.n_folds):
+				x_fold.append(self.cv_x[position])    
 	            		position += self.n_folds	
-		elif isinstance(cv_x, list):
+		elif isinstance(self.cv_x, list):
 			position = fold_number
-			for number in xrange(len(cv_x)/self.n_folds):
-				x_fold.append(cv_x[position])    
+			for number in xrange(len(self.cv_x)/self.n_folds):
+				x_fold.append(self.cv_x[position])    
 	            		position += self.n_folds
-	        for number in xrange(cv_y.shape[0]/self.n_folds):
+	        for number in xrange(self.cv_y.shape[0]/self.n_folds):
 			position = fold_number
-			y_fold.append(cv_y[position])    
+			y_fold.append(self.cv_y[position])    
 			position += self.n_folds
 	        x_all_folds.append(x_fold)
 		y_all_folds.append(y_fold)
@@ -112,20 +112,20 @@ class Cross_Validation(object):
 	
 	    return x_validation_sets, x_training_sets, y_validation_sets, y_training_sets
 	
-	def get_binned_folds(self, cv_data_x, cv_data_y, iteration=0):
+	def get_binned_folds(self, iteration=0):
 	    active_x = []
 	    inactive_x = []
 	    active_y = []
 	    inactive_y = []
 	      
-	    for i,number in enumerate(cv_data_y):
+	    for i,number in enumerate(self.cv_y):
 	        if number > self.threshold:
 	            active_y.append(number)
-	            active_x.append(cv_data_x[i])
+	            active_x.append(self.cv_x[i])
         
 	        else:
 	            inactive_y.append(number)
-	            inactive_x.append(cv_data_x[i])
+	            inactive_x.append(self.cv_x[i])
 	    if iteration == 0:
 		    print "active x:", len(active_x), "inactive x:", len(inactive_x), "active y:", len	(active_y), "inactive y:", len(inactive_y)
   
@@ -212,19 +212,23 @@ class Cross_Validation(object):
 	    # print r_sq
 	    return np.mean(r_sq)
 
-	def repeated_CV(self, default_kern, cv_data_x, cv_data_y, iterations=10, lhs_kern=None):
+	def repeated_CV(self, default_kern, iterations=10, lhs_kern=None):
 		
 		iteration_means = []
 		for i in xrange(iterations):
 			print "Iteration ", i
 			iteration_mean = []
-			x_validation_sets, x_training_sets, y_validation_sets, y_training_sets = self.get_binned_folds(cv_data_x, cv_data_y, iteration=i)
+			x_validation_sets, x_training_sets, y_validation_sets, y_training_sets = self.get_binned_folds(iteration=i)
 			default_r_sq = self.perform_cv(default_kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets)
 			iteration_mean.append(default_r_sq)
 			    
 			if self.lhs is True:
 				for j in xrange(len(self.hparameter_choices)):
 					# if isinstance(self.kernel, kernels.Composite): 
+					# for i in xrange(self.n_kers):
+					# lhs_kern.kers[i].lengthscale=
+					# lhs_kern.kers[i].sig_var=
+					# else:
 					lhs_kern.lengthscale=self.hparameter_choices[j][0]
 					lhs_kern.sig_var=self.hparameter_choices[j][1]
 					lhs_kern.noise_var=self.hparameter_choices[j][2]
@@ -237,6 +241,15 @@ class Cross_Validation(object):
 
 	def test_set_results(self, test_kern):
 		index = np.argmax(self.means_over_iters)
-		print index
-		print self.hparameter_choices[index]
-		# test_kern
+		best = self.hparameter_choices[index]
+		print best
+		test_kern.lengthscale=best[0]
+		test_kern.sig_var=best[1]
+		test_kern.noise_var=best[2]
+		test_run = model.Model(self.cv_y, self.y_test_set, smiles_test=self.x_test_set, smiles_train=self.cv_x, kernel=test_kern)
+		test_regression = test_run.regression()  
+		test_regression.plot_by_index()
+		r_sq = test_regression.r_squared()
+		print r_sq
+		# post_mean, upper, lower = test_regression.predict()
+
