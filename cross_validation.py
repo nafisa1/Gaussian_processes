@@ -4,11 +4,12 @@ import utils
 
 class Cross_Validation(object):
 
-	def __init__(self, x, y, fraction_test=0.2, n_folds=10, lhs=True, threshold=None):
+	def __init__(self, x, y, fraction_test=0.2, n_folds=10, n_kers=1, lhs=True, threshold=None):
 		self.x = x
 		self.y = y
 		self.fraction_test = fraction_test
 		self.n_folds = n_folds
+		self.n_kers = n_kers
 		self.lhs = lhs
 		self.threshold = threshold	
 
@@ -223,6 +224,7 @@ class Cross_Validation(object):
 			    
 			if self.lhs is True:
 				for j in xrange(len(self.hparameter_choices)):
+					# if isinstance(self.kernel, kernels.Composite): 
 					lhs_kern.lengthscale=self.hparameter_choices[j][0]
 					lhs_kern.sig_var=self.hparameter_choices[j][1]
 					lhs_kern.noise_var=self.hparameter_choices[j][2]
@@ -230,5 +232,11 @@ class Cross_Validation(object):
 					iteration_mean.append(r_sq)
 		    	iteration_means.append(iteration_mean)	
 		means = (np.asarray(iteration_means)).T
-		means_over_iters = np.mean(means, axis=1)
-		return means, means_over_iters	
+		self.means_over_iters = np.mean(means, axis=1)
+		return means, self.means_over_iters	
+
+	def test_set_results(self, test_kern):
+		index = np.argmax(self.means_over_iters)
+		print index
+		print self.hparameter_choices[index]
+		# test_kern
