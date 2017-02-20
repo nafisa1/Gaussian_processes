@@ -205,8 +205,9 @@ def shuffle(Y, split=0.8, X=None, smiles=None, prior=None):
 
 def get_fps(smiles, radius=2, circular=True):
 	mols = [Chem.MolFromSmiles(compound) for compound in smiles]
+
 	if circular is True:
-		fingerprints = [AllChem.GetMorganFingerprint(compound, 2) for compound in mols]
+		fingerprints = [AllChem.GetMorganFingerprint(compound, radius) for compound in mols]
 	else:
 		fingerprints = [Chem.RDKFingerprint(compound, fpSize=2048) for compound in mols]
 	
@@ -216,6 +217,30 @@ def pIC50(values, power):
 	values = np.asarray(values)
 	pIC50s = -np.log10(values*(10**power))
 	return pIC50s
+
+def classif(pred,ytest,t):
+    count = 0
+    tp = 0
+    tn = 0
+    tp_correct = 0
+    tn_correct = 0
+    for n in xrange(pred.shape[0]):
+        if ytest[n] >= t:
+            tp += 1
+            if pred[n] >= t:
+                count += 1
+                tp_correct +=1
+        else: #if ytest[n] >= t:
+            tn += 1
+            if pred[n] <= t:
+                count += 1
+                tn_correct +=1
+
+    correct = float(count)/pred.shape[0]
+    sensitivity = float(tp_correct)/tp
+    specificity = float(tn_correct)/tn
+        
+    print ('%d compounds (%f) were identified correctly. The sensitivity is %f (%d out of %d) and the specificity is %f (%d out of %d).' %(count,correct,sensitivity,tp_correct,tp,specificity,tn_correct,tn))
 
 # Latin hypercube sampling
 
