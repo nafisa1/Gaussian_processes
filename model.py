@@ -73,8 +73,8 @@ class Model(object):
 	def regression(self):
 		import regression
 
-		Ytrain_mean = np.mean(self.Ytrain)
-		c_threshold = self.threshold - Ytrain_mean
+		self.Ytrain_mean = np.mean(self.Ytrain)
+		c_threshold = self.threshold - self.Ytrain_mean
 		Ytrain = utils.centre(self.Ytrain)
 
 		Ytest = utils.centre(self.Ytrain, self.Ytest)
