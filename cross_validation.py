@@ -251,5 +251,9 @@ class Cross_Validation(object):
 		test_regression.plot_by_index()
 		r_sq = test_regression.r_squared()
 		print r_sq
+		Ytr_mean = test_run.Ytrain_mean
+		predictions = test_regression.post_mean + Ytr_mean
+		 
+		utils.classif(predictions, self.y_test_set, self.threshold)
 		# post_mean, upper, lower = test_regression.predict()
 
