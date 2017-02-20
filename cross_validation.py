@@ -246,7 +246,7 @@ class Cross_Validation(object):
 		test_kern.lengthscale=best[0]
 		test_kern.sig_var=best[1]
 		test_kern.noise_var=best[2]
-		test_run = model.Model(self.cv_y, self.y_test_set, smiles_test=self.x_test_set, smiles_train=self.cv_x, kernel=test_kern)
+		test_run = model.Model(self.cv_y, self.y_test_set, smiles_test=self.x_test_set, smiles_train=self.cv_x, kernel=test_kern, threshold=self.threshold)
 		test_regression = test_run.regression()  
 		test_regression.plot_by_index()
 		r_sq = test_regression.r_squared()
