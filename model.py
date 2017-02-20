@@ -5,7 +5,7 @@ import kernels
 
 class Model(object):
 
-	def __init__(self, Ytrain, Ytest, pca=False, latent_dim=None, Xtrain=None, Xtest=None, smiles_train=None, smiles_test=None, kernel=None, prior_train=None, prior_test=None, acq_func=None):
+	def __init__(self, Ytrain, Ytest, pca=False, latent_dim=None, Xtrain=None, Xtest=None, smiles_train=None, smiles_test=None, kernel=None, prior_train=None, prior_test=None, acq_func=None, threshold=None):
 
 		self.latent_dim = latent_dim
 		self.Xtrain = Xtrain
@@ -18,6 +18,7 @@ class Model(object):
 		self.prior_train = prior_train
 		self.prior_test = prior_test
 		self.acq_func = acq_func
+		self.threshold = threshold
 
 		# Sanity check	
 		if len(Ytrain.shape) != 2:
@@ -72,21 +73,20 @@ class Model(object):
 	def regression(self):
 		import regression
 
-#		log_Ytrain = np.log(self.Ytrain)
-#		Ytrain_mean = np.mean(self.Ytrain)
+		Ytrain_mean = np.mean(self.Ytrain)
+		c_threshold = self.threshold - Ytrain_mean
 		Ytrain = utils.centre(self.Ytrain)
 
-#		log_Ytest = np.log(self.Ytest)
 		Ytest = utils.centre(self.Ytrain, self.Ytest)
 
 		if self.Xtrain is None:
-			regress = regression.Regression(Ytrain, Ytest, smiles_train=self.smiles_train, smiles_test=self.smiles_test, kernel=self.kernel)
+			regress = regression.Regression(Ytrain, Ytest, smiles_train=self.smiles_train, smiles_test=self.smiles_test, kernel=self.kernel, cent_threshold=c_threshold)
 
 		elif self.smiles_train is None:
-			regress = regression.Regression(Ytrain, Ytest, Xtrain=self.Xtrain, Xtest=self.Xtest, kernel=self.kernel)
+			regress = regression.Regression(Ytrain, Ytest, Xtrain=self.Xtrain, Xtest=self.Xtest, kernel=self.kernel, cent_threshold=c_threshold)
 
 		else:
-			regress = regression.Regression(Ytrain, Ytest, Xtrain=self.Xtrain, Xtest=self.Xtest, smiles_train=self.smiles_train, smiles_test=self.smiles_test, kernel=self.kernel)
+			regress = regression.Regression(Ytrain, Ytest, Xtrain=self.Xtrain, Xtest=self.Xtest, smiles_train=self.smiles_train, smiles_test=self.smiles_test, kernel=self.kernel, cent_threshold=c_threshold)
 
 		return regress
 
