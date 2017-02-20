@@ -6,7 +6,7 @@ import plotting
 
 class Regression(object):
 
-	def __init__(self, Ytrain, Ytest, kernel=kernels.RBF(), add_noise=0.01, Xtest=None, Xtrain=None, smiles_train=None, smiles_test=None):
+	def __init__(self, Ytrain, Ytest, kernel=kernels.RBF(), add_noise=0.01, Xtest=None, Xtrain=None, smiles_train=None, smiles_test=None, cent_threshold=None):
 		self.Xtest = Xtest
 		self.Xtrain = Xtrain
 		self.smiles_train = smiles_train
@@ -15,6 +15,7 @@ class Regression(object):
 		self.Ytrain = Ytrain
 		self.add_noise = add_noise
 		self.kernel = kernel		
+		self.cent_threshold = cent_threshold
 		
 		# Compute posterior mean vector
 		if isinstance(self.kernel, kernels.Composite):
@@ -93,6 +94,7 @@ class Regression(object):
 		plt.plot(index, Ytest, 'ro')
 		plt.plot(index, post_mean, 'r--', lw=2)
 		plt.fill_between(index, lower, upper, color='#87cefa')
+		plt.plot([0, max(index)+1],[self.cent_threshold, self.cent_threshold])
 		plt.show()		
 
 	def r_squared(self):
