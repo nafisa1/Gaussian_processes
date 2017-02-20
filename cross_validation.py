@@ -206,7 +206,7 @@ class Cross_Validation(object):
 	    r_sq = []
 	
 	    for i in xrange(self.n_folds):
-	        run = model.Model(y_training_sets[i], y_validation_sets[i], smiles_train=x_training_sets[i], smiles_test=x_validation_sets[i], kernel=kern)
+	        run = model.Model(y_training_sets[i], y_validation_sets[i], smiles_train=x_training_sets[i], smiles_test=x_validation_sets[i], kernel=kern, threshold=self.threshold)
 	        run_regression = run.regression()
 	        r_sq.append(run_regression.r_squared())
 	    # print r_sq
