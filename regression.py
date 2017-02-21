@@ -94,7 +94,8 @@ class Regression(object):
 		plt.plot(index, Ytest, 'ro')
 		plt.plot(index, post_mean, 'r--', lw=2)
 		plt.fill_between(index, lower, upper, color='#87cefa')
-		plt.plot([0, max(index)+1],[self.cent_threshold, self.cent_threshold])
+		if self.cent_threshold is not None:
+			plt.plot([0, max(index)+1],[self.cent_threshold, self.cent_threshold])
 		plt.show()		
 
 	def r_squared(self):
