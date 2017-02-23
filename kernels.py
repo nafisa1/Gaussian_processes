@@ -37,24 +37,26 @@ class OU_num(object):
 		return cov
 
 class SMILES_RBF(object):
-	def __init__(self, metric=DataStructs.TanimotoSimilarity, lengthscale=1, sig_var=1, noise_var=1, datatype='string', circular=True):
+	def __init__(self, sim_metric=DataStructs.TanimotoSimilarity, lengthscale=1, sig_var=1, noise_var=1, datatype='string', circ_radius=2, circular=True):
 		self.lengthscale = lengthscale
 		self.sig_var = sig_var
 		self.noise_var = noise_var
 		self.datatype = datatype
-		self.metric = metric
+		self.sim_metric = sim_metric
+		self.circ_radius = circ_radius
 		self.circular = circular
 
 	def compute(self, smilesA, smilesB):
 
-		fingerprintsA = utils.get_fps(smilesA, circular=self.circular)
-		fingerprintsB = utils.get_fps(smilesB, circular=self.circular) 
+		fingerprintsA = utils.get_fps(smilesA, circular=self.circular, radius=self.circ_radius)
+		fingerprintsB = utils.get_fps(smilesB, circular=self.circular,
+radius=self.circ_radius) 
 
 		sims = []
 		for i in xrange(len(smilesA)):
 			sim_row = []
 			for j in xrange(len(smilesB)):
-				sim_row.append(DataStructs.FingerprintSimilarity(fingerprintsA[i],fingerprintsB[j], metric=self.metric))
+				sim_row.append(self.sim_metric(fingerprintsA[i],fingerprintsB[j]))
 			sims.append(sim_row)
 		similarities = np.asarray(sims)
 		distances = 1 - similarities
@@ -171,13 +173,13 @@ class Composite(object):
 		covs = []
 		for i in xrange(self.nkers):
 			for item in self.kers:
-					#if item is not None:
-				if item.datatype == 'numerical':
-					item_cov = item.compute(numA, numB)
-					covs.append(item_cov)
-				else:
-					item_cov = item.compute(smilesA, smilesB)
-					covs.append(item_cov)
+				if item is not None:
+					if item.datatype == 'numerical':
+						item_cov = item.compute(numA, numB)
+						covs.append(item_cov)
+					else:
+						item_cov = item.compute(smilesA, smilesB)
+						covs.append(item_cov)
 		covs = np.asarray(covs)
 		cov = np.sum(covs, axis=0)
 		return cov
