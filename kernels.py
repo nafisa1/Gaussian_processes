@@ -171,15 +171,14 @@ class Composite(object):
 	
 	def compute(self, numA=None, numB=None, smilesA=None, smilesB=None):
 		covs = []
-		for i in xrange(self.nkers):
-			for item in self.kers:
-				if item is not None:
-					if item.datatype == 'numerical':
-						item_cov = item.compute(numA, numB)
-						covs.append(item_cov)
-					else:
-						item_cov = item.compute(smilesA, smilesB)
-						covs.append(item_cov)
+		for item in self.kers:
+			if item is not None:
+				if item.datatype == 'numerical':
+					item_cov = item.compute(numA, numB)
+					covs.append(item_cov)
+				else:
+					item_cov = item.compute(smilesA, smilesB)
+					covs.append(item_cov)
 		covs = np.asarray(covs)
 		cov = np.sum(covs, axis=0)
 		return cov
