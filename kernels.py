@@ -75,7 +75,7 @@ class Matern(object):
 		self.circ_radius = circ_radius
 		self.circular = circular
 
-	def compute(self, smilesA, smilesB):
+	def compute(self, smilesA, smilesB, noise=False):
 
 		fingerprintsA = utils.get_fps(smilesA, circular=self.circular, radius=self.circ_radius)
 		fingerprintsB = utils.get_fps(smilesB, circular=self.circular, radius=self.circ_radius) 
@@ -95,6 +95,9 @@ class Matern(object):
 			cov = self.sig_var*((1+((3**0.5)*distances/self.lengthscale))*np.exp(-distances* (3**0.5) * (1/(self.lengthscale))))
 		elif self.nu==2:
 			cov = self.sig_var*(1+((5**0.5)*distances/self.lengthscale)+((5*(distances**2))/(3*(self.lengthscale**2))))*np.exp(-distances* (5**0.5) * (1/(self.lengthscale)))
+
+		if noise==True:
+			cov = cov + (self.noise_var*np.eye(cov.shape[0]))
 		return cov
 
 class RQ(object):
