@@ -67,7 +67,7 @@ class Regression(object):
 		test_cov = test_cov + (self.kernel.noise_var*np.eye(test_cov.shape[0]))			
 
  		self.cov_post = (test_cov) - np.dot(trtecov_div_trchol.T,trtecov_div_trchol)
- 		self.post_s = np.sqrt(np.diag(self.cov_post)).reshape(-1,1)
+ 		self.post_s = np.sqrt(np.absolute(np.diag(self.cov_post))).reshape(-1,1)
 
 	def predict(self):   
 		# Return the posterior mean and upper and lower 95% confidence bounds
