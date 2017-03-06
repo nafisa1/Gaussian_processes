@@ -3,6 +3,20 @@ from rdkit import Chem
 from rdkit import DataStructs
 import utils 
 
+def jit_chol(cov, attempts=10):
+    jitter = 0
+    for i in xrange(attempts):
+        try:
+            cov_chol = np.linalg.cholesky(cov)
+            break
+        except:
+            jitter = abs(np.mean(np.diag(cov)))*1e-2
+            cov = cov + jitter*np.eye(cov.shape[0])
+            if i == 9:
+                print "Covariance matrix is not positive definite"
+    print "jitter = ", jitter
+    return cov_chol
+
 class RBF(object):
 #	Equivalent to:
 #       cov = np.zeros((a.shape[0],b.shape[0]))
