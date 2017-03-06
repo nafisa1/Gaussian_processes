@@ -20,26 +20,25 @@ class Regression(object):
 		# Compute posterior mean vector
 		if isinstance(self.kernel, kernels.Composite):
 			if self.Xtrain is not None and self.smiles_train is not None:
-				Xtrain_cov = self.kernel.compute(numA=self.Xtrain, numB=self.Xtrain, smilesA=self.smiles_train, smilesB=self.smiles_train)
+				Xtrain_cov = self.kernel.compute(numA=self.Xtrain, numB=self.Xtrain, smilesA=self.smiles_train, smilesB=self.smiles_train, noise=True)
  				train_test_cov = self.kernel.compute(numA=self.Xtrain, numB=self.Xtest, smilesA=self.smiles_train, smilesB=self.smiles_test)
 			
 			elif self.Xtrain is None and self.smiles_train is not None:
-				Xtrain_cov = self.kernel.compute(smilesA=self.smiles_train, smilesB=self.smiles_train)
+				Xtrain_cov = self.kernel.compute(smilesA=self.smiles_train, smilesB=self.smiles_train, noise=True)
  				train_test_cov = self.kernel.compute(smilesA=self.smiles_train, smilesB=self.smiles_test)
 
 			elif self.Xtrain is not None and self.smiles_train is None:
-				Xtrain_cov = self.kernel.compute(numA=self.Xtrain, numB=self.Xtrain)
+				Xtrain_cov = self.kernel.compute(numA=self.Xtrain, numB=self.Xtrain, noise=True)
  				train_test_cov = self.kernel.compute(numA=self.Xtrain, numB=self.Xtest)
 
 		elif self.Xtrain is not None:
-			Xtrain_cov = self.kernel.compute(self.Xtrain, self.Xtrain)
+			Xtrain_cov = self.kernel.compute(self.Xtrain, self.Xtrain, noise=True)
  			train_test_cov = self.kernel.compute(self.Xtrain, self.Xtest)
 
 		else:
-			Xtrain_cov = self.kernel.compute(self.smiles_train, self.smiles_train)
+			Xtrain_cov = self.kernel.compute(self.smiles_train, self.smiles_train, noise=True)
  			train_test_cov = self.kernel.compute(self.smiles_train, self.smiles_test)
-
-		Xtrain_cov = Xtrain_cov + (self.kernel.noise_var*np.eye(Xtrain_cov.shape[0]))		
+		
 		tr_chol = kernels.jit_chol(Xtrain_cov) 
 		trtecov_div_trchol = np.linalg.solve(tr_chol,train_test_cov)
  		ytr_div_trchol = np.linalg.solve(tr_chol,self.Ytrain)
