@@ -40,10 +40,10 @@ class Regression(object):
  			train_test_cov = self.kernel.compute(self.smiles_train, self.smiles_test)
 
 		Xtrain_cov = Xtrain_cov + (self.kernel.noise_var*np.eye(Xtrain_cov.shape[0]))		
-		tr_chol = np.linalg.cholesky(Xtrain_cov) 
+		tr_chol = kernels.jit_chol(Xtrain_cov) 
 		trtecov_div_trchol = np.linalg.solve(tr_chol,train_test_cov)
  		ytr_div_trchol = np.linalg.solve(tr_chol,self.Ytrain)
- 		post_mean = np.dot(trtecov_div_trchol.T, ytr_div_trchol)
+ 		post_mean = (np.dot(trtecov_div_trchol.T, ytr_div_trchol)).reshape(-1,1)
 		noise = add_noise*np.reshape([random.gauss(0, np.sqrt(self.kernel.noise_var)) for i in range(0,post_mean.shape[0])],(-1,1))
 		self.post_mean = post_mean + noise
 
@@ -65,6 +65,7 @@ class Regression(object):
 			test_cov = self.kernel.compute(self.smiles_test, self.smiles_test)
 		
 		test_cov = test_cov + (self.kernel.noise_var*np.eye(test_cov.shape[0]))			
+
  		self.cov_post = (test_cov) - np.dot(trtecov_div_trchol.T,trtecov_div_trchol)
  		self.post_s = np.sqrt(np.diag(self.cov_post)).reshape(-1,1)
 
