@@ -17,10 +17,14 @@ class RBF(object):
 		self.noise_var = noise_var
 		self.datatype = datatype
 
-	def compute(self, a, b):	       		
+	def compute(self, a, b, noise=False):	       		
 		sq_dist = np.sum(a**2, 1).reshape(-1, 1) + np.sum(b**2, 1) - 2*np.dot(a, b.T)
 	        cov = np.exp(-.5 * (1/(self.lengthscale**2)) * sq_dist)
 		cov = (self.sig_var*cov)
+
+		if noise==True:
+			cov = cov + (self.noise_var*np.eye(cov.shape[0]))
+
 		return cov
 
 class OU_num(object):
@@ -31,9 +35,13 @@ class OU_num(object):
 		self.noise_var = noise_var
 		self.datatype = datatype
 
-	def compute(self, a, b):	       		
+	def compute(self, a, b, noise=False):	       		
 		distances = np.absolute(np.sum(a, 1).reshape(-1, 1) - np.sum(b, 1))
 		cov = self.sig_var*np.exp(-distances * (1/(self.lengthscale)))
+
+		if noise==True:
+			cov = cov + (self.noise_var*np.eye(cov.shape[0]))
+
 		return cov
 
 class SMILES_RBF(object):
@@ -46,7 +54,7 @@ class SMILES_RBF(object):
 		self.circ_radius = circ_radius
 		self.circular = circular
 
-	def compute(self, smilesA, smilesB):
+	def compute(self, smilesA, smilesB, noise=False):
 
 		fingerprintsA = utils.get_fps(smilesA, circular=self.circular, radius=self.circ_radius)
 		fingerprintsB = utils.get_fps(smilesB, circular=self.circular,
@@ -62,6 +70,10 @@ radius=self.circ_radius)
 		distances = 1 - similarities
 		sq_dist = distances**2
 		cov = self.sig_var*np.exp(-.5 * sq_dist * (1/(self.lengthscale**2)))
+
+		if noise==True:
+			cov = cov + (self.noise_var*np.eye(cov.shape[0]))
+
 		return cov
 
 class Matern(object):
@@ -98,6 +110,7 @@ class Matern(object):
 
 		if noise==True:
 			cov = cov + (self.noise_var*np.eye(cov.shape[0]))
+
 		return cov
 
 class RQ(object):
@@ -109,7 +122,7 @@ class RQ(object):
 		self.circ_radius = circ_radius
 		self.circular = circular
 
-	def compute(self, smilesA, smilesB):
+	def compute(self, smilesA, smilesB, noise=False):
 
 		fingerprintsA = utils.get_fps(smilesA, circular=self.circular, radius=self.circ_radius)
 		fingerprintsB = utils.get_fps(smilesB, circular=self.circular, radius=self.circ_radius)
@@ -124,6 +137,10 @@ class RQ(object):
 		distances = 1 - similarities
 		sq_dist = distances ** 2
 		cov = (1 + sq_dist)**(-self.lengthscale)
+
+		if noise==True:
+			cov = cov + (self.noise_var*np.eye(cov.shape[0]))
+
 		return cov
 
 class Periodic(object):
@@ -137,7 +154,7 @@ class Periodic(object):
 		self.circ_radius = circ_radius
 		self.circular = circular
 
-	def compute(self, smilesA, smilesB):
+	def compute(self, smilesA, smilesB, noise=False):
 
 		fingerprintsA = utils.get_fps(smilesA, circular=self.circular, radius=self.circ_radius)
 		fingerprintsB = utils.get_fps(smilesB, circular=self.circular, radius=self.circ_radius) 
@@ -152,6 +169,10 @@ class Periodic(object):
 		distances = 1 - similarities
 		
 		cov = self.sig_var*np.exp(-2*((np.sin(distances/2))**2)/(self.lengthscale**2))
+
+		if noise==True:
+			cov = cov + (self.noise_var*np.eye(cov.shape[0]))
+
 		return cov
 
 class Composite(object):
@@ -172,7 +193,7 @@ class Composite(object):
 				nkers += 1
 		self.nkers = nkers
 	
-	def compute(self, numA=None, numB=None, smilesA=None, smilesB=None):
+	def compute(self, numA=None, numB=None, smilesA=None, smilesB=None, noise=False):
 		covs = []
 		for item in self.kers:
 			if item is not None:
@@ -184,6 +205,10 @@ class Composite(object):
 					covs.append(item_cov)
 		covs = np.asarray(covs)
 		cov = np.sum(covs, axis=0)
+
+		if noise==True:
+			cov = cov + (self.noise_var*np.eye(cov.shape[0]))
+
 		return cov
 
 class ARD(object):
