@@ -5,8 +5,10 @@ import kernels
 
 class Model(object):
 
-	def __init__(self, Ytrain, Ytest, pca=False, latent_dim=None, Xtrain=None, Xtest=None, smiles_train=None, smiles_test=None, kernel=None, prior_train=None, prior_test=None, acq_func=None, threshold=None):
+	def __init__(self, Ytrain, Ytest, pca=False, print_jit=False, latent_dim=None, Xtrain=None, Xtest=None, smiles_train=None, smiles_test=None, kernel=None, prior_train=None, prior_test=None, acq_func=None, threshold=None):
 
+		self.pca = pca
+		self.print_jit = print_jit
 		self.latent_dim = latent_dim
 		self.Xtrain = Xtrain
 		self.Xtest = Xtest
