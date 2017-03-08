@@ -6,7 +6,7 @@ import plotting
 
 class Regression(object):
 
-	def __init__(self, Ytrain, Ytest, kernel=kernels.RBF(), add_noise=0.01, Xtest=None, Xtrain=None, smiles_train=None, smiles_test=None, cent_threshold=None):
+	def __init__(self, Ytrain, Ytest, kernel=kernels.RBF(), add_noise=0.01, print_jit=False, Xtest=None, Xtrain=None, smiles_train=None, smiles_test=None, cent_threshold=None):
 		self.Xtest = Xtest
 		self.Xtrain = Xtrain
 		self.smiles_train = smiles_train
@@ -16,6 +16,7 @@ class Regression(object):
 		self.add_noise = add_noise
 		self.kernel = kernel		
 		self.cent_threshold = cent_threshold
+		self.print_jit = print_jit
 		
 		# Compute posterior mean vector
 		if isinstance(self.kernel, kernels.Composite):
@@ -39,7 +40,7 @@ class Regression(object):
 			Xtrain_cov = self.kernel.compute(self.smiles_train, self.smiles_train, noise=True)
  			train_test_cov = self.kernel.compute(self.smiles_train, self.smiles_test)
 		
-		tr_chol = kernels.jit_chol(Xtrain_cov) 
+		tr_chol = kernels.jit_chol(Xtrain_cov, print_jit=self.print_jit) 
 		trtecov_div_trchol = np.linalg.solve(tr_chol,train_test_cov)
  		ytr_div_trchol = np.linalg.solve(tr_chol,self.Ytrain)
  		post_mean = (np.dot(trtecov_div_trchol.T, ytr_div_trchol)).reshape(-1,1)
