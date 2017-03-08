@@ -3,7 +3,7 @@ from rdkit import Chem
 from rdkit import DataStructs
 import utils 
 
-def jit_chol(cov, attempts=10):
+def jit_chol(cov, attempts=10, print_jit=False):
     jitter = 0
     for i in xrange(attempts):
         try:
@@ -14,7 +14,8 @@ def jit_chol(cov, attempts=10):
             cov = cov + jitter*np.eye(cov.shape[0])
             if i == 9:
                 print "Covariance matrix is not positive definite"
-    print "jitter = ", jitter
+    if print_jit == True:
+	print "jitter = ", jitter
     return cov_chol
 
 class RBF(object):
