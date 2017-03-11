@@ -16,7 +16,7 @@ def jit_chol(cov, attempts=10, print_jit=False):
                 print "Covariance matrix is not positive definite"
     if print_jit == True:
 	print "jitter = ", jitter
-    return cov_chol
+    return cov_chol, jitter
 
 class RBF(object):
 #	Equivalent to:
