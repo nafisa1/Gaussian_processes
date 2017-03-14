@@ -11,17 +11,27 @@ class GPLVM(object):
 		self.N = N
 		self.D = D
 
-	def log_lik():
-		X = self.X
-		kern = self.kernel
-		cov = kern.compute(X,X, noise=True)
-		chol_cov = kernels.jit_chol(cov)
-		invK_y = np.linalg.solve((np.linalg.solve(self.Y, chol_cov)),chol_cov.T)
-		log_l = (-0.5*self.N*np.log(2*math.pi))-(0.5*np.log(np.linalg.det(cov))) - (0.5*np.dot(self.Y.T,invK_y))  
-		return -log_l
+	def log_lik(Y, kernel):
+		cov = kernel.compute(Y,Y, noise=False) # noise should be false but add jitter if returned by jitchol
+		chol_cov, jitter = kernels.jit_chol(cov, attempts=100,print_jit=False)
+		if jitter != 0:
+		    kernel.noise_var = jitter
+        	cov = kernel.compute(Y,Y, noise=True)
+		Yt_invcov_Y = np.dot(np.linalg.solve(chol_cov, Y).T, np.linalg.solve(chol_cov, Y))
+		if np.linalg.det(cov) == 0:
+			determinant = 3.0e-324
+		else:
+			determinant = np.linalg.det(cov)
+		log_l = (-0.5*Y.shape[0]*np.log(2*math.pi))-(0.5*np.log(determinant)) - (0.5*Yt_invcov_Y)
+		return log_l
 
 	def opt_hyp(hyp):
-		X = self.X
+		k.lengthscale=hyp[0]
+		k.sig_var=hyp[1]
+		log_l = log_lik(c_output, k)
+		return -log_l
+
+	def opt_hyp_composite(hyp):
 		if isinstance(self.kernel, kernels.Composite):
 			count = 0
 			for i in xrange(self.kernel.nkers):
@@ -37,12 +47,12 @@ class GPLVM(object):
 		#	k.sig_var=hyp[1]
 		#	k.noise_var=hyp[2]
 		log_l = log_lik(outputs, k)
-		return log_l
+		return -log_l
 		
 	diff = 1.0
 	tol = 0.5
 
-	log_likelihoods = []
+	log_likelihoods = [] # save for plotting / get function values from optimizer?
 	print "Optimize hyperparameters:"
 	for i in xrange(5):#while diff > tol:
 
