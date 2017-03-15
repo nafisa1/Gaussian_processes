@@ -26,7 +26,7 @@ class GPLVM(object):
 	def opt_hyp(self, hyp):
 		self.kernel.lengthscale=hyp[0]
 		self.kernel.sig_var=hyp[1]
-		log_l = log_lik(self.Y, self.kernel)
+		log_l = self.log_lik()
 		return -log_l
 
 	def opt_hyp_composite(self, hyp):
@@ -37,11 +37,11 @@ class GPLVM(object):
 					item.lengthscale = hyp[count]
 					item.sig_var = hyp[count+1]
 					count +=2
-		log_l = log_lik(self.Y, self.kernel)
+		log_l = self.log_lik()
 		return -log_l
 
 	def run_opt(self, hyp):
-		min_hyp = minimize(opt_hyp, hyp, method='l-bfgs-b', bounds=((0.5,1.1),(0.5,7.5)), options={'disp':True}) 
+		min_hyp = minimize(self.opt_hyp, hyp, method='l-bfgs-b', bounds=((0.5,1.1),(0.5,7.5)), options={'disp':True}) 
 		#log_likelihoods = [] # save for plotting / get function values from optimizer?
 		return min_hyp.x
 
