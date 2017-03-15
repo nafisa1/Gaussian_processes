@@ -12,7 +12,7 @@ def jit_chol(cov, attempts=10, print_jit=False):
         except:
             jitter = abs(np.mean(np.diag(cov)))*1e-2
             cov = cov + jitter*np.eye(cov.shape[0])
-            if i == 9:
+            if i == (attempts-1):
                 print "Covariance matrix is not positive definite"
     if print_jit == True:
 	print "jitter = ", jitter
