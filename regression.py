@@ -40,7 +40,9 @@ class Regression(object):
 			Xtrain_cov = self.kernel.compute(self.smiles_train, self.smiles_train, noise=True)
  			train_test_cov = self.kernel.compute(self.smiles_train, self.smiles_test)
 		
-		tr_chol = kernels.jit_chol(Xtrain_cov, print_jit=self.print_jit) 
+		tr_chol, jitter = kernels.jit_chol(Xtrain_cov, print_jit=self.print_jit) 
+		print tr_chol
+		print train_test_cov
 		trtecov_div_trchol = np.linalg.solve(tr_chol,train_test_cov)
  		ytr_div_trchol = np.linalg.solve(tr_chol,self.Ytrain)
  		post_mean = (np.dot(trtecov_div_trchol.T, ytr_div_trchol)).reshape(-1,1)
