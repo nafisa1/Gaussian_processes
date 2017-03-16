@@ -41,8 +41,8 @@ class GPLVM(object):
 		return -log_l
 
 	def run_opt(self, hyp):
-		min_hyp = minimize(self.opt_hyp, hyp, method='l-bfgs-b', bounds=((0.5,1.1),(0.5,7.5)), options={'disp':True}) 
+		min_hyp = minimize(self.opt_hyp, hyp, method='l-bfgs-b', bounds=((0.5,10.0),(0.5,7.0)), options={'disp':True}) 
 		#log_likelihoods = [] # save for plotting / get function values from optimizer?
-		return min_hyp.x
+		return min_hyp.x, min_hyp.fun
 
 
