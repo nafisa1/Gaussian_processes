@@ -245,7 +245,7 @@ def classif(pred,ytest,t):
 # Latin hypercube sampling
 
 class LHS(object):
-	def __init__(self, parameters=2, n_choices=15, lower=[0.5,3,0.01], upper=[2,7,0.2], divisions=[11,11,11]):
+	def __init__(self, parameters=2, n_choices=5, lower=[0.5,1,0.01], upper=[10,7,0.1], divisions=[11,11,11]):
 		self.parameters = parameters
 		self.divisions = divisions
 		self.lower = lower
