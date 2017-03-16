@@ -229,8 +229,8 @@ class Cross_Validation(object):
 					# lhs_kern.kers[i].lengthscale=
 					# lhs_kern.kers[i].sig_var=
 					# else:
-					lhs_kern.lengthscale=self.hparameter_choices[j][0]
-					lhs_kern.sig_var=self.hparameter_choices[j][1]
+					#lhs_kern.lengthscale=self.hparameter_choices[j][0]
+					#lhs_kern.sig_var=self.hparameter_choices[j][1]
 					lhs_kern.noise_var=self.hparameter_choices[j][2]
 		    			r_sq = self.perform_cv(lhs_kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets)
 					iteration_mean.append(r_sq)
@@ -241,11 +241,12 @@ class Cross_Validation(object):
 
 	def test_set_results(self, test_kern):
 		index = np.argmax(self.means_over_iters)
-		best = self.hparameter_choices[index]
+		best = self.hparameter_choices[index] # wrong - 
 		print best
-		test_kern.lengthscale=best[0]
-		test_kern.sig_var=best[1]
+		#test_kern.lengthscale=best[0]
+		#test_kern.sig_var=best[1]
 		test_kern.noise_var=best[2]
+
 		test_run = model.Model(self.cv_y, self.y_test_set, smiles_test=self.x_test_set, smiles_train=self.cv_x, kernel=test_kern, threshold=self.threshold)
 		test_regression = test_run.regression()  
 		test_regression.plot_by_index()
