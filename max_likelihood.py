@@ -4,7 +4,7 @@ import kernels
 import utils
 from scipy.optimize import minimize 
 
-class GPLVM(object):
+class Max_LL(object):
 	def __init__(self, Y, kernel):
 		self.Y = Y
 		self.kernel = kernel
