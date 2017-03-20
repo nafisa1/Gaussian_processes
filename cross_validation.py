@@ -4,30 +4,28 @@ import utils
 
 class Cross_Validation(object):
 
-	def __init__(self, x, y, fraction_test=0.2, n_folds=10, n_kers=1, lhs=True, threshold=None):
+	def __init__(self, x, y, fraction_test=0.2, n_folds=10, n_kers=1, threshold=None):
 		self.x = x
 		self.y = y
 		self.fraction_test = fraction_test
 		self.n_folds = n_folds
 		self.n_kers = n_kers
-		self.lhs = lhs
 		self.threshold = threshold	
 
-		if lhs == True:
-			change_vars = raw_input("Would you like to change values of the default latin hypercube sampling variables? Enter y or n: ")
+		change_vars = raw_input("Would you like to change values of the default latin hypercube sampling variables? Enter y or n: ")
 			
-			if change_vars == "y":
-				
-				n_parameters = input("Enter the number of hyperparameters, not including noise variance: ")
-				n_samples = input("Enter the number of samples from the hyperparameter space: ")
-				lowb = input("Enter the lower bounds for the hyperparameters as a list [(lengthscale, signal variance)*number of hyperparameters, noise variance]: ")
-				upb = input("Enter the upper bounds for the hyperparameters as a list [(lengthscale, signal variance)*number of hyperparameters, noise variance]: ")
-				divs = input("Enter the number of evenly-spaced samples for each hyperparameter, in one list: ")
-				self.hparameter_choices = utils.LHS(parameters=n_parameters, n_choices=n_samples, lower=lowb, upper=upb, divisions=divs).combinations
+		if change_vars == "y":
+			
+			n_parameters = input("Enter the number of hyperparameters, not including noise variance: ")
+			n_samples = input("Enter the number of samples from the hyperparameter space: ")
+			lowb = input("Enter the lower bounds for the hyperparameters as a list [(lengthscale, signal variance)*number of hyperparameters, noise variance]: ")
+			upb = input("Enter the upper bounds for the hyperparameters as a list [(lengthscale, signal variance)*number of hyperparameters, noise variance]: ")
+			divs = input("Enter the number of evenly-spaced samples for each hyperparameter, in one list: ")
+			self.hparameter_choices = utils.LHS(parameters=n_parameters, n_choices=n_samples, lower=lowb, upper=upb, divisions=divs).combinations
 
-			elif change_vars == "n":
-				print("All LHS variables will remain as default.")
-				self.hparameter_choices = utils.LHS().combinations
+		elif change_vars == "n":
+			print("All LHS variables will remain as default.")
+			self.hparameter_choices = utils.LHS().combinations
 
 	def order(self):
 		y = self.y
@@ -63,6 +61,23 @@ class Cross_Validation(object):
 	                position += step
 	    self.cv_y = np.asarray(cv_y)
 	    return self.x_test_set, self.y_test_set, self.cv_x, self.cv_y
+
+	def max_log_likelihood(self, kernel):
+		final_points = []
+		log_likelihoods = []
+		for choice in self.hparameter_choices:
+			centred_cv_y = utils.centre(self.cv_y.reshape(-1,1))
+			find_max_ll = max_likelihood.Max_LL(centred_cv_y, kernel)
+			starting_point = []
+			start.append(choice[0])
+			start.append(choice[1])
+			final_point, ll = find_max_ll.run_opt(starting_point)
+			print final_point, ll
+			final_points.append(final_point)
+			log_likelihoods.append(ll)
+		index = np.argmax(log_likelihoods)
+		best_hparams = final_points[index]
+		
 
 	def get_stratified_folds(self):
 	    x_all_folds = []
@@ -209,7 +224,6 @@ class Cross_Validation(object):
 	        run = model.Model(y_training_sets[i], y_validation_sets[i], smiles_train=x_training_sets[i], smiles_test=x_validation_sets[i], kernel=kern, threshold=self.threshold)
 	        run_regression = run.regression()
 	        r_sq.append(run_regression.r_squared())
-	    # print r_sq
 	    return np.mean(r_sq)
 
 	def repeated_CV(self, default_kern, iterations=10, lhs_kern=None):
@@ -222,29 +236,25 @@ class Cross_Validation(object):
 			default_r_sq = self.perform_cv(default_kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets)
 			iteration_mean.append(default_r_sq)
 			    
-			if self.lhs is True:
-				for j in xrange(len(self.hparameter_choices)):
-					# if isinstance(self.kernel, kernels.Composite): 
-					# for i in xrange(self.n_kers):
-					# lhs_kern.kers[i].lengthscale=
-					# lhs_kern.kers[i].sig_var=
-					# else:
-					#lhs_kern.lengthscale=self.hparameter_choices[j][0]
-					#lhs_kern.sig_var=self.hparameter_choices[j][1]
-					lhs_kern.noise_var=self.hparameter_choices[j][2]
-		    			r_sq = self.perform_cv(lhs_kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets)
-					iteration_mean.append(r_sq)
+			for j in xrange(len(self.hparameter_choices)):
+				# if isinstance(self.kernel, kernels.Composite): 
+				# for i in xrange(self.n_kers):
+				# lhs_kern.kers[i].lengthscale=
+				# lhs_kern.kers[i].sig_var=
+				# else:
+				lhs_kern.noise_var=self.hparameter_choices[j][2]
+	    			r_sq = self.perform_cv(lhs_kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets)
+				iteration_mean.append(r_sq)
 		    	iteration_means.append(iteration_mean)	
+
 		means = (np.asarray(iteration_means)).T
 		self.means_over_iters = np.mean(means, axis=1)
 		return means, self.means_over_iters	
 
 	def test_set_results(self, test_kern):
 		index = np.argmax(self.means_over_iters)
-		best = self.hparameter_choices[index] # wrong - 
+		best = self.hparameter_choices[index+1] # corrected?
 		print best
-		#test_kern.lengthscale=best[0]
-		#test_kern.sig_var=best[1]
 		test_kern.noise_var=best[2]
 
 		test_run = model.Model(self.cv_y, self.y_test_set, smiles_test=self.x_test_set, smiles_train=self.cv_x, kernel=test_kern, threshold=self.threshold)
