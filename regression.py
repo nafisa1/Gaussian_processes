@@ -107,7 +107,7 @@ class Regression(object):
 		r_sq = 1 - (ss_res/ss_tot)
 		return r_sq
 
-	def classify(self):
+	def classify(self): # ADD ROC PLOT, ENRICHMENT FACTORS
 		assert self.cent_threshold is not None, "An active/inactive threshold is required for classification."
 		utils.classif(self.post_mean, self.Ytest, self.cent_threshold)
     
