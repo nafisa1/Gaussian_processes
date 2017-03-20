@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import kernels
 import random
 import plotting
+import utils
 
 class Regression(object):
 
@@ -105,8 +106,12 @@ class Regression(object):
 		ss_res = np.sum((self.Ytest-self.post_mean)**2)
 		r_sq = 1 - (ss_res/ss_tot)
 		return r_sq
+
+	def classify(self):
+		assert self.cent_threshold is not None, "An active/inactive threshold is required for classification."
+		utils.classif(self.post_mean, self.Ytest, self.cent_threshold)
     
-	def plot_prior(self):
+	def plot_prior(self): # UPDATE FOR SMILES
 		if self.Xtrain.shape[1] == 1:
 			plotting.plot_prior_1D(self.Xtest, self.test_cov, Ytest=self.Ytest)
 		elif self.Xtrain.shape[1] == 2:
@@ -114,7 +119,7 @@ class Regression(object):
 		else:
 			print "The dimensionality of the input space is too high to visualize."
         
-	def plot_posterior(self):
+	def plot_posterior(self): # UPDATE FOR SMILES
 		if self.Xtrain.shape[1] == 1:
 			plotting.plot_posterior_1D(self.Xtest, self.Xtrain, self.Ytrain, self.post_mean, self.post_s, self.cov_post, Ytest=self.Ytest)
 		elif self.Xtrain.shape[1] == 2:
