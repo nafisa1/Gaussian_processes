@@ -24,11 +24,15 @@ class Model(object):
 		self.acq_func = acq_func
 		self.threshold = threshold
 
-		# Sanity check	
-		if len(Ytrain.shape) != 2:
-			self.Ytrain = Ytrain.reshape(-1,1)	
-		if len(Ytest.shape) != 2:
-			self.Ytest = Ytest.reshape(-1,1)
+		# Sanity check
+		if Y is not None:
+			if len(Y.shape) != 2:
+				self.Y = Y.reshape(-1,1)
+		else:
+			if len(Ytrain.shape) != 2:
+				self.Ytrain = Ytrain.reshape(-1,1)	
+			if len(Ytest.shape) != 2:
+				self.Ytest = Ytest.reshape(-1,1)
 
 		if Xtrain is not None: 
 			Xtrain = np.asarray(Xtrain)
@@ -61,6 +65,25 @@ class Model(object):
 			prior_train = prior_train.reshape(-1,1)
 			# subtract training prior mean from Ytrain values
 			self.Ytrain = self.Ytrain - prior_train
+
+	def cross_validation(self):
+		pass
+
+	def max_log_likelihood(self, kernel):
+		final_points = []
+		log_likelihoods = []
+		for choice in self.hparameter_choices:
+			centred_cv_y = utils.centre(self.cv_y.reshape(-1,1))
+			find_max_ll = max_likelihood.Max_LL(centred_cv_y, kernel)
+			starting_point = []
+			start.append(choice[0])
+			start.append(choice[1])
+			final_point, ll = find_max_ll.run_opt(starting_point)
+			print final_point, ll
+			final_points.append(final_point)
+			log_likelihoods.append(ll)
+		index = np.argmax(log_likelihoods)
+		best_hparams = final_points[index]
 
 	def hyperparameters(self):
 		lat_hyp = utils.LHS(self.kernel)
