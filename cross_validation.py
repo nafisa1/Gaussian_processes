@@ -60,24 +60,7 @@ class Cross_Validation(object):
 	            else:
 	                position += step
 	    self.cv_y = np.asarray(cv_y)
-	    return self.x_test_set, self.y_test_set, self.cv_x, self.cv_y
-
-	def max_log_likelihood(self, kernel):
-		final_points = []
-		log_likelihoods = []
-		for choice in self.hparameter_choices:
-			centred_cv_y = utils.centre(self.cv_y.reshape(-1,1))
-			find_max_ll = max_likelihood.Max_LL(centred_cv_y, kernel)
-			starting_point = []
-			start.append(choice[0])
-			start.append(choice[1])
-			final_point, ll = find_max_ll.run_opt(starting_point)
-			print final_point, ll
-			final_points.append(final_point)
-			log_likelihoods.append(ll)
-		index = np.argmax(log_likelihoods)
-		best_hparams = final_points[index]
-		
+	    return self.x_test_set, self.y_test_set, self.cv_x, self.cv_y		
 
 	def get_stratified_folds(self):
 	    x_all_folds = []
