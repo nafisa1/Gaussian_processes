@@ -118,9 +118,3 @@ class Model(object):
 		# add test prior mean to posterior mean
 		self.Ytest = self.Ytest + self.prior_test
 		# will also have to apply correction to random draws
-
-	def classify(self, threshold):
-		# separate into compounds below and above threshold
-		# using real Ytest values, calculate true positives, false positives, true negatives, false negatives
-		# ROC plot (add function to plotting module)
-		pass
