@@ -209,7 +209,7 @@ class Cross_Validation(object):
 	        r_sq.append(run_regression.r_squared())
 	    return np.mean(r_sq)
 
-	def repeated_CV(self, default_kern, iterations=10, lhs_kern=None):
+	def repeated_CV(self, default_kern, hparams, iterations=10, lhs_kern=None):
 		
 		iteration_means = []
 		for i in xrange(iterations):
@@ -219,7 +219,7 @@ class Cross_Validation(object):
 			default_r_sq = self.perform_cv(default_kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets)
 			iteration_mean.append(default_r_sq)
 			    
-			for j in xrange(len(self.hparameter_choices)):
+			for j in xrange(len(hparams)):
 				# if isinstance(self.kernel, kernels.Composite): 
 				# for i in xrange(self.n_kers):
 				# lhs_kern.kers[i].lengthscale=
