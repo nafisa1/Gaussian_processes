@@ -262,37 +262,3 @@ class LHS(object):
 		all_combs = np.asarray(list(itertools.product(*scales)))
 
 		self.combinations = all_combs[np.random.randint(all_combs.shape[0], size=n_choices),:]
-		# print a.combinations
-
-	def compute(self, kern, Ytrain, Ytest, Xtrain=None, Xtest=None, smiles_train=None, smiles_test=None):
-		r_sq = []
-		import regression
-		if Xtrain is not None:
-			regr = regression.Regression(Ytrain, Ytest, kernel=kern, Xtrain=Xtrain, Xtest=Xtest)
-		if smiles_train is not None:
-			regr = regression.Regression(Ytrain, Ytest, kernel=kern, smiles_train=smiles_train, smiles_test=smiles_test)
-		init_rsq = regr.r_squared()
-		print init_rsq
-
-		for i in xrange(self.divisions):
-			kern.lengthscale, kern.sig_var, kern.noise_var = self.combinations[i][0], self.combinations[i][1], self.combinations[i][2]
-
-			if Xtrain is None:
-				regr = regression.Regression(Ytrain, Ytest, smiles_train=smiles_train, smiles_test=smiles_test, kernel=kern)
-
-			elif smiles_train is None:
-				regr = regression.Regression(Ytrain, Ytest, Xtrain=Xtrain, Xtest=Xtest, kernel=kern)
-			r_sq.append(regr.r_squared())
-		
-		if max(r_sq) > init_rsq:
-			ind = np.argmax(r_sq)
-			print max(r_sq)
-			best = self.combinations[ind]
-
-			print "The new kernel hyperparameters are: lengthscale=",best[0],", power=",best[1]," and noise variance=",best[2],"."
-		
-		else:
-			best = np.array((self.kernel.lengthscale, self.kernel.sig_var, self.kernel.noise_var))
-			print "The kernel hyperparameters will remain unchanged."
-
-		return best[0], best[1], best[2]
