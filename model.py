@@ -72,8 +72,8 @@ class Model(object):
 		self.hparameter_choices = utils.LHS().combinations
 
 	def cross_validation(self, frac_test=0.2, num_folds=10, max_ll=True, ll_kernel=None):
-		cross_val = self.X, self.Y, fraction_test=frac_test, n_folds=num_folds, n_kers=self.n_kers, threshold=self.threshold)
-		self.Xtest, self.Ytest, self.Xtrain, self.Ytrain = cross_val.get_test_set()
+		cross_val = cross_validation.Cross_Validation(self.X, self.Y, fraction_test=frac_test, n_folds=num_folds, n_kers=self.n_kers, threshold=self.threshold)
+		self.smiles_test, self.Ytest, self.smiles_train, self.Ytrain = cross_val.get_test_set()
 		if max_ll == True:
 			self.max_log_likelihood(opt_kernel=ll_kernel)
 		best_noise_var, all_means, iteration_means = cross_val.repeated_CV(self.kernel, self.hparameter_choices, iterations=10, lhs_kern=self.kernel)
@@ -91,8 +91,8 @@ class Model(object):
 
 		for choice in self.hparameter_choices:
 			starting_point = []
-			start.append(choice[0])
-			start.append(choice[1])
+			starting_point.append(choice[0])
+			starting_point.append(choice[1])
 			final_point, ll = find_max_ll.run_opt(starting_point)
 			print final_point, ll
 			final_points.append(final_point)
