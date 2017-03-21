@@ -89,6 +89,13 @@ class Model(object):
 		else:
 			find_max_ll = max_likelihood.Max_LL(centred_Ytrain, opt_kernel)
 
+		default_starting_point = []
+		default_starting_point.append(choice[0])
+		default_starting_point.append(choice[1])
+		final_point, ll = find_max_ll.run_opt(default_starting_point)
+		final_points.append(final_point)
+		log_likelihoods.append(ll)
+
 		for choice in self.hparameter_choices:
 			starting_point = []
 			starting_point.append(choice[0])
