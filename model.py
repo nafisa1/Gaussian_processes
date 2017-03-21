@@ -93,6 +93,7 @@ class Model(object):
 		default_starting_point.append(self.kernel.lengthscale)
 		default_starting_point.append(self.kernel.sig_var)
 		final_point, ll = find_max_ll.run_opt(default_starting_point)
+		print final_point, ll
 		final_points.append(final_point)
 		log_likelihoods.append(ll)
 
