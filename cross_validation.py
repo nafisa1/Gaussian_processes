@@ -1,5 +1,5 @@
 import numpy as np
-import model
+import model # CIRCULAR IMPORT
 import utils
 
 class Cross_Validation(object):
@@ -12,20 +12,20 @@ class Cross_Validation(object):
 		self.n_kers = n_kers
 		self.threshold = threshold	
 
-		change_vars = raw_input("Would you like to change values of the default latin hypercube sampling variables? Enter y or n: ")
+#		change_vars = raw_input("Would you like to change values of the default latin hypercube sampling variables? Enter y or n: ")
 			
-		if change_vars == "y":
+#		if change_vars == "y":
 			
-			n_parameters = input("Enter the number of hyperparameters, not including noise variance: ")
-			n_samples = input("Enter the number of samples from the hyperparameter space: ")
-			lowb = input("Enter the lower bounds for the hyperparameters as a list [(lengthscale, signal variance)*number of hyperparameters, noise variance]: ")
-			upb = input("Enter the upper bounds for the hyperparameters as a list [(lengthscale, signal variance)*number of hyperparameters, noise variance]: ")
-			divs = input("Enter the number of evenly-spaced samples for each hyperparameter, in one list: ")
-			self.hparameter_choices = utils.LHS(parameters=n_parameters, n_choices=n_samples, lower=lowb, upper=upb, divisions=divs).combinations
+#			n_parameters = input("Enter the number of hyperparameters, not including noise variance: ")
+#			n_samples = input("Enter the number of samples from the hyperparameter space: ")
+#			lowb = input("Enter the lower bounds for the hyperparameters as a list [(lengthscale, signal variance)*number of hyperparameters, noise variance]: ")
+#			upb = input("Enter the upper bounds for the hyperparameters as a list [(lengthscale, signal variance)*number of hyperparameters, noise variance]: ")
+#			divs = input("Enter the number of evenly-spaced samples for each hyperparameter, in one list: ")
+#			self.hparameter_choices = utils.LHS(parameters=n_parameters, n_choices=n_samples, lower=lowb, upper=upb, divisions=divs).combinations
 
-		elif change_vars == "n":
-			print("All LHS variables will remain as default.")
-			self.hparameter_choices = utils.LHS().combinations
+#		elif change_vars == "n":
+#			print("All LHS variables will remain as default.")
+		self.hparameter_choices = utils.LHS().combinations
 
 	def order(self):
 		y = self.y
@@ -215,7 +215,7 @@ class Cross_Validation(object):
 		for i in xrange(iterations):
 			print "Iteration ", i
 			iteration_mean = []
-			x_validation_sets, x_training_sets, y_validation_sets, y_training_sets = self.get_binned_folds(iteration=i)
+			x_validation_sets, x_training_sets, y_validation_sets, y_training_sets = self.get_binned_folds(iteration=i) # ALLOW OPTION FOR BINNED OR STRATIFIED
 			default_r_sq = self.perform_cv(default_kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets)
 			iteration_mean.append(default_r_sq)
 			    
