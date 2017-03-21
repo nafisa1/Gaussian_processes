@@ -2,11 +2,14 @@ import numpy as np
 import utils
 import GPy
 import kernels
+import cross_validation # CIRCULAR IMPORT
+import max_likelihood
 
 class Model(object):
 
-	def __init__(self, pca=False, print_jit=False, latent_dim=None, X=None, Y=None, Ytrain=None, Ytest=None, Xtrain=None, Xtest=None, smiles_train=None, smiles_test=None, kernel=None, prior_train=None, prior_test=None, acq_func=None, threshold=None):
+	def __init__(self, n_kers=1, pca=False, print_jit=False, latent_dim=None, X=None, Y=None, Ytrain=None, Ytest=None, Xtrain=None, Xtest=None, smiles_train=None, smiles_test=None, kernel=None, prior_train=None, prior_test=None, acq_func=None, threshold=None):
 
+		self.n_kers = n_kers # Update kernel module so number of kernels is given
 		self.pca = pca
 		self.print_jit = print_jit
 		self.latent_dim = latent_dim
@@ -65,16 +68,28 @@ class Model(object):
 			prior_train = prior_train.reshape(-1,1)
 			# subtract training prior mean from Ytrain values
 			self.Ytrain = self.Ytrain - prior_train
+		
+		self.hparameter_choices = utils.LHS().combinations
 
-	def cross_validation(self):
-		pass
+	def cross_validation(self, frac_test=0.2, num_folds=10, max_ll=True, ll_kernel=None):
+		cross_val = self.X, self.Y, fraction_test=frac_test, n_folds=num_folds, n_kers=self.n_kers, threshold=self.threshold)
+		self.Xtest, self.Ytest, self.Xtrain, self.Ytrain = cross_val.get_test_set()
+		if max_ll == True:
+			self.max_log_likelihood(opt_kernel=ll_kernel)
+		best_noise_var, all_means, iteration_means = cross_val.repeated_CV(self.kernel, self.hparameter_choices, iterations=10, lhs_kern=self.kernel)
+		self.kernel.noise_var = best_noise_var
+		print "The kernel hyperparameters are: lengthscale", self.kernel.lengthscale,"signal variance", self.kernel.sig_var,"noise variance", self.kernel.noise_var,"."
 
-	def max_log_likelihood(self, kernel):
+	def max_log_likelihood(self, opt_kernel=None):
 		final_points = []
 		log_likelihoods = []
+		centred_Ytrain = utils.centre(self.Ytrain.reshape(-1,1))
+		if opt_kernel is None:
+			find_max_ll = max_likelihood.Max_LL(centred_Ytrain, self.kernel)
+		else:
+			find_max_ll = max_likelihood.Max_LL(centred_Ytrain, opt_kernel)
+
 		for choice in self.hparameter_choices:
-			centred_cv_y = utils.centre(self.cv_y.reshape(-1,1))
-			find_max_ll = max_likelihood.Max_LL(centred_cv_y, kernel)
 			starting_point = []
 			start.append(choice[0])
 			start.append(choice[1])
@@ -82,20 +97,11 @@ class Model(object):
 			print final_point, ll
 			final_points.append(final_point)
 			log_likelihoods.append(ll)
-		index = np.argmax(log_likelihoods)
+		index = np.argmin(log_likelihoods)
 		best_hparams = final_points[index]
-
-	def hyperparameters(self):
-		lat_hyp = utils.LHS(self.kernel)
-
-		Ytrain = utils.centre(self.Ytrain)
-		Ytest = utils.centre(self.Ytrain, self.Ytest)
-
-		if self.Xtrain is not None and self.smiles_train is None:
-			self.kernel.lengthscale, self.kernel.sig_var, self.kernel.noise_var = lat_hyp.compute(Ytrain, Ytest, Xtrain=self.Xtrain, Xtest=self.Xtest)
-
-		elif self.Xtrain is None and self.smiles_train is not None:
-			self.kernel.lengthscale, self.kernel.sig_var, self.kernel.noise_var = lat_hyp.compute(Ytrain, Ytest, smiles_train=self.smiles_train, smiles_test=self.smiles_test)
+		print "Best hyperparameters:", best_hparams
+		self.kernel.lengthscale = best_hparams[0]
+		self.kernel.sig_var = best_hparams[1]
 
 	def regression(self):
 		import regression
