@@ -42,7 +42,7 @@ class Cross_Validation(object):
 	    elif isinstance(self.x,np.ndarray):
 	        cv_x = []
 	        position=4
-	        for index, row in enumerate(x):
+	        for index, row in enumerate(self.x):
 	            if index != position:
 	                cv_x.append(row)
 	            else:
@@ -54,7 +54,7 @@ class Cross_Validation(object):
 	    elif isinstance(self.y,np.ndarray):
 	        cv_y = []
 	        position=4
-	        for index, row in enumerate(y):
+	        for index, row in enumerate(self.y):
 	            if index != position:
 	                cv_y.append(row)
 	            else:
@@ -204,7 +204,7 @@ class Cross_Validation(object):
 	    r_sq = []
 	
 	    for i in xrange(self.n_folds):
-	        run = model.Model(y_training_sets[i], y_validation_sets[i], smiles_train=x_training_sets[i], smiles_test=x_validation_sets[i], kernel=kern, threshold=self.threshold)
+	        run = model.Model(Ytrain=y_training_sets[i], Ytest=y_validation_sets[i], smiles_train=x_training_sets[i], smiles_test=x_validation_sets[i], kernel=kern, threshold=self.threshold)
 	        run_regression = run.regression()
 	        r_sq.append(run_regression.r_squared())
 	    return np.mean(r_sq)
@@ -213,9 +213,9 @@ class Cross_Validation(object):
 		
 		iteration_means = []
 		for i in xrange(iterations):
-			print "Iteration ", i
 			iteration_mean = []
 			x_validation_sets, x_training_sets, y_validation_sets, y_training_sets = self.get_binned_folds(iteration=i) # ALLOW OPTION FOR BINNED OR STRATIFIED
+			print "Iteration ", i
 			default_r_sq = self.perform_cv(default_kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets)
 			iteration_mean.append(default_r_sq)
 			    
@@ -237,7 +237,7 @@ class Cross_Validation(object):
 		if index == 0:
 			best_noise = default_kern.noise_var
 		else:
-			best_noise = hparams[index-1] # corrected?
+			best_noise = hparams[index-1][2] # corrected?
 
 		return best_noise, means, self.means_over_iters	
 
