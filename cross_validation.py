@@ -232,11 +232,18 @@ class Cross_Validation(object):
 
 		means = (np.asarray(iteration_means)).T
 		self.means_over_iters = np.mean(means, axis=1)
-		return means, self.means_over_iters	
+
+		index = np.argmax(self.means_over_iters)
+		if index == 0:
+			best_noise = default_kern.noise_var
+		else:
+			best_noise = hparams[index-1] # corrected?
+
+		return best_noise, means, self.means_over_iters	
 
 	def test_set_results(self, test_kern):
 		index = np.argmax(self.means_over_iters)
-		best = self.hparameter_choices[index+1] # corrected?
+		best = self.hparameter_choices[index-1] # corrected?
 		print best
 		test_kern.noise_var=best[2]
 
