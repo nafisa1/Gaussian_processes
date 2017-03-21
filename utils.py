@@ -240,12 +240,12 @@ def classif(pred,ytest,t):
     sensitivity = float(tp_correct)/tp
     specificity = float(tn_correct)/tn
         
-    print ('%d compounds (%f) were identified correctly. The sensitivity is %f (%d out of %d) and the specificity is %f (%d out of %d).' %(count,correct,sensitivity,tp_correct,tp,specificity,tn_correct,tn))
+    print ('%d compounds (%f) were classified correctly. The sensitivity is %f (%d out of %d) and the specificity is %f (%d out of %d).' %(count,correct,sensitivity,tp_correct,tp,specificity,tn_correct,tn))
 
 # Latin hypercube sampling
 
 class LHS(object):
-	def __init__(self, parameters=2, n_choices=5, lower=[0.5,1,0.01], upper=[10,7,0.1], divisions=[11,11,11]):
+	def __init__(self, parameters=2, n_choices=5, lower=[2.0,1,0.001], upper=[10,7,0.01], divisions=[11,11,11]):
 		self.parameters = parameters
 		self.divisions = divisions
 		self.lower = lower
