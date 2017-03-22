@@ -73,10 +73,11 @@ class Model(object):
 
 	def cross_validation(self, frac_test=0.2, num_folds=10, max_ll=True, ll_kernel=None):
 		cross_val = cross_validation.Cross_Validation(self.X, self.Y, fraction_test=frac_test, n_folds=num_folds, n_kers=self.n_kers, threshold=self.threshold)
+		cross_val.order()
 		self.smiles_test, self.Ytest, self.smiles_train, self.Ytrain = cross_val.get_test_set()
 		if max_ll == True:
 			self.max_log_likelihood(opt_kernel=ll_kernel)
-		best_noise_var, all_means, iteration_means = cross_val.repeated_CV(self.kernel, self.hparameter_choices, iterations=10, lhs_kern=self.kernel)
+		best_noise_var, all_means, iteration_means = cross_val.repeated_CV(self.kernel, self.hparameter_choices, iterations=1, lhs_kern=self.kernel) # EDIT BACK TO 10 ITERATIONS
 		self.kernel.noise_var = best_noise_var
 		print "The kernel hyperparameters are: lengthscale", self.kernel.lengthscale,"signal variance", self.kernel.sig_var,"noise variance", self.kernel.noise_var,"."
 
