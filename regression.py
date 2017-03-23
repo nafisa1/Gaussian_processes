@@ -110,6 +110,8 @@ class Regression(object):
 	def classify(self): # ADD ROC PLOT, ENRICHMENT FACTORS
 		assert self.cent_threshold is not None, "An active/inactive threshold is required for classification."
 		utils.classif(self.post_mean, self.Ytest, self.cent_threshold)
+		roc_plot = []
+		enrichment_factors = []
     
 	def plot_prior(self): # UPDATE FOR SMILES
 		if self.Xtrain.shape[1] == 1:
