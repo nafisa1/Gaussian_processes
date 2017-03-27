@@ -109,9 +109,34 @@ class Regression(object):
 
 	def classify(self): # ADD ROC PLOT, ENRICHMENT FACTORS
 		assert self.cent_threshold is not None, "An active/inactive threshold is required for classification."
-		utils.classif(self.post_mean, self.Ytest, self.cent_threshold)
-		roc_plot = []
+		true_positives, true_negatives = utils.classif(self.post_mean, self.Ytest, self.cent_threshold, roc=True)
 		enrichment_factors = []
+
+		Y2 = self.Ytest
+		post_mean = self.post_mean
+		Ytest = (np.sort(self.Ytest, axis=0))[::-1]
+		post_mean = (np.array([post_mean for Y2,post_mean in sorted(zip(Y2,post_mean))]))[::-1]
+
+		tpr = [0.0]
+		fpr = [0.0]
+
+		actives = 0.0
+		inactives = 0.0
+		for index,value in enumerate(post_mean):
+			if Ytest[index] > self.cent_threshold:
+				actives += 1.0
+			else:
+				inactives += 1.0
+			tpr.append(actives/float(true_positives))
+			fpr.append(inactives/float(true_negatives))
+		print true_positives
+		print actives
+		print true_negatives
+		print inactives
+		fig = plt.figure()
+		plt.plot(fpr,tpr)
+		plt.show()
+				
     
 	def plot_prior(self): # UPDATE FOR SMILES
 		if self.Xtrain.shape[1] == 1:
