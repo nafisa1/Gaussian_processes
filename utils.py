@@ -218,7 +218,7 @@ def pIC50(values, power):
 	pIC50s = -np.log10(values*(10**power))
 	return pIC50s
 
-def classif(pred,ytest,t):
+def classif(pred,ytest,t,roc=False):
     count = 0
     tp = 0
     tn = 0
@@ -241,6 +241,8 @@ def classif(pred,ytest,t):
     specificity = float(tn_correct)/tn
         
     print ('%d compounds (%f) were classified correctly. The sensitivity is %f (%d out of %d) and the specificity is %f (%d out of %d).' %(count,correct,sensitivity,tp_correct,tp,specificity,tn_correct,tn))
+    if roc == True:
+        return tp,tn
 
 # Latin hypercube sampling
 
