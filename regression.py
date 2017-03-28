@@ -111,11 +111,9 @@ class Regression(object):
 		assert self.cent_threshold is not None, "An active/inactive threshold is required for classification."
 		true_positives, true_negatives = utils.classif(self.post_mean, self.Ytest, self.cent_threshold, roc=True)
 		enrichment_factors = []
-
 		Y2 = self.Ytest
-		post_mean = self.post_mean
-		Ytest = (np.sort(self.Ytest, axis=0))[::-1]
-		post_mean = (np.array([post_mean for Y2,post_mean in sorted(zip(Y2,post_mean))]))[::-1]
+		post_mean = (np.sort(self.post_mean, axis=0))[::-1]
+		Ytest = (np.array([Y2 for self.post_mean,Y2 in sorted(zip(self.post_mean,Y2))]))[::-1]
 
 		tpr = [0.0]
 		fpr = [0.0]
@@ -123,8 +121,8 @@ class Regression(object):
 		actives = 0.0
 		inactives = 0.0
 		for index,value in enumerate(post_mean):
-			if Ytest[index] > self.cent_threshold:
-				actives += 1.0
+			if Ytest[index] >= self.cent_threshold:
+				actives += 1.0       
 			else:
 				inactives += 1.0
 			tpr.append(actives/float(true_positives))
@@ -134,7 +132,9 @@ class Regression(object):
 		print true_negatives
 		print inactives
 		fig = plt.figure()
-		plt.plot(fpr,tpr)
+		x= [0.0,1,0]
+		plt.plot(x,x, linestyle='dashed', color='red', linewidth=2)
+		plt.plot(fpr,tpr, 'g', linewidth=5)
 		plt.show()
 				
     
