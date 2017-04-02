@@ -25,7 +25,6 @@ class Cross_Validation(object):
 
 #		elif change_vars == "n":
 #			print("All LHS variables will remain as default.")
-		self.hparameter_choices = utils.LHS().combinations
 
 	def order(self):
 		y = self.y
@@ -60,6 +59,7 @@ class Cross_Validation(object):
 	            else:
 	                position += step
 	    self.cv_y = np.asarray(cv_y)
+	    print len(self.x_test_set), self.y_test_set.shape, len(self.cv_x), self.cv_y.shape
 	    return self.x_test_set, self.y_test_set, self.cv_x, self.cv_y		
 
 	def get_stratified_folds(self):
@@ -225,7 +225,7 @@ class Cross_Validation(object):
 				# lhs_kern.kers[i].lengthscale=
 				# lhs_kern.kers[i].sig_var=
 				# else:
-				lhs_kern.noise_var=self.hparameter_choices[j][2]
+				lhs_kern.noise_var=hparams[j][2] #change to hparams
 	    			r_sq = self.perform_cv(lhs_kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets)
 				iteration_mean.append(r_sq)
 		    	iteration_means.append(iteration_mean)	
