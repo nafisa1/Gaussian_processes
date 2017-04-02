@@ -118,18 +118,8 @@ def get_SMILES(filename):
 		names = []
 		filecontents = f.readlines()
 		for line in filecontents:
-			lin = line.strip('\n')      
+			lin = line.strip('\n') # may need i = lin.split(),append(str(i[1]))     
 			names.append(str(lin))
-	return names
-
-def get_SMILES_old(filename):
-	with open(filename,'r') as f:
-		names = []
-		filecontents = f.readlines()
-		for line in filecontents:
-			lin = line.strip('\n')      
-			items = lin.split()
-			names.append(str(items[1]))
 	return names
 
 def get_sdf_property(filename, sdf_property):
@@ -230,7 +220,7 @@ def classif(pred,ytest,t,roc=False):
             if pred[n] >= t:
                 count += 1
                 tp_correct +=1
-        else: #if ytest[n] >= t:
+        else: 
             tn += 1
             if pred[n] <= t:
                 count += 1
@@ -240,7 +230,7 @@ def classif(pred,ytest,t,roc=False):
     sensitivity = float(tp_correct)/tp
     specificity = float(tn_correct)/tn
         
-    print ('%d compounds (%f) were classified correctly. The sensitivity is %f (%d out of %d) and the specificity is %f (%d out of %d).' %(count,correct,sensitivity,tp_correct,tp,specificity,tn_correct,tn))
+    print ('%d compounds out of %d (%f) were classified correctly. The sensitivity is %f (%d out of %d) and the specificity is %f (%d out of %d).' %(count,pred.shape[0],correct,sensitivity,tp_correct,tp,specificity,tn_correct,tn))
     if roc == True:
         return tp,tn
 
