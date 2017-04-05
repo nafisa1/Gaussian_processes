@@ -118,7 +118,10 @@ class Model(object):
 		import regression
 
 		self.Ytrain_mean = np.mean(self.Ytrain)
-		c_threshold = self.threshold - self.Ytrain_mean
+		if self.threshold is not None:
+			c_threshold = self.threshold - self.Ytrain_mean
+		else:
+			c_threshold = None
 		Ytrain = utils.centre(self.Ytrain)
 
 
