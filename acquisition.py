@@ -5,9 +5,9 @@ from scipy.stats import norm
 
 class PI(object):
 
-	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
+	def compute(self, smiles_test, smiles_train, Ytrain, kern, plot=False):
 		# Get posterior mean and standard deviation for test set
-		run = Regression(Xtest, Xtrain, Ytrain, add_noise=0.01, kernel=kern, Ytest=None)
+		run = Regression(smiles_test=smiles_test, smiles_train=smiles_train, Ytrain=Ytrain, add_noise=0.01, kernel=kern, Ytest=None)
 		sd = run.post_s
 		p_mean = run.post_mean
 
