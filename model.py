@@ -144,16 +144,21 @@ class Model(object):
 		Ytest = utils.centre(self.Ytrain, self.Ytest)
 
 		if plot==False:
-			new_x, ind = self.acq_func.compute(self.Xtest, self.Xtrain, Ytrain, self.kernel, plot=False)
+			new_x, ind = self.acq_func.compute(self.smiles_test, self.smiles_train, Ytrain, self.kernel, plot=False)
 		else:
-			new_x, ind = self.acq_func.compute(self.Xtest, self.Xtrain, Ytrain, self.kernel, plot=True)
+			new_x, ind = self.acq_func.compute(self.smiles_test, self.smiles_train, Ytrain, self.kernel, plot=True)
 
 		new_obs = self.Ytest[ind]		
-
-		self.Xtrain = np.vstack((self.Xtrain, new_x))
+		print len(self.smiles_train)
+		print len(new_x)
+		print self.Ytrain.shape
+		print new_obs.shape
+		self.smiles_train.append(new_x)
+#		self.smiles_train = np.vstack((self.smiles_train, new_x))
 		self.Ytrain = np.vstack((self.Ytrain, new_obs))
 
-		self.Xtest = np.delete(self.Xtest, ind, axis=0)
+		del self.smiles_test[ind]
+#		self.smiles_test = np.delete(self.smiles_test, ind, axis=0)
 		self.Ytest = np.delete(self.Ytest, ind, axis=0)
 
 		return new_x
