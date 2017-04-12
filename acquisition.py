@@ -11,16 +11,11 @@ class PI(object):
 		sd = run.post_s
 		p_mean = run.post_mean
 
-		# Centre training output values (these are automatically centred before
-		# calculating posterior mean but need to be centred here)
-		Y_mu = np.mean(Ytrain) 
-		Ytrain0 = Ytrain - Y_mu 
-
 		# Find the minimum of the training values
-		f_min = np.amin(Ytrain0)
+		f_max = np.amax(Ytrain)
 
 		# Calculate input for cdf
-		acq1 = (f_min - p_mean)/sd
+		acq1 = (p_mean - f_max)/sd
 
 		# Centre and normalize cdf input so it has zero mean and unit standard deviation
 		acq_mean = np.mean(acq1)
@@ -32,15 +27,15 @@ class PI(object):
 
 		# Find maximum of acquisition function and corresponding test input
 		ind = np.argmax(acq)
-		new_x = Xtest[ind]
+		new_x = smiles_test[ind]
 		
 		# Take first principal component as X axis for plotting
-		Xtest_axis = Xtest[:,0]	
+		#Xtest_axis = Xtest[:,0]	
 #		Xtrain_axis = Xtrain[:,0].reshape(-1,1)
 
 		# Plot posterior and acquisition function, showing preferred next observation
-		if plot==True:		
-			plotting.plot_acq(Xtest_axis, acq, p_mean, sd, Ytest=None)
+		#if plot==True:		
+		#	plotting.plot_acq(Xtest_axis, acq, p_mean, sd, Ytest=None)
 
 		return new_x, ind
 		
