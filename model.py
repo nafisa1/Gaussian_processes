@@ -148,11 +148,7 @@ class Model(object):
 		else:
 			new_x, ind = self.acq_func.compute(self.smiles_test, self.smiles_train, Ytrain, self.kernel, plot=True)
 
-		new_obs = self.Ytest[ind]		
-		print len(self.smiles_train)
-		print len(new_x)
-		print self.Ytrain.shape
-		print new_obs.shape
+		new_obs = self.Ytest[ind]	
 		self.smiles_train.append(new_x)
 #		self.smiles_train = np.vstack((self.smiles_train, new_x))
 		self.Ytrain = np.vstack((self.Ytrain, new_obs))
