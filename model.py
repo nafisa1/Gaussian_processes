@@ -141,7 +141,6 @@ class Model(object):
 	def optimization(self, plot=False):
 
 		Ytrain = utils.centre(self.Ytrain)
-		Ytest = utils.centre(self.Ytrain, self.Ytest)
 
 		if plot==False:
 			new_x, ind = self.acq_func.compute(self.smiles_test, self.smiles_train, Ytrain, self.kernel, plot=False)
