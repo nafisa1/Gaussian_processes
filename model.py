@@ -83,7 +83,7 @@ class Model(object):
 		
 		print "The kernel hyperparameters are: lengthscale", self.kernel.lengthscale,"signal variance", self.kernel.sig_var,"noise variance", self.kernel.noise_var,"."
 
-	def max_log_likelihood(self, opt_kernel=None):
+	def max_log_likelihood(self, opt_kernel=None, print=True):
 		final_points = []
 		log_likelihoods = []
 		centred_Ytrain = utils.centre(self.Ytrain.reshape(-1,1))
@@ -105,12 +105,14 @@ class Model(object):
 			starting_point.append(choice[0])
 			starting_point.append(choice[1])
 			final_point, ll = find_max_ll.run_opt(starting_point)
-			print final_point, ll
+			if print==True:
+				print final_point, ll
 			final_points.append(final_point)
 			log_likelihoods.append(ll)
 		index = np.argmin(log_likelihoods)
 		best_hparams = final_points[index]
-		print "Best hyperparameters:", best_hparams
+		if print==True:
+			print "Best hyperparameters:", best_hparams
 		self.kernel.lengthscale = best_hparams[0]
 		self.kernel.sig_var = best_hparams[1]
 
