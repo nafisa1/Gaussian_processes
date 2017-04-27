@@ -71,7 +71,7 @@ class Model(object):
 		
 		self.hparameter_choices = utils.LHS().combinations
 
-	def hyperparameters(self, frac_test=0.2, num_folds=10, max_ll=True, split=False, ll_kernel=None):
+	def hyperparameters(self, frac_test=0.2, num_folds=10, max_ll=True, print_vals=True, split=False, ll_kernel=None):
 		if split == True:
 			cross_val = cross_validation.Cross_Validation(self.X, self.Y, fraction_test=frac_test, n_folds=num_folds, n_kers=self.n_kers, threshold=self.threshold)
 			cross_val.order()
@@ -79,7 +79,7 @@ class Model(object):
 			best_noise_var, all_means, iteration_means = cross_val.repeated_CV(self.kernel, self.hparameter_choices, iterations=1, lhs_kern=self.kernel) # EDIT BACK TO 10 ITERATIONS
 			self.kernel.noise_var = best_noise_var
 		if max_ll == True:
-			self.max_log_likelihood(opt_kernel=ll_kernel)
+			self.max_log_likelihood(opt_kernel=ll_kernel, print_vals=print_vals)
 		
 		print "The kernel hyperparameters are: lengthscale", self.kernel.lengthscale,"signal variance", self.kernel.sig_var,"noise variance", self.kernel.noise_var,"."
 
@@ -96,7 +96,8 @@ class Model(object):
 		default_starting_point.append(self.kernel.lengthscale)
 		default_starting_point.append(self.kernel.sig_var)
 		final_point, ll = find_max_ll.run_opt(default_starting_point)
-		print final_point, ll
+		if print_vals==True:
+			print final_point, ll
 		final_points.append(final_point)
 		log_likelihoods.append(ll)
 
