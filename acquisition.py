@@ -75,6 +75,31 @@ class EI(object):
 
 		return new_x, ind
 
+class UCB(object):
+
+	def compute(self, smiles_test, smiles_train, Ytrain, kern, kappa=0.2, plot=False):
+		# Get posterior mean and standard deviation for test set
+		run = Regression(smiles_test=smiles_test, smiles_train=smiles_train, Ytrain=Ytrain, add_noise=0.01, kernel=kern, Ytest=None)
+		sd = run.post_s
+		p_mean = run.post_mean
+
+		# Calculate acquisition function
+		acq = p_mean - (kappa*sd)
+
+		# Find maximum of acquisition function and corresponding test input
+		ind = np.argmax(acq)
+		new_x = smiles_test[ind]
+		
+		# Take first principal component as X axis for plotting
+		#Xtest_axis = Xtest[:,0]	
+#		Xtrain_axis = Xtrain[:,0].reshape(-1,1)
+
+		#if plot==True:
+		# Plot posterior and acquisition function, showing preferred next observation
+		#	plotting.plot_acq(Xtest_axis, acq, p_mean, sd, Ytest=None)
+
+		return new_x, ind
+
 class LCB(object):
 
 	def compute(self, Xtest, Xtrain, Ytrain, kern, kappa=0.2, plot=False):
