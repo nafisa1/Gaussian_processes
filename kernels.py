@@ -3,7 +3,7 @@ from rdkit import Chem
 from rdkit import DataStructs
 import utils 
 
-def jit_chol(cov, attempts=10, print_jit=False):
+def jit_chol(cov, attempts=1000, print_jit=False):
     jitter = 0
     for i in xrange(attempts):
         try:
@@ -114,7 +114,7 @@ class Matern(object):
 				sim_row.append(self.sim_metric(fingerprintsA[i],fingerprintsB[j]))
 			sims.append(sim_row)
 		similarities = np.asarray(sims)
-		distances = 1 - similarities
+		distances = 1/similarities # changed
 		
 		if self.nu==0:
 			cov = self.sig_var*np.exp(-distances * (1/(self.lengthscale)))
