@@ -77,14 +77,17 @@ class EI(object):
 
 class UCB(object):
 
-	def compute(self, smiles_test, smiles_train, Ytrain, kern, kappa=0.2, plot=False):
+	def __init__(self, kappa=0.2):
+		self.kappa = kappa
+
+	def compute(self, smiles_test, smiles_train, Ytrain, kern, plot=False):
 		# Get posterior mean and standard deviation for test set
 		run = Regression(smiles_test=smiles_test, smiles_train=smiles_train, Ytrain=Ytrain, add_noise=0.01, kernel=kern, Ytest=None)
 		sd = run.post_s
 		p_mean = run.post_mean
 
 		# Calculate acquisition function
-		acq = p_mean - (kappa*sd)
+		acq = p_mean - (self.kappa*sd)
 
 		# Find maximum of acquisition function and corresponding test input
 		ind = np.argmax(acq)
