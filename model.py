@@ -93,8 +93,15 @@ class Model(object):
 			find_max_ll = max_likelihood.Max_LL(centred_Ytrain, opt_kernel)
 
 		default_starting_point = []
-		default_starting_point.append(self.kernel.lengthscale)
-		default_starting_point.append(self.kernel.sig_var)
+		
+		if isinstance(self.kernel, kernels.Composite):
+			for item in self.kernel.kers:
+				if item is not None:
+					default_starting_point.append(item.lengthscale)
+					default_starting_point.append(item.sig_var)
+		else:
+			default_starting_point.append(self.kernel.lengthscale)
+			default_starting_point.append(self.kernel.sig_var)
 		final_point, ll = find_max_ll.run_opt(default_starting_point)
 		if print_vals==True:
 			print final_point, ll
@@ -103,8 +110,14 @@ class Model(object):
 
 		for choice in self.hparameter_choices:
 			starting_point = []
-			starting_point.append(choice[0])
-			starting_point.append(choice[1])
+			if isinstance(self.kernel, kernels.Composite):
+				for item in self.kernel.kers:
+					if item is not None:
+						starting_point.append(choice[0])
+						starting_point.append(choice[1])
+			else:
+				starting_point.append(choice[0])
+				starting_point.append(choice[1])
 			final_point, ll = find_max_ll.run_opt(starting_point)
 			if print_vals==True:
 				print final_point, ll
@@ -114,8 +127,17 @@ class Model(object):
 		best_hparams = final_points[index]
 		if print_vals==True:
 			print "Best hyperparameters:", best_hparams
-		self.kernel.lengthscale = best_hparams[0]
-		self.kernel.sig_var = best_hparams[1]
+
+		if isinstance(self.kernel, kernels.Composite):
+			count = 0
+			for item in self.kernel.kers:
+				if item is not None:
+					item.lengthscale = best_hparams[count]
+					item.sig_var = best_hparams[count+1]
+					count +=2
+		else:
+			self.kernel.lengthscale = best_hparams[0]
+			self.kernel.sig_var = best_hparams[1]
 
 	def regression(self):
 		import regression
