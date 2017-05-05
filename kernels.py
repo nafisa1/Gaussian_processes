@@ -59,6 +59,38 @@ class OU_num(object):
 
 		return cov
 
+class Linear(object):
+	def __init__(self, sim_metric=DataStructs.TanimotoSimilarity, lengthscale=1, sig_var=1, noise_var=1, datatype='string', circ_radius=2, circular=True):
+		self.lengthscale = lengthscale
+		self.sig_var = sig_var
+		self.noise_var = noise_var
+		self.datatype = datatype
+		self.sim_metric = sim_metric
+		self.circ_radius = circ_radius
+		self.circular = circular
+
+	def compute(self, smilesA, smilesB, noise=False):
+
+		fingerprintsA = utils.get_fps(smilesA, circular=self.circular, radius=self.circ_radius)
+		fingerprintsB = utils.get_fps(smilesB, circular=self.circular, radius=self.circ_radius) 
+
+		sims = []
+		for i in xrange(len(smilesA)):
+			sim_row = []
+			for j in xrange(len(smilesB)):
+				sim_row.append(self.sim_metric(fingerprintsA[i],fingerprintsB[j]))
+			sims.append(sim_row)
+		similarities = np.asarray(sims)
+		distances = 1/similarities # changed
+		
+		cov = self.lengthscale + self.sig_var*distances # lengthscale is bias in this case
+
+		if noise==True:
+			cov = cov + (self.noise_var*np.eye(cov.shape[0]))
+
+		return cov
+
+
 class SMILES_RBF(object):
 	def __init__(self, sim_metric=DataStructs.TanimotoSimilarity, lengthscale=1, sig_var=1, noise_var=1, datatype='string', circ_radius=2, circular=True):
 		self.lengthscale = lengthscale
