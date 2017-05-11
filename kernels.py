@@ -18,6 +18,18 @@ def jit_chol(cov, attempts=1000, print_jit=False):
 	print "jitter = ", jitter
     return cov_chol, jitter
 
+class Kernel(object):
+	def __init__(self, sim_metric=DataStructs.TanimotoSimilarity, nu=0, lengthscale=1, sig_var=1, noise_var=1, datatype='string', circ_radius=2, circular=True, data_type=str):
+		self.nu = nu
+		self.lengthscale = lengthscale
+		self.sig_var = sig_var
+		self.noise_var = noise_var
+		self.datatype = datatype
+		self.sim_metric = sim_metric
+		self.circ_radius = circ_radius
+		self.circular = circular
+		self.data_type = data_type
+
 class RBF(object):
 #	Equivalent to:
 #       cov = np.zeros((a.shape[0],b.shape[0]))
@@ -114,7 +126,7 @@ radius=self.circ_radius)
 				sim_row.append(self.sim_metric(fingerprintsA[i],fingerprintsB[j]))
 			sims.append(sim_row)
 		similarities = np.asarray(sims)
-		distances = 1 - similarities
+		distances = 1 / similarities
 		sq_dist = distances**2
 		cov = self.sig_var*np.exp(-.5 * sq_dist * (1/(self.lengthscale**2)))
 
@@ -124,7 +136,7 @@ radius=self.circ_radius)
 		return cov
 
 class Matern(object):
-	def __init__(self, sim_metric=DataStructs.TanimotoSimilarity, nu=0, lengthscale=1, sig_var=1, noise_var=1, datatype='string', circ_radius=2, circular=True):
+	def __init__(self, sim_metric=DataStructs.TanimotoSimilarity, nu=0, lengthscale=1, sig_var=1, noise_var=1, datatype='string', circ_radius=2, circular=True, data_type=str):
 		self.nu = nu
 		self.lengthscale = lengthscale
 		self.sig_var = sig_var
@@ -133,6 +145,7 @@ class Matern(object):
 		self.sim_metric = sim_metric
 		self.circ_radius = circ_radius
 		self.circular = circular
+		self.data_type = data_type
 
 	def compute(self, smilesA, smilesB, noise=False):
 
@@ -181,7 +194,7 @@ class RQ(object):
 				sim_row.append(self.sim_metric(fingerprintsA[i],fingerprintsB[j]))
 			sims.append(sim_row)
 		similarities = np.asarray(sims)
-		distances = 1 - similarities
+		distances = 1 / similarities
 		sq_dist = distances ** 2
 		cov = (1 + sq_dist)**(-self.lengthscale)
 
@@ -213,7 +226,7 @@ class Periodic(object):
 				sim_row.append(self.sim_metric(fingerprintsA[i],fingerprintsB[j]))
 			sims.append(sim_row)
 		similarities = np.asarray(sims)
-		distances = 1 - similarities
+		distances = 1 / similarities
 		
 		cov = self.sig_var*np.exp(-2*((np.sin(distances/2))**2)/(self.lengthscale**2))
 
