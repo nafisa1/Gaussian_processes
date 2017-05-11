@@ -32,8 +32,8 @@ class Max_LL(object):
 	def opt_hyp_composite(self, hyp):
 		if isinstance(self.kernel, kernels.Composite):
 			count = 0
-			for i in xrange(self.kernel.nkers):
-				for item in self.kernel.kers:
+			for item in self.kernel.kers:
+				if item is not None:
 					item.lengthscale = hyp[count]
 					item.sig_var = hyp[count+1]
 					count +=2
@@ -44,7 +44,7 @@ class Max_LL(object):
 		if isinstance(self.kernel, kernels.Composite):
 			min_hyp = minimize(self.opt_hyp_composite, hyp, method='l-bfgs-b', bounds=((0.01,2.0),(0.5,7.0),(0.01,2.0),(0.5,7.0)), options={'disp':True}) 
 		else:
-			min_hyp = minimize(self.opt_hyp, hyp, method='l-bfgs-b', bounds=((0.01,2.0),(0.5,7.0)), options={'disp':True}) 
+			min_hyp = minimize(self.opt_hyp, hyp, method='l-bfgs-b', bounds=((0.01,10.0),(0.5,7.0)), options={'disp':True}) 
 		#log_likelihoods = [] # save for plotting / get function values from optimizer?
 		return min_hyp.x, min_hyp.fun
 
