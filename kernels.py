@@ -30,6 +30,23 @@ class Kernel(object):
 		self.circular = circular
 		self.data_type = data_type
 
+		if isinstance(a[0], str) == True:
+
+			fingerprintsA = utils.get_fps(a, circular=self.circular, radius=self.circ_radius)
+			fingerprintsB = utils.get_fps(a, circular=self.circular, radius=self.circ_radius) 
+
+			sims = []
+			for i in xrange(len(a)):
+				sim_row = []
+				for j in xrange(len(b)):
+					sim_row.append(self.sim_metric(fingerprintsA[i],fingerprintsB[j]))
+				sims.append(sim_row)
+			similarities = np.asarray(sims)
+			self.distances = 1/similarities # changed
+
+		else:
+			self.distances = np.absolute(np.sum(a, 1).reshape(-1, 1) - np.sum(b, 1))
+
 class RBF(object):
 #	Equivalent to:
 #       cov = np.zeros((a.shape[0],b.shape[0]))
@@ -147,19 +164,24 @@ class Matern(object):
 		self.circular = circular
 		self.data_type = data_type
 
-	def compute(self, smilesA, smilesB, noise=False):
+	def compute(self, a, b, noise=False):
 
-		fingerprintsA = utils.get_fps(smilesA, circular=self.circular, radius=self.circ_radius)
-		fingerprintsB = utils.get_fps(smilesB, circular=self.circular, radius=self.circ_radius) 
+		if isinstance(a[0], str) == True:
 
-		sims = []
-		for i in xrange(len(smilesA)):
-			sim_row = []
-			for j in xrange(len(smilesB)):
-				sim_row.append(self.sim_metric(fingerprintsA[i],fingerprintsB[j]))
-			sims.append(sim_row)
-		similarities = np.asarray(sims)
-		distances = 1/similarities # changed
+			fingerprintsA = utils.get_fps(a, circular=self.circular, radius=self.circ_radius)
+			fingerprintsB = utils.get_fps(a, circular=self.circular, radius=self.circ_radius) 
+
+			sims = []
+			for i in xrange(len(a)):
+				sim_row = []
+				for j in xrange(len(b)):
+					sim_row.append(self.sim_metric(fingerprintsA[i],fingerprintsB[j]))
+				sims.append(sim_row)
+			similarities = np.asarray(sims)
+			distances = 1/similarities # changed
+
+		else:
+			distances = np.absolute(np.sum(a, 1).reshape(-1, 1) - np.sum(b, 1))
 		
 		if self.nu==0:
 			cov = self.sig_var*np.exp(-distances * (1/(self.lengthscale)))
