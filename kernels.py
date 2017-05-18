@@ -22,12 +22,13 @@ def distance(a, b, sim_metric, circ_radius, circular):
 	if isinstance(a[0], str) == True:
 
 		fingerprintsA = utils.get_fps(a, circular=circular, radius=circ_radius)
-		fingerprintsB = utils.get_fps(a, circular=circular, radius=circ_radius) 
+		fingerprintsB = utils.get_fps(b, circular=circular, radius=circ_radius) 
 
 		sims = []
+
 		for i in xrange(len(a)):
 			sim_row = []
-			for j in xrange(len(b)):
+			for j in xrange(len(b)):			
 				sim_row.append(sim_metric(fingerprintsA[i],fingerprintsB[j]))
 			sims.append(sim_row)
 		similarities = np.asarray(sims)
@@ -168,16 +169,16 @@ class Composite(object):
 				nkers += 1
 		self.nkers = nkers
 	
-	def compute(self, numA=None, numB=None, smilesA=None, smilesB=None, noise=False):
+	def compute(self, smilesA, smilesB, noise=False):
 		covs = []
 		for item in self.kers:
 			if item is not None:
-				if item.datatype == 'numerical':
-					item_cov = item.compute(numA, numB)
-					covs.append(item_cov)
-				else:
-					item_cov = item.compute(smilesA, smilesB)
-					covs.append(item_cov)
+#				if item.datatype == 'numerical':
+#					item_cov = item.compute(numA, numB)
+#					covs.append(item_cov)
+#				else:
+				item_cov = item.compute(smilesA, smilesB)
+				covs.append(item_cov)
 		covs = np.asarray(covs)
 		cov = np.sum(covs, axis=0)
 
