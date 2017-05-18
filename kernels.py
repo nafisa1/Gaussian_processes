@@ -18,75 +18,25 @@ def jit_chol(cov, attempts=1000, print_jit=False):
 	print "jitter = ", jitter
     return cov_chol, jitter
 
-class Kernel(object):
-	def __init__(self, sim_metric=DataStructs.TanimotoSimilarity, nu=0, lengthscale=1, sig_var=1, noise_var=1, datatype='string', circ_radius=2, circular=True, data_type=str):
-		self.nu = nu
-		self.lengthscale = lengthscale
-		self.sig_var = sig_var
-		self.noise_var = noise_var
-		self.datatype = datatype
-		self.sim_metric = sim_metric
-		self.circ_radius = circ_radius
-		self.circular = circular
-		self.data_type = data_type
+def distance(a, b, sim_metric, circ_radius, circular):
+	if isinstance(a[0], str) == True:
 
-		if isinstance(a[0], str) == True:
+		fingerprintsA = utils.get_fps(a, circular=circular, radius=circ_radius)
+		fingerprintsB = utils.get_fps(a, circular=circular, radius=circ_radius) 
 
-			fingerprintsA = utils.get_fps(a, circular=self.circular, radius=self.circ_radius)
-			fingerprintsB = utils.get_fps(a, circular=self.circular, radius=self.circ_radius) 
+		sims = []
+		for i in xrange(len(a)):
+			sim_row = []
+			for j in xrange(len(b)):
+				sim_row.append(sim_metric(fingerprintsA[i],fingerprintsB[j]))
+			sims.append(sim_row)
+		similarities = np.asarray(sims)
+		distances = 1/similarities 
 
-			sims = []
-			for i in xrange(len(a)):
-				sim_row = []
-				for j in xrange(len(b)):
-					sim_row.append(self.sim_metric(fingerprintsA[i],fingerprintsB[j]))
-				sims.append(sim_row)
-			similarities = np.asarray(sims)
-			self.distances = 1/similarities # changed
-
-		else:
-			self.distances = np.absolute(np.sum(a, 1).reshape(-1, 1) - np.sum(b, 1))
-
-class RBF(object):
-#	Equivalent to:
-#       cov = np.zeros((a.shape[0],b.shape[0]))
-#       for i in range(0,a.shape[0]):
-#           for j in range(0,b.shape[0]):
-#               cov[i][j] = np.exp(-.5 * (1/lengthscale**2) * ((a[i]-b[j])**2))
-#       return cov
-
-	def __init__(self, lengthscale=1, sig_var=1, noise_var=1, datatype='numerical'):
-		self.lengthscale = lengthscale
-		self.sig_var = sig_var
-		self.noise_var = noise_var
-		self.datatype = datatype
-
-	def compute(self, a, b, noise=False):	       		
-		sq_dist = np.sum(a**2, 1).reshape(-1, 1) + np.sum(b**2, 1) - 2*np.dot(a, b.T)
-	        cov = np.exp(-.5 * (1/(self.lengthscale**2)) * sq_dist)
-		cov = (self.sig_var*cov)
-
-		if noise==True:
-			cov = cov + (self.noise_var*np.eye(cov.shape[0]))
-
-		return cov
-
-class OU_num(object):
-
-	def __init__(self, lengthscale=1, sig_var=1, noise_var=1, datatype='numerical'):
-		self.lengthscale = lengthscale
-		self.sig_var = sig_var
-		self.noise_var = noise_var
-		self.datatype = datatype
-
-	def compute(self, a, b, noise=False):	       		
+	else:
 		distances = np.absolute(np.sum(a, 1).reshape(-1, 1) - np.sum(b, 1))
-		cov = self.sig_var*np.exp(-distances * (1/(self.lengthscale)))
 
-		if noise==True:
-			cov = cov + (self.noise_var*np.eye(cov.shape[0]))
-
-		return cov
+	return distances
 
 class Linear(object):
 	def __init__(self, sim_metric=DataStructs.TanimotoSimilarity, lengthscale=1, sig_var=1, noise_var=1, datatype='string', circ_radius=2, circular=True):
@@ -100,18 +50,7 @@ class Linear(object):
 
 	def compute(self, smilesA, smilesB, noise=False):
 
-		fingerprintsA = utils.get_fps(smilesA, circular=self.circular, radius=self.circ_radius)
-		fingerprintsB = utils.get_fps(smilesB, circular=self.circular, radius=self.circ_radius) 
-
-		sims = []
-		for i in xrange(len(smilesA)):
-			sim_row = []
-			for j in xrange(len(smilesB)):
-				sim_row.append(self.sim_metric(fingerprintsA[i],fingerprintsB[j]))
-			sims.append(sim_row)
-		similarities = np.asarray(sims)
-		distances = 1/similarities # changed
-		
+		distances = distance(a, b, self.sim_metric, self.circ_radius, self.circular)		
 		cov = self.lengthscale + self.sig_var*distances # lengthscale is bias in this case
 
 		if noise==True:
@@ -120,7 +59,7 @@ class Linear(object):
 		return cov
 
 
-class SMILES_RBF(object):
+class RBF(object):
 	def __init__(self, sim_metric=DataStructs.TanimotoSimilarity, lengthscale=1, sig_var=1, noise_var=1, datatype='string', circ_radius=2, circular=True):
 		self.lengthscale = lengthscale
 		self.sig_var = sig_var
@@ -130,20 +69,9 @@ class SMILES_RBF(object):
 		self.circ_radius = circ_radius
 		self.circular = circular
 
-	def compute(self, smilesA, smilesB, noise=False):
+	def compute(self, a, b, noise=False):
 
-		fingerprintsA = utils.get_fps(smilesA, circular=self.circular, radius=self.circ_radius)
-		fingerprintsB = utils.get_fps(smilesB, circular=self.circular,
-radius=self.circ_radius) 
-
-		sims = []
-		for i in xrange(len(smilesA)):
-			sim_row = []
-			for j in xrange(len(smilesB)):
-				sim_row.append(self.sim_metric(fingerprintsA[i],fingerprintsB[j]))
-			sims.append(sim_row)
-		similarities = np.asarray(sims)
-		distances = 1 / similarities
+		distances = distance(a, b, self.sim_metric, self.circ_radius, self.circular)
 		sq_dist = distances**2
 		cov = self.sig_var*np.exp(-.5 * sq_dist * (1/(self.lengthscale**2)))
 
@@ -154,6 +82,7 @@ radius=self.circ_radius)
 
 class Matern(object):
 	def __init__(self, sim_metric=DataStructs.TanimotoSimilarity, nu=0, lengthscale=1, sig_var=1, noise_var=1, datatype='string', circ_radius=2, circular=True, data_type=str):
+
 		self.nu = nu
 		self.lengthscale = lengthscale
 		self.sig_var = sig_var
@@ -165,23 +94,8 @@ class Matern(object):
 		self.data_type = data_type
 
 	def compute(self, a, b, noise=False):
-
-		if isinstance(a[0], str) == True:
-
-			fingerprintsA = utils.get_fps(a, circular=self.circular, radius=self.circ_radius)
-			fingerprintsB = utils.get_fps(a, circular=self.circular, radius=self.circ_radius) 
-
-			sims = []
-			for i in xrange(len(a)):
-				sim_row = []
-				for j in xrange(len(b)):
-					sim_row.append(self.sim_metric(fingerprintsA[i],fingerprintsB[j]))
-				sims.append(sim_row)
-			similarities = np.asarray(sims)
-			distances = 1/similarities # changed
-
-		else:
-			distances = np.absolute(np.sum(a, 1).reshape(-1, 1) - np.sum(b, 1))
+		
+		distances = distance(a, b, self.sim_metric, self.circ_radius, self.circular)
 		
 		if self.nu==0:
 			cov = self.sig_var*np.exp(-distances * (1/(self.lengthscale)))
@@ -206,17 +120,7 @@ class RQ(object):
 
 	def compute(self, smilesA, smilesB, noise=False):
 
-		fingerprintsA = utils.get_fps(smilesA, circular=self.circular, radius=self.circ_radius)
-		fingerprintsB = utils.get_fps(smilesB, circular=self.circular, radius=self.circ_radius)
-
-		sims = []
-		for i in xrange(len(smilesA)):
-			sim_row = []
-			for j in xrange(len(smilesB)):
-				sim_row.append(self.sim_metric(fingerprintsA[i],fingerprintsB[j]))
-			sims.append(sim_row)
-		similarities = np.asarray(sims)
-		distances = 1 / similarities
+		distances = distance(a, b, self.sim_metric, self.circ_radius, self.circular)
 		sq_dist = distances ** 2
 		cov = (1 + sq_dist)**(-self.lengthscale)
 
@@ -238,18 +142,7 @@ class Periodic(object):
 
 	def compute(self, smilesA, smilesB, noise=False):
 
-		fingerprintsA = utils.get_fps(smilesA, circular=self.circular, radius=self.circ_radius)
-		fingerprintsB = utils.get_fps(smilesB, circular=self.circular, radius=self.circ_radius) 
-
-		sims = []
-		for i in xrange(len(smilesA)):
-			sim_row = []
-			for j in xrange(len(smilesB)):
-				sim_row.append(self.sim_metric(fingerprintsA[i],fingerprintsB[j]))
-			sims.append(sim_row)
-		similarities = np.asarray(sims)
-		distances = 1 / similarities
-		
+		distances = distance(a, b, self.sim_metric, self.circ_radius, self.circular)
 		cov = self.sig_var*np.exp(-2*((np.sin(distances/2))**2)/(self.lengthscale**2))
 
 		if noise==True:
