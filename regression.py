@@ -26,12 +26,12 @@ class Regression(object):
  				train_test_cov = self.kernel.compute(numA=self.Xtrain, numB=self.Xtest, smilesA=self.smiles_train, smilesB=self.smiles_test)
 			
 			elif self.Xtrain is None and self.smiles_train is not None:
-				Xtrain_cov = self.kernel.compute(smilesA=self.smiles_train, smilesB=self.smiles_train, noise=True)
- 				train_test_cov = self.kernel.compute(smilesA=self.smiles_train, smilesB=self.smiles_test)
+				Xtrain_cov = self.kernel.compute(self.smiles_train, self.smiles_train, noise=True)
+ 				train_test_cov = self.kernel.compute(self.smiles_train, self.smiles_test)
 
 			elif self.Xtrain is not None and self.smiles_train is None:
-				Xtrain_cov = self.kernel.compute(numA=self.Xtrain, numB=self.Xtrain, noise=True)
- 				train_test_cov = self.kernel.compute(numA=self.Xtrain, numB=self.Xtest)
+				Xtrain_cov = self.kernel.compute(self.Xtrain, self.Xtrain, noise=True)
+ 				train_test_cov = self.kernel.compute(self.Xtrain, self.Xtest)
 
 		elif self.Xtrain is not None:
 			Xtrain_cov = self.kernel.compute(self.Xtrain, self.Xtrain, noise=True)
@@ -54,10 +54,10 @@ class Regression(object):
 				test_cov = self.kernel.compute(numA=self.Xtest, numB=self.Xtest, smilesA=self.smiles_test, smilesB=self.smiles_test)
 			
 			elif self.Xtrain is None and self.smiles_train is not None:
-				test_cov = self.kernel.compute(smilesA=self.smiles_test, smilesB=self.smiles_test)
+				test_cov = self.kernel.compute(self.smiles_test, self.smiles_test)
 
 			elif self.Xtrain is not None and self.smiles_train is None:
-				test_cov = self.kernel.compute(numA=self.Xtest, numB=self.Xtest)
+				test_cov = self.kernel.compute(self.Xtest, self.Xtest)
 
 		elif self.Xtrain is not None:
 			test_cov = self.kernel.compute(self.Xtest,self.Xtest)
