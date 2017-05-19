@@ -119,7 +119,7 @@ class RQ(object):
 		self.circ_radius = circ_radius
 		self.circular = circular
 
-	def compute(self, smilesA, smilesB, noise=False):
+	def compute(self, a, b, noise=False):
 
 		distances = distance(a, b, self.sim_metric, self.circ_radius, self.circular)
 		sq_dist = distances ** 2
@@ -131,8 +131,7 @@ class RQ(object):
 		return cov
 
 class Periodic(object):
-	def __init__(self, sim_metric=DataStructs.TanimotoSimilarity, nu=0, lengthscale=1, sig_var=1, noise_var=1, datatype='string', circ_radius=2, circular=True):
-		self.nu = nu
+	def __init__(self, sim_metric=DataStructs.TanimotoSimilarity, lengthscale=1, sig_var=1, noise_var=1, datatype='string', circ_radius=2, circular=True):
 		self.lengthscale = lengthscale
 		self.sig_var = sig_var
 		self.noise_var = noise_var
@@ -141,7 +140,7 @@ class Periodic(object):
 		self.circ_radius = circ_radius
 		self.circular = circular
 
-	def compute(self, smilesA, smilesB, noise=False):
+	def compute(self, a, b, noise=False):
 
 		distances = distance(a, b, self.sim_metric, self.circ_radius, self.circular)
 		cov = self.sig_var*np.exp(-2*((np.sin(distances/2))**2)/(self.lengthscale**2))
