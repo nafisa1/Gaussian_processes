@@ -24,12 +24,6 @@ class Max_LL(object):
 		return log_l
 
 	def opt_hyp(self, hyp):
-		self.kernel.lengthscale=hyp[0]
-		self.kernel.sig_var=hyp[1]
-		log_l = self.log_lik()
-		return -log_l
-
-	def opt_hyp_composite(self, hyp):
 		if isinstance(self.kernel, kernels.Composite):
 			count = 0
 			for item in self.kernel.kers:
@@ -37,12 +31,17 @@ class Max_LL(object):
 					item.lengthscale = hyp[count]
 					item.sig_var = hyp[count+1]
 					count +=2
+		else:
+
+			self.kernel.lengthscale=hyp[0]
+			self.kernel.sig_var=hyp[1]
+	
 		log_l = self.log_lik()
 		return -log_l
 
 	def run_opt(self, hyp):
 		if isinstance(self.kernel, kernels.Composite):
-			min_hyp = minimize(self.opt_hyp_composite, hyp, method='l-bfgs-b', bounds=((0.01,2.0),(0.5,7.0),(0.01,2.0),(0.5,7.0)), options={'disp':True}) 
+			min_hyp = minimize(self.opt_hyp, hyp, method='l-bfgs-b', bounds=((0.01,2.0),(0.5,7.0),(0.01,2.0),(0.5,7.0)), options={'disp':True}) 
 		else:
 			min_hyp = minimize(self.opt_hyp, hyp, method='l-bfgs-b', bounds=((0.01,10.0),(0.5,7.0)), options={'disp':True}) 
 		#log_likelihoods = [] # save for plotting / get function values from optimizer?
