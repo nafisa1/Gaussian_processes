@@ -236,21 +236,18 @@ def classif(pred,ytest,t,roc=False):
 
 # Latin hypercube sampling
 
-class LHS(object):
-	def __init__(self, parameters=2, n_choices=5, lower=[0.01,1,0.001], upper=[10.0,7.0,0.01], divisions=[11,11,11]):
-		self.parameters = parameters
-		self.divisions = divisions
-		self.lower = lower
-		self.upper = upper
-		
-		import itertools
-		scales = []
-		for i in xrange(parameters):
-			scale = np.linspace(lower[i],upper[i],divisions[i])
-			scales.append(scale)
-		noise_scale = np.linspace(lower[-1],upper[-1],divisions[-1])
-		scales.append(noise_scale)
+def LHS(parameters=2, n_choices=5, lower=[0.01,1], upper=[10.0,7.0], divisions=[11,11]):
+	
+	import itertools
+	scales = []
+	for i in xrange(parameters):
+		if i % 2 == 0:
+			scale = np.linspace(lower[0],upper[0],divisions[0])
+		else:
+			scale = np.linspace(lower[1],upper[1],divisions[1])
+		scales.append(scale)
 
-		all_combs = np.asarray(list(itertools.product(*scales)))
+	all_combs = np.asarray(list(itertools.product(*scales)))
 
-		self.combinations = all_combs[np.random.randint(all_combs.shape[0], size=n_choices),:]
+	combinations = all_combs[np.random.randint(all_combs.shape[0], size=n_choices),:]
+	return combinations
