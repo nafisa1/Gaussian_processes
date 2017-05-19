@@ -69,9 +69,9 @@ class Model(object):
 			# subtract training prior mean from Ytrain values
 			self.Ytrain = self.Ytrain - prior_train
 		
-		self.hparameter_choices = utils.LHS().combinations
+		self.hparameter_choices = utils.LHS(parameters=n_kers*2)
 
-	def hyperparameters(self, frac_test=0.2, num_folds=10, max_ll=True, print_vals=True, split=False, ll_kernel=None):
+	def hyperparameters(self, frac_test=0.2, num_folds=10, max_ll=True, print_vals=True, split=False):
 		if split == True:
 			cross_val = cross_validation.Cross_Validation(self.X, self.Y, fraction_test=frac_test, n_folds=num_folds, n_kers=self.n_kers, threshold=self.threshold)
 			cross_val.order()
@@ -79,18 +79,17 @@ class Model(object):
 			best_noise_var, all_means, iteration_means = cross_val.repeated_CV(self.kernel, self.hparameter_choices, iterations=1, lhs_kern=self.kernel) # EDIT BACK TO 10 ITERATIONS
 			self.kernel.noise_var = best_noise_var
 		if max_ll == True:
-			self.max_log_likelihood(opt_kernel=ll_kernel, print_vals=print_vals)
+			best_hparams = self.max_log_likelihood(print_vals=print_vals)
 		
-		print "The kernel hyperparameters are: lengthscale", self.kernel.lengthscale,"signal variance", self.kernel.sig_var,"noise variance", self.kernel.noise_var,"."
+		print best_hparams #"The kernel hyperparameters are: lengthscale", self.kernel.lengthscale,"signal variance", self.kernel.sig_var,"noise variance", self.kernel.noise_var,"."
 
-	def max_log_likelihood(self, opt_kernel=None, print_vals=True):
+	def max_log_likelihood(self, print_vals=True):
+
 		final_points = []
 		log_likelihoods = []
 		centred_Ytrain = utils.centre(self.Ytrain.reshape(-1,1))
-		if opt_kernel is None:
-			find_max_ll = max_likelihood.Max_LL(centred_Ytrain, self.kernel)
-		else:
-			find_max_ll = max_likelihood.Max_LL(centred_Ytrain, opt_kernel)
+		
+		find_max_ll = max_likelihood.Max_LL(centred_Ytrain, self.kernel)
 
 		default_starting_point = []
 		
@@ -114,11 +113,12 @@ class Model(object):
 				for item in self.kernel.kers:
 					if item is not None:
 						starting_point.append(choice[0])
-						starting_point.append(choice[1])
+						starting_point.append(choice[1]) # check this is correct
 			else:
 				starting_point.append(choice[0])
 				starting_point.append(choice[1])
 			final_point, ll = find_max_ll.run_opt(starting_point)
+
 			if print_vals==True:
 				print final_point, ll
 			final_points.append(final_point)
@@ -138,6 +138,8 @@ class Model(object):
 		else:
 			self.kernel.lengthscale = best_hparams[0]
 			self.kernel.sig_var = best_hparams[1]
+
+		return best_hparams
 
 	def regression(self):
 		import regression
