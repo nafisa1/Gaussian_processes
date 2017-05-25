@@ -49,7 +49,7 @@ class Linear(object):
 		self.circ_radius = circ_radius
 		self.circular = circular
 
-	def compute(self, smilesA, smilesB, noise=False):
+	def compute(self, a, b, noise=False):
 
 		distances = distance(a, b, self.sim_metric, self.circ_radius, self.circular)		
 		cov = self.lengthscale + self.sig_var*distances # lengthscale is bias in this case
