@@ -87,11 +87,12 @@ class UCB(object):
 		p_mean = run.post_mean
 
 		# Calculate acquisition function
-		acq = p_mean - (self.kappa*sd)
+		acq = p_mean + (self.kappa*sd)
 
 		# Find maximum of acquisition function and corresponding test input
 		ind = np.argmax(acq)
 		new_x = smiles_test[ind]
+		print max(acq)
 		
 		# Take first principal component as X axis for plotting
 		#Xtest_axis = Xtest[:,0]	
