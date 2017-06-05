@@ -7,7 +7,7 @@ import max_likelihood
 
 class Model(object):
 
-	def __init__(self, n_kers=1, pca=False, print_jit=False, latent_dim=None, X=None, Y=None, Ytrain=None, Ytest=None, Xtrain=None, Xtest=None, smiles_train=None, smiles_test=None, kernel=None, prior_train=None, prior_test=None, acq_func=None, threshold=None):
+	def __init__(self, n_kers=1, pca=False, print_jit=False, latent_dim=None, X=None, Y=None, Ytrain=None, Ytest=None, Xtrain=None, Xtest=None, kernel=None, prior_train=None, prior_test=None, acq_func=None, threshold=None):
 
 		self.n_kers = n_kers # Update kernel module so number of kernels is given
 		self.pca = pca
@@ -19,8 +19,6 @@ class Model(object):
 		self.Xtest = Xtest
 		self.Ytrain = Ytrain
 		self.Ytest = Ytest
-		self.smiles_train = smiles_train
-		self.smiles_test = smiles_test
 		self.kernel = kernel
 		self.prior_train = prior_train
 		self.prior_test = prior_test
@@ -75,7 +73,7 @@ class Model(object):
 		if split == True:
 			cross_val = cross_validation.Cross_Validation(self.X, self.Y, fraction_test=frac_test, n_folds=num_folds, n_kers=self.n_kers, threshold=self.threshold)
 			cross_val.order()
-			self.smiles_test, self.Ytest, self.smiles_train, self.Ytrain = cross_val.get_test_set()
+			self.Xtest, self.Ytest, self.Xtrain, self.Ytrain = cross_val.get_test_set()
 			best_noise_var, all_means, iteration_means = cross_val.repeated_CV(self.kernel, self.hparameter_choices, iterations=1, lhs_kern=self.kernel) # EDIT BACK TO 10 ITERATIONS
 			self.kernel.noise_var = best_noise_var
 		if max_ll == True:
@@ -154,14 +152,7 @@ class Model(object):
 
 		Ytest = utils.centre(self.Ytrain, self.Ytest)
 
-		if self.Xtrain is None:
-			regress = regression.Regression(Ytrain, Ytest, smiles_train=self.smiles_train, smiles_test=self.smiles_test, kernel=self.kernel, cent_threshold=c_threshold)
-
-		elif self.smiles_train is None:
-			regress = regression.Regression(Ytrain, Ytest, Xtrain=self.Xtrain, Xtest=self.Xtest, kernel=self.kernel, cent_threshold=c_threshold)
-
-		else:
-			regress = regression.Regression(Ytrain, Ytest, Xtrain=self.Xtrain, Xtest=self.Xtest, smiles_train=self.smiles_train, smiles_test=self.smiles_test, kernel=self.kernel, cent_threshold=c_threshold)
+		regress = regression.Regression(Ytrain, Ytest=Ytest, Xtrain=self.Xtrain, Xtest=self.Xtest, kernel=self.kernel, cent_threshold=c_threshold)
 
 		return regress
 
@@ -170,17 +161,17 @@ class Model(object):
 		Ytrain = utils.centre(self.Ytrain)
 
 		if plot==False:
-			new_x, ind = self.acq_func.compute(self.smiles_test, self.smiles_train, Ytrain, self.kernel, plot=False)
+			new_x, ind = self.acq_func.compute(self.Xtest, self.Xtrain, Ytrain, self.kernel, plot=False)
 		else:
-			new_x, ind = self.acq_func.compute(self.smiles_test, self.smiles_train, Ytrain, self.kernel, plot=True)
+			new_x, ind = self.acq_func.compute(self.Xtest, self.Xtrain, Ytrain, self.kernel, plot=True)
 
 		new_obs = self.Ytest[ind]	
-		self.smiles_train.append(new_x)
-#		self.smiles_train = np.vstack((self.smiles_train, new_x))
+		self.Xtrain.append(new_x)
+#		self.Xtrain = np.vstack((self.Xtrain, new_x))
 		self.Ytrain = np.vstack((self.Ytrain, new_obs))
 
-		del self.smiles_test[ind]
-#		self.smiles_test = np.delete(self.smiles_test, ind, axis=0)
+		del self.Xtest[ind]
+#		self.Xtest = np.delete(self.Xtest, ind, axis=0)
 		self.Ytest = np.delete(self.Ytest, ind, axis=0)
 
 		return new_x
