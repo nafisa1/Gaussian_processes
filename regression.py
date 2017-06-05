@@ -10,8 +10,6 @@ class Regression(object):
 	def __init__(self, Ytrain, kernel=kernels.RBF(), add_noise=0.01, print_jit=False, Ytest=None, Xtest=None, Xtrain=None, cent_threshold=None):
 		self.Xtest = Xtest
 		self.Xtrain = Xtrain
-		self.smiles_train = smiles_train
-		self.smiles_test = smiles_test
 		self.Ytest = Ytest
 		self.Ytrain = Ytrain
 		self.add_noise = add_noise
