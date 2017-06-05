@@ -166,17 +166,13 @@ class Composite(object):
 		for item in self.kers:
 			if item is not None:
 				nkers += 1
-		self.nkers = nkers
+		self.n_kers = n_kers
 	
-	def compute(self, smilesA, smilesB, noise=False):
+	def compute(self, inputA, inputB, noise=False):
 		covs = []
 		for item in self.kers:
 			if item is not None:
-#				if item.datatype == 'numerical':
-#					item_cov = item.compute(numA, numB)
-#					covs.append(item_cov)
-#				else:
-				item_cov = item.compute(smilesA, smilesB)
+				item_cov = item.compute(inputA, inputB)
 				covs.append(item_cov)
 		covs = np.asarray(covs)
 		cov = np.sum(covs, axis=0)
