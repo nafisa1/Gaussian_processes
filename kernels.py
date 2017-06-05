@@ -162,17 +162,17 @@ class Composite(object):
 
 		self.kers = [self.kern1, self.kern2, self.kern3, self.kern4, self.kern5, self.kern6]
 
-		nkers = 0
+		n_kers = 0
 		for item in self.kers:
 			if item is not None:
-				nkers += 1
+				n_kers += 1
 		self.n_kers = n_kers
 	
 	def compute(self, inputA, inputB, noise=False):
 		covs = []
-		for item in self.kers:
+		for x,item in enumerate(self.kers):
 			if item is not None:
-				item_cov = item.compute(inputA, inputB)
+				item_cov = item.compute(inputA[x], inputB[x])
 				covs.append(item_cov)
 		covs = np.asarray(covs)
 		cov = np.sum(covs, axis=0)
