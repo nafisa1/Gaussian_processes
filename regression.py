@@ -7,7 +7,7 @@ import utils
 
 class Regression(object):
 
-	def __init__(self, Ytrain, Ytest, kernel=kernels.RBF(), add_noise=0.01, print_jit=False, Xtest=None, Xtrain=None, smiles_train=None, smiles_test=None, cent_threshold=None):
+	def __init__(self, Ytrain, kernel=kernels.RBF(), add_noise=0.01, print_jit=False, Ytest=None, Xtest=None, Xtrain=None, cent_threshold=None):
 		self.Xtest = Xtest
 		self.Xtrain = Xtrain
 		self.smiles_train = smiles_train
@@ -20,26 +20,8 @@ class Regression(object):
 		self.print_jit = print_jit
 		
 		# Compute posterior mean vector
-		if isinstance(self.kernel, kernels.Composite):
-			if self.Xtrain is not None and self.smiles_train is not None:
-				Xtrain_cov = self.kernel.compute(numA=self.Xtrain, numB=self.Xtrain, smilesA=self.smiles_train, smilesB=self.smiles_train, noise=True)
- 				train_test_cov = self.kernel.compute(numA=self.Xtrain, numB=self.Xtest, smilesA=self.smiles_train, smilesB=self.smiles_test)
-			
-			elif self.Xtrain is None and self.smiles_train is not None:
-				Xtrain_cov = self.kernel.compute(self.smiles_train, self.smiles_train, noise=True)
- 				train_test_cov = self.kernel.compute(self.smiles_train, self.smiles_test)
-
-			elif self.Xtrain is not None and self.smiles_train is None:
-				Xtrain_cov = self.kernel.compute(self.Xtrain, self.Xtrain, noise=True)
- 				train_test_cov = self.kernel.compute(self.Xtrain, self.Xtest)
-
-		elif self.Xtrain is not None:
-			Xtrain_cov = self.kernel.compute(self.Xtrain, self.Xtrain, noise=True)
- 			train_test_cov = self.kernel.compute(self.Xtrain, self.Xtest)
-
-		else:
-			Xtrain_cov = self.kernel.compute(self.smiles_train, self.smiles_train, noise=True)
- 			train_test_cov = self.kernel.compute(self.smiles_train, self.smiles_test)
+		Xtrain_cov = self.kernel.compute(self.Xtrain, self.Xtrain, noise=True)
+		train_test_cov = self.kernel.compute(self.Xtrain, self.Xtest)
 		
 		tr_chol, jitter = kernels.jit_chol(Xtrain_cov, print_jit=self.print_jit) 
 		trtecov_div_trchol = np.linalg.solve(tr_chol,train_test_cov)
@@ -49,23 +31,7 @@ class Regression(object):
 		self.post_mean = post_mean + noise
 
  		# Compute posterior standard deviation and uncertainty bounds
-		if isinstance(self.kernel, kernels.Composite):
-			if self.Xtrain is not None and self.smiles_train is not None:
-				test_cov = self.kernel.compute(numA=self.Xtest, numB=self.Xtest, smilesA=self.smiles_test, smilesB=self.smiles_test)
-			
-			elif self.Xtrain is None and self.smiles_train is not None:
-				test_cov = self.kernel.compute(self.smiles_test, self.smiles_test)
-
-			elif self.Xtrain is not None and self.smiles_train is None:
-				test_cov = self.kernel.compute(self.Xtest, self.Xtest)
-
-		elif self.Xtrain is not None:
-			test_cov = self.kernel.compute(self.Xtest,self.Xtest)
-
-		else:
-			test_cov = self.kernel.compute(self.smiles_test, self.smiles_test)
-		
-		test_cov = test_cov + (self.kernel.noise_var*np.eye(test_cov.shape[0]))			
+		test_cov = self.kernel.compute(self.Xtest,self.Xtest)
 
  		self.cov_post = (test_cov) - np.dot(trtecov_div_trchol.T,trtecov_div_trchol)
  		self.post_s = np.sqrt(np.absolute(np.diag(self.cov_post))).reshape(-1,1)
