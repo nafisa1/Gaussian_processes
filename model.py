@@ -35,32 +35,33 @@ class Model(object):
 			if len(Ytest.shape) != 2:
 				self.Ytest = Ytest.reshape(-1,1)
 
-		if Xtrain is not None: 
-			Xtrain = np.asarray(Xtrain)
-			print Xtrain.shape, Xtest.shape
-			Xtrain, Xtest = utils.remove_identical(Xtrain, Xtest)
-			print Xtrain.shape, Xtest.shape
+		if Xtrain is not None:
+			Xtrain[0] = np.asarray(Xtrain[0]).reshape(-1,1)
+			Xtest[0] = np.asarray(Xtest[0]).reshape(-1,1)
+#			print Xtrain.shape, Xtest.shape
+#			Xtrain, Xtest = utils.remove_identical(Xtrain, Xtest)
+			print Xtrain[0].shape
 
 			# Normalise and centre X, perform PCA
-			Xtrain_nc = utils.normalize_centre(Xtrain)
-			print np.vstack(Xtrain_nc.std(axis=0))
-			Xtest_nc = utils.normalize_centre(Xtrain, Xtest)
-			print np.vstack(Xtest_nc.std(axis=0))
+			Xtrain_num_nc = utils.normalize_centre(Xtrain[0])
+#			print np.vstack(Xtrain_nc.std(axis=0))
+			Xtest_num_nc = utils.normalize_centre(Xtrain[0], Xtest[0])
+			print np.vstack(Xtest_num_nc.std(axis=0))
 
 			if pca == True:
-				Xtrain, W = GPy.util.linalg.pca(Xtrain_nc, self.latent_dim)
-				jitter = 0.05*np.random.rand((Xtrain.shape[0]), (Xtrain.shape[1]))
+				num_train, W = GPy.util.linalg.pca(Xtrain_num_nc, self.latent_dim)
+				jitter = 0.05*np.random.rand((num_train.shape[0]), (Xtrain.shape[1]))
 				jitter -= 0.025
-				self.Xtrain = Xtrain - jitter
+				num_train = num_train - jitter
 	
-				Xtest = np.dot(W,Xtest_nc.T).T
-				jitter = 0.05*np.random.rand((Xtest.shape[0]), (Xtest.shape[1]))
+				num_test = np.dot(W,Xtest_num_nc.T).T
+				jitter = 0.05*np.random.rand((num_test.shape[0]), (num_test.shape[1]))
 				jitter -= 0.025
-				self.Xtest = Xtest - jitter
+				num_test = num_test - jitter
 
 			else:
-				self.Xtrain = Xtrain_nc
-				self.Xtest = Xtest_nc
+				self.Xtrain[0] = Xtrain_num_nc
+				self.Xtest[0] = Xtest_num_nc
 
 		if prior_train is not None:
 			prior_train = prior_train.reshape(-1,1)
