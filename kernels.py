@@ -35,9 +35,6 @@ def distance(a, b, sim_metric, circ_radius, circular):
 		distances = 1/similarities 
 
 	else:
-		print a
-		print np.sum(a, 1).reshape(-1, 1)
-		print np.sum(b, 1)
 		distances = np.absolute(np.sum(a, 1).reshape(-1, 1) - np.sum(b, 1))
 
 	return distances
