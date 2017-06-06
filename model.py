@@ -35,33 +35,53 @@ class Model(object):
 			if len(Ytest.shape) != 2:
 				self.Ytest = Ytest.reshape(-1,1)
 
-		if Xtrain is not None:
-			Xtrain[0] = np.asarray(Xtrain[0]).reshape(-1,1)
-			Xtest[0] = np.asarray(Xtest[0]).reshape(-1,1)
-#			print Xtrain.shape, Xtest.shape
+		if len(Xtrain) == 2:
+			for n,item in enumerate(Xtrain):
+				if isinstance(item[0], float) == True:
+					Xtrain_num = np.asarray(item).reshape(-1,1)
+					Xtest_num = np.asarray(Xtest[n]).reshape(-1,1)
 #			Xtrain, Xtest = utils.remove_identical(Xtrain, Xtest)
-			print Xtrain[0].shape
+					Xtrain_num = utils.normalize_centre(Xtrain_num)
+					Xtest_num = utils.normalize_centre(Xtrain_num, Xtest_num)
+					print np.vstack(Xtest_num.std(axis=0))
 
-			# Normalise and centre X, perform PCA
-			Xtrain_num_nc = utils.normalize_centre(Xtrain[0])
+				else:
+					Xtrain_smiles = item
+					Xtest_smiles = Xtest[n]
+
+		elif isinstance(Xtrain[0], float) == True:
+			Xtrain = np.asarray(Xtrain).reshape(-1,1)
+			Xtest = np.asarray(Xtest).reshape(-1,1)
+#			Xtrain, Xtest = utils.remove_identical(Xtrain, Xtest)
+			
+			Xtrain_num = utils.normalize_centre(Xtrain)
 #			print np.vstack(Xtrain_nc.std(axis=0))
-			Xtest_num_nc = utils.normalize_centre(Xtrain[0], Xtest[0])
-			print np.vstack(Xtest_num_nc.std(axis=0))
+			Xtest_num = utils.normalize_centre(Xtrain, Xtest)
+			print np.vstack(Xtest_num.std(axis=0))
 
-			if pca == True:
-				num_train, W = GPy.util.linalg.pca(Xtrain_num_nc, self.latent_dim)
-				jitter = 0.05*np.random.rand((num_train.shape[0]), (Xtrain.shape[1]))
-				jitter -= 0.025
-				num_train = num_train - jitter
+		if pca == True:
+			Xtrain_num, W = GPy.util.linalg.pca(Xtrain_num, self.latent_dim)
+			jitter = 0.05*np.random.rand((Xtrain_num.shape[0]), (Xtrain_num.shape[1]))
+			jitter -= 0.025
+			Xtrain_num = Xtrain_num - jitter
 	
-				num_test = np.dot(W,Xtest_num_nc.T).T
-				jitter = 0.05*np.random.rand((num_test.shape[0]), (num_test.shape[1]))
-				jitter -= 0.025
-				num_test = num_test - jitter
+			Xtest_num = np.dot(W,Xtest_num.T).T
+			jitter = 0.05*np.random.rand((Xtest_num.shape[0]), (Xtest_num.shape[1]))
+			jitter -= 0.025
+			Xtest_num = Xtest_num - jitter
 
-			else:
-				self.Xtrain[0] = Xtrain_num_nc
-				self.Xtest[0] = Xtest_num_nc
+
+		if len(Xtrain) == 2:
+			Xtrain = []
+			Xtrain.append(Xtrain_num)
+			Xtrain.append(Xtrain_smiles)
+			Xtest = []
+			Xtest.append(Xtest_num)
+			Xtest.append(Xtest_smiles)
+		else:
+			self.Xtrain = Xtrain_num
+			self.Xtest = Xtest_num
+
 
 		if prior_train is not None:
 			prior_train = prior_train.reshape(-1,1)
