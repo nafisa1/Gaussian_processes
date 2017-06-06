@@ -5,9 +5,9 @@ from scipy.stats import norm
 
 class PI(object):
 
-	def compute(self, smiles_test, smiles_train, Ytrain, kern, plot=False):
+	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 		# Get posterior mean and standard deviation for test set
-		run = Regression(smiles_test=smiles_test, smiles_train=smiles_train, Ytrain=Ytrain, add_noise=0.01, kernel=kern, Ytest=None)
+		run = Regression(Xtest=Xtest, Xtrain=Xtrain, Ytrain=Ytrain, add_noise=0.0, kernel=kern, Ytest=None)
 		sd = run.post_s
 		p_mean = run.post_mean
 
@@ -27,7 +27,7 @@ class PI(object):
 
 		# Find maximum of acquisition function and corresponding test input
 		ind = np.argmax(acq)
-		new_x = smiles_test[ind]
+		new_x = Xtest[ind]
 		
 		# Take first principal component as X axis for plotting
 		#Xtest_axis = Xtest[:,0]	
@@ -41,9 +41,9 @@ class PI(object):
 		
 class EI(object):
 
-	def compute(self, smiles_test, smiles_train, Ytrain, kern, plot=False):
+	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 		# Get posterior mean and standard deviation for test set
-		run = Regression(smiles_test=smiles_test, smiles_train=smiles_train, Ytrain=Ytrain, add_noise=0.01, kernel=kern, Ytest=None)
+		run = Regression(Xtest=Xtest, Xtrain=Xtrain, Ytrain=Ytrain, add_noise=0.0, kernel=kern, Ytest=None)
 		sd = run.post_s
 		p_mean = run.post_mean
 
@@ -63,7 +63,7 @@ class EI(object):
 
 		# Find maximum of acquisition function and corresponding test input
 		ind = np.argmax(acq)
-		new_x = smiles_test[ind]
+		new_x = Xtest[ind]
 		
 		# Take first principal component as X axis for plotting
 #		Xtest_axis = Xtest[:,0]	
@@ -80,9 +80,9 @@ class UCB(object):
 	def __init__(self, kappa=0.2):
 		self.kappa = kappa
 
-	def compute(self, smiles_test, smiles_train, Ytrain, kern, plot=False):
+	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 		# Get posterior mean and standard deviation for test set
-		run = Regression(smiles_test=smiles_test, smiles_train=smiles_train, Ytrain=Ytrain, add_noise=0.01, kernel=kern, Ytest=None)
+		run = Regression(Ytrain, Xtest=Xtest, Xtrain=Xtrain, add_noise=0.0, kernel=kern, Ytest=None)
 		sd = run.post_s
 		p_mean = run.post_mean
 
@@ -91,9 +91,13 @@ class UCB(object):
 
 		# Find maximum of acquisition function and corresponding test input
 		ind = np.argmax(acq)
-		new_x = smiles_test[ind]
-		print max(acq)
-		
+		if len(Xtest) != 2:
+			new_x = Xtest[ind]
+		else:
+			new_x = []
+			new_x.append(Xtest[0][ind]) # new numerical value(s)
+			new_x.append(Xtest[1][ind]) # new smiles
+			
 		# Take first principal component as X axis for plotting
 		#Xtest_axis = Xtest[:,0]	
 #		Xtrain_axis = Xtrain[:,0].reshape(-1,1)
