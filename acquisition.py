@@ -27,7 +27,12 @@ class PI(object):
 
 		# Find maximum of acquisition function and corresponding test input
 		ind = np.argmax(acq)
-		new_x = Xtest[ind]
+		if len(Xtest) != 2:
+			new_x = Xtest[ind]
+		else:
+			new_x = []
+			new_x.append(Xtest[0][ind]) # new numerical value(s)
+			new_x.append(Xtest[1][ind]) # new smiles
 		
 		# Take first principal component as X axis for plotting
 		#Xtest_axis = Xtest[:,0]	
@@ -63,7 +68,12 @@ class EI(object):
 
 		# Find maximum of acquisition function and corresponding test input
 		ind = np.argmax(acq)
-		new_x = Xtest[ind]
+		if len(Xtest) != 2:
+			new_x = Xtest[ind]
+		else:
+			new_x = []
+			new_x.append(Xtest[0][ind]) # new numerical value(s)
+			new_x.append(Xtest[1][ind]) # new smiles
 		
 		# Take first principal component as X axis for plotting
 #		Xtest_axis = Xtest[:,0]	
@@ -121,15 +131,20 @@ class LCB(object):
 
 		# Find maximum of acquisition function and corresponding test input
 		ind = np.argmin(acq)
-		new_x = Xtest[ind]
+		if len(Xtest) != 2:
+			new_x = Xtest[ind]
+		else:
+			new_x = []
+			new_x.append(Xtest[0][ind]) # new numerical value(s)
+			new_x.append(Xtest[1][ind]) # new smiles
 		
 		# Take first principal component as X axis for plotting
-		Xtest_axis = Xtest[:,0]	
+#		Xtest_axis = Xtest[:,0]	
 #		Xtrain_axis = Xtrain[:,0].reshape(-1,1)
 
-		if plot==True:
+#		if plot==True:
 		# Plot posterior and acquisition function, showing preferred next observation
-			plotting.plot_acq(Xtest_axis, acq, p_mean, sd, Ytest=None)
+#			plotting.plot_acq(Xtest_axis, acq, p_mean, sd, Ytest=None)
 
 		return new_x, ind
 
