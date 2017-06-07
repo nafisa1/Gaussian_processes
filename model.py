@@ -4,6 +4,7 @@ import GPy
 import kernels
 import cross_validation # CIRCULAR IMPORT
 import max_likelihood
+import regression
 
 class Model(object):
 
@@ -35,54 +36,6 @@ class Model(object):
 			if len(Ytest.shape) != 2:
 				self.Ytest = Ytest.reshape(-1,1)
 
-		if len(Xtrain) == 2:
-			for n,item in enumerate(Xtrain):
-				if isinstance(item[0], float) == True:
-					Xtrain_num = np.asarray(item).reshape(-1,1)
-					Xtest_num = np.asarray(Xtest[n]).reshape(-1,1)
-#			Xtrain, Xtest = utils.remove_identical(Xtrain, Xtest)
-					Xtrain_num = utils.normalize_centre(Xtrain_num)
-					Xtest_num = utils.normalize_centre(Xtrain_num, Xtest_num)
-					print np.vstack(Xtest_num.std(axis=0))
-
-				else:
-					Xtrain_smiles = item
-					Xtest_smiles = Xtest[n]
-
-		elif isinstance(Xtrain[0], float) == True:
-			Xtrain = np.asarray(Xtrain).reshape(-1,1)
-			Xtest = np.asarray(Xtest).reshape(-1,1)
-#			Xtrain, Xtest = utils.remove_identical(Xtrain, Xtest)
-			
-			Xtrain_num = utils.normalize_centre(Xtrain)
-#			print np.vstack(Xtrain_nc.std(axis=0))
-			Xtest_num = utils.normalize_centre(Xtrain, Xtest)
-			print np.vstack(Xtest_num.std(axis=0))
-
-		if pca == True:
-			Xtrain_num, W = GPy.util.linalg.pca(Xtrain_num, self.latent_dim)
-			jitter = 0.05*np.random.rand((Xtrain_num.shape[0]), (Xtrain_num.shape[1]))
-			jitter -= 0.025
-			Xtrain_num = Xtrain_num - jitter
-	
-			Xtest_num = np.dot(W,Xtest_num.T).T
-			jitter = 0.05*np.random.rand((Xtest_num.shape[0]), (Xtest_num.shape[1]))
-			jitter -= 0.025
-			Xtest_num = Xtest_num - jitter
-
-
-		if len(Xtrain) == 2:
-			Xtrain = []
-			Xtrain.append(Xtrain_num)
-			Xtrain.append(Xtrain_smiles)
-			Xtest = []
-			Xtest.append(Xtest_num)
-			Xtest.append(Xtest_smiles)
-		else:
-			self.Xtrain = Xtrain_num
-			self.Xtest = Xtest_num
-
-
 		if prior_train is not None:
 			prior_train = prior_train.reshape(-1,1)
 			# subtract training prior mean from Ytrain values
@@ -100,14 +53,14 @@ class Model(object):
 		if max_ll == True:
 			best_hparams = self.max_log_likelihood(print_vals=print_vals)
 		
-		print best_hparams #"The kernel hyperparameters are: lengthscale", self.kernel.lengthscale,"signal variance", self.kernel.sig_var,"noise variance", self.kernel.noise_var,"."
+		print best_hparams
 
 	def max_log_likelihood(self, print_vals=True):
 
 		final_points = []
 		log_likelihoods = []
 		centred_Ytrain = utils.centre(self.Ytrain.reshape(-1,1))
-		
+
 		find_max_ll = max_likelihood.Max_LL(centred_Ytrain, self.kernel)
 
 		default_starting_point = []
@@ -161,7 +114,52 @@ class Model(object):
 		return best_hparams
 
 	def regression(self):
-		import regression
+
+		if len(self.Xtrain) == 2:
+			for n,item in enumerate(self.Xtrain):
+				if isinstance(item[0], str) == False:
+					Xtrain_num = np.asarray(item).reshape(-1,len(item[0]))
+					Xtest_num = np.asarray(self.Xtest[n]).reshape(-1,len(item[0]))
+#			Xtrain, Xtest = utils.remove_identical(Xtrain, Xtest)
+					Xtest_num = utils.normalize_centre(Xtrain_num, Xtest_num)
+					Xtrain_num = utils.normalize_centre(Xtrain_num)
+
+				else:
+					Xtrain_smiles = item
+					Xtest_smiles = self.Xtest[n]
+
+		elif isinstance(self.Xtrain[0], str) == False:
+			Xtrain = np.asarray(self.Xtrain).reshape(-1,1)
+			Xtest = np.asarray(self.Xtest).reshape(-1,1)
+#			Xtrain, Xtest = utils.remove_identical(Xtrain, Xtest)
+			
+			Xtest_num = utils.normalize_centre(Xtrain, Xtest)
+			Xtrain_num = utils.normalize_centre(Xtrain)
+
+		if self.pca == True:
+			Xtrain_num, W = GPy.util.linalg.pca(Xtrain_num, self.latent_dim)
+			jitter = 0.05*np.random.rand((Xtrain_num.shape[0]), (Xtrain_num.shape[1]))
+			jitter -= 0.025
+			Xtrain_num = Xtrain_num - jitter
+	
+			Xtest_num = np.dot(W,Xtest_num.T).T
+			jitter = 0.05*np.random.rand((Xtest_num.shape[0]), (Xtest_num.shape[1]))
+			jitter -= 0.025
+			Xtest_num = Xtest_num - jitter
+
+
+		if len(self.Xtrain) == 2:
+			self.Xtrain_reg = []
+			self.Xtrain_reg.append(Xtrain_num)
+			self.Xtrain_reg.append(Xtrain_smiles)
+			self.Xtest_reg = []
+			self.Xtest_reg.append(Xtest_num)
+			self.Xtest_reg.append(Xtest_smiles)
+		else:
+			self.Xtrain_reg = Xtrain_num
+			self.Xtest_reg = Xtest_num
+
+
 
 		self.Ytrain_mean = np.mean(self.Ytrain)
 		if self.threshold is not None:
@@ -173,7 +171,7 @@ class Model(object):
 
 		Ytest = utils.centre(self.Ytrain, self.Ytest)
 
-		regress = regression.Regression(Ytrain, Ytest=Ytest, Xtrain=self.Xtrain, Xtest=self.Xtest, kernel=self.kernel, cent_threshold=c_threshold)
+		regress = regression.Regression(Ytrain, Ytest=Ytest, Xtrain=self.Xtrain_reg, Xtest=self.Xtest_reg, kernel=self.kernel, cent_threshold=c_threshold)
 
 		return regress
 
@@ -181,17 +179,30 @@ class Model(object):
 
 		Ytrain = utils.centre(self.Ytrain)
 
+# CENTRE XTRAIN AGAIN
+
 		if plot==False:
 			new_x, ind = self.acq_func.compute(self.Xtest, self.Xtrain, Ytrain, self.kernel, plot=False)
 		else:
 			new_x, ind = self.acq_func.compute(self.Xtest, self.Xtrain, Ytrain, self.kernel, plot=True)
 
-		new_obs = self.Ytest[ind]	
-		self.Xtrain.append(new_x)
+		new_obs = self.Ytest[ind]
+#		print new_x	
+		if len(self.Xtrain) != 2:
+			if isinstance(new_x, float) == True:
+				self.Xtrain = np.vstack((self.Xtrain, new_x))
+				self.Xtest = np.delete(self.Xtest, ind, axis=0)
+			else:
+				self.Xtrain.append(new_x)
+				del self.Xtest[ind]
+		else:
+			self.Xtrain[0] = np.vstack((self.Xtrain[0], new_x[0]))
+			self.Xtrain[1].append(new_x[1])
+			self.Xtest[0] = np.delete(self.Xtest[0], ind, axis=0)
+			del self.Xtest[1][ind]
 #		self.Xtrain = np.vstack((self.Xtrain, new_x))
 		self.Ytrain = np.vstack((self.Ytrain, new_obs))
 
-		del self.Xtest[ind]
 #		self.Xtest = np.delete(self.Xtest, ind, axis=0)
 		self.Ytest = np.delete(self.Ytest, ind, axis=0)
 
