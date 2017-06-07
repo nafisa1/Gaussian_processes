@@ -7,7 +7,7 @@ import utils
 
 class Regression(object):
 
-	def __init__(self, Ytrain, kernel=kernels.RBF(), add_noise=0.01, print_jit=False, Ytest=None, Xtest=None, Xtrain=None, cent_threshold=None):
+	def __init__(self, Ytrain, kernel=kernels.RBF(), add_noise=0.001, print_jit=False, Ytest=None, Xtest=None, Xtrain=None, cent_threshold=None):
 		self.Xtest = Xtest
 		self.Xtrain = Xtrain
 		self.Ytest = Ytest
@@ -20,7 +20,7 @@ class Regression(object):
 		# Compute posterior mean vector
 		Xtrain_cov = self.kernel.compute(self.Xtrain, self.Xtrain, noise=True)
 		train_test_cov = self.kernel.compute(self.Xtrain, self.Xtest)
-		
+#		print train_test_cov		
 		tr_chol, jitter = kernels.jit_chol(Xtrain_cov, print_jit=self.print_jit) 
 		trtecov_div_trchol = np.linalg.solve(tr_chol,train_test_cov)
  		ytr_div_trchol = np.linalg.solve(tr_chol,self.Ytrain)
@@ -43,23 +43,39 @@ class Regression(object):
 		lower = (self.post_mean - (2*self.post_s)).flat
 		index = np.arange(1,(self.Ytest.shape[0]+1),1)
 
+		colours = []
+		for i in xrange(len(self.Ytest)):
+			if len(self.Xtrain) == 2:
+				if self.Xtest[1][i] in self.Xtrain[1]:
+					colours.append('y')
+				else:    
+					colours.append('r')
+			else:
+				if self.Xtest[i] in self.Xtrain:
+					colours.append('y')
+				else:    
+					colours.append('r')
 		Y = self.Ytest
 		Y1 = self.Ytest
 		Y2 = self.Ytest
+		Y3 = self.Ytest
 		post_mean = self.post_mean
 		Ytest = np.sort(self.Ytest, axis=0)
 		upper = (np.array([upper for Y,upper in sorted(zip(Y,upper))])).flat
 		lower = (np.array([lower for Y1,lower in sorted(zip(Y1,lower))])).flat
 		post_mean = (np.array([post_mean for Y2,post_mean in sorted(zip(Y2,post_mean))]))
-        
+		cmap = [colours for Y3,colours in sorted(zip(Y3,colours))]
+
 		# Plot index against posterior mean function, uncertainty and true test values
 		fig = plt.figure()
 		plt.xlim(0, max(index)+1) 
 		plt.xlabel('Compound')
-		plt.ylabel('Centred output')    
-		plt.plot(index, Ytest, 'ro')
+		plt.ylabel('Centred output')
+		
+	
 		plt.plot(index, post_mean, 'r--', lw=2)
 		plt.fill_between(index, lower, upper, color='#87cefa')
+		plt.scatter(index, Ytest, c=cmap, s=40)	
 		if self.cent_threshold is not None:
 			plt.plot([0, max(index)+1],[self.cent_threshold, self.cent_threshold])
 		plt.show()		
