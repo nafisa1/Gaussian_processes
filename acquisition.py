@@ -4,6 +4,8 @@ from regression import Regression
 from scipy.stats import norm
 
 class PI(object):
+	def __init__(self, eta=0.0):
+		self.eta = eta
 
 	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 		# Get posterior mean and standard deviation for test set
@@ -15,7 +17,7 @@ class PI(object):
 		f_max = np.amax(Ytrain)
 
 		# Calculate input for cdf
-		acq1 = (p_mean - f_max)/sd
+		acq1 = (p_mean - f_max - self.eta)/sd
 
 		# Centre and normalize cdf input so it has zero mean and unit standard deviation
 		acq_mean = np.mean(acq1)
@@ -45,6 +47,8 @@ class PI(object):
 		return new_x, ind
 		
 class EI(object):
+	def __init__(self, kappa=0.0):
+		self.eta = eta
 
 	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 		# Get posterior mean and standard deviation for test set
@@ -56,7 +60,7 @@ class EI(object):
 		f_max = np.amax(Ytrain)
 
 		# Calculate input for cdf
-		acq1 = (p_mean - f_max)/sd
+		acq1 = (p_mean - f_max - self.eta)/sd
 
 		# Centre and normalize cdf input so it has zero mean and unit standard deviation
 		acq_mean = np.mean(acq1)
