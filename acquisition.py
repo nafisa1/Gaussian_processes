@@ -129,7 +129,7 @@ class LCB(object):
 
 	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 		# Get posterior mean and standard deviation for test set
-		run = Regression(Xtest, Xtrain, Ytrain, add_noise=0.0, kernel=kern, Ytest=None)
+		run = Regression(Ytrain, Xtest=Xtest, Xtrain=Xtrain, add_noise=0.0, kernel=kern, Ytest=None)
 		sd = run.post_s
 		p_mean = run.post_mean
 
