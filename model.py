@@ -155,9 +155,12 @@ class Model(object):
 			self.Xtest_reg = []
 			self.Xtest_reg.append(Xtest_num)
 			self.Xtest_reg.append(Xtest_smiles)
-		else:
+		elif isinstance(self.Xtrain[0], str) == False:
 			self.Xtrain_reg = Xtrain_num
 			self.Xtest_reg = Xtest_num
+		elif isinstance(self.Xtrain[0], str) == True:
+			self.Xtrain_reg = self.Xtrain
+			self.Xtest_reg = self.Xtest
 
 
 
@@ -179,12 +182,12 @@ class Model(object):
 
 		Ytrain = utils.centre(self.Ytrain)
 
-# CENTRE XTRAIN AGAIN
+# CENTRE XTRAIN AGAIN?
 
 		if plot==False:
-			new_x, ind = self.acq_func.compute(self.Xtest, self.Xtrain, Ytrain, self.kernel, plot=False)
+			new_x, ind = self.acq_func.compute(self.Xtest_reg, self.Xtrain_reg, Ytrain, self.kernel, plot=False)
 		else:
-			new_x, ind = self.acq_func.compute(self.Xtest, self.Xtrain, Ytrain, self.kernel, plot=True)
+			new_x, ind = self.acq_func.compute(self.Xtest_reg, self.Xtrain_reg, Ytrain, self.kernel, plot=True)
 
 		new_obs = self.Ytest[ind]
 #		print new_x	
