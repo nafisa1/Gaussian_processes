@@ -16,7 +16,57 @@ class Regression(object):
 		self.kernel = kernel		
 		self.cent_threshold = cent_threshold
 		self.print_jit = print_jit
-		
+
+
+		if len(self.Xtrain) == 2:
+			for n,item in enumerate(self.Xtrain):
+				if isinstance(item[0], str) == False:
+					Xtrain_num = np.asarray(item).reshape(-1,len(item[0]))
+					Xtest_num = np.asarray(self.Xtest[n]).reshape(-1,len(item[0]))
+
+					Xtest_num = utils.normalize_centre(Xtrain_num, Xtest_num)
+					Xtrain_num = utils.normalize_centre(Xtrain_num)
+
+				else:
+					Xtrain_smiles = item
+					Xtest_smiles = self.Xtest[n]
+
+		elif isinstance(self.Xtrain[0], str) == False:
+			Xtrain = np.asarray(self.Xtrain).reshape(-1,1)
+			Xtest = np.asarray(self.Xtest).reshape(-1,1)
+			
+			Xtest_num = utils.normalize_centre(Xtrain, Xtest)
+			Xtrain_num = utils.normalize_centre(Xtrain)
+
+#		if self.pca == True:
+#			Xtrain_num, W = GPy.util.linalg.pca(Xtrain_num, self.latent_dim)
+#			jitter = 0.05*np.random.rand((Xtrain_num.shape[0]), (Xtrain_num.shape[1]))
+#			jitter -= 0.025
+#			Xtrain_num = Xtrain_num - jitter
+#	
+#			Xtest_num = np.dot(W,Xtest_num.T).T
+#			jitter = 0.05*np.random.rand((Xtest_num.shape[0]), (Xtest_num.shape[1]))
+#			jitter -= 0.025
+#			Xtest_num = Xtest_num - jitter
+
+
+		if len(self.Xtrain) == 2:
+			self.Xtrain = []
+			self.Xtrain.append(Xtrain_num)
+			self.Xtrain.append(Xtrain_smiles)
+			self.Xtest = []
+			self.Xtest.append(Xtest_num)
+			self.Xtest.append(Xtest_smiles)
+		elif isinstance(self.Xtrain[0], str) == False:
+			self.Xtrain = Xtrain_num
+			self.Xtest = Xtest_num
+		elif isinstance(self.Xtrain[0], str) == True:
+			self.Xtrain = self.Xtrain
+			self.Xtest = self.Xtest
+
+
+
+
 		# Compute posterior mean vector
 		Xtrain_cov = self.kernel.compute(self.Xtrain, self.Xtrain, noise=True)
 		train_test_cov = self.kernel.compute(self.Xtrain, self.Xtest)
@@ -52,6 +102,7 @@ class Regression(object):
 					colours.append('r')
 			else:
 				if self.Xtest[i] in self.Xtrain:
+					print self.Xtest[i]
 					colours.append('y')
 				else:    
 					colours.append('r')
