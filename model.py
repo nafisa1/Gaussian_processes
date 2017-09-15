@@ -43,6 +43,11 @@ class Model(object):
 		
 		self.hparameter_choices = utils.LHS(parameters=n_kers*2)
 
+
+
+
+
+
 	def hyperparameters(self, frac_test=0.2, num_folds=10, max_ll=True, print_vals=True, split=False):
 		if split == True:
 			cross_val = cross_validation.Cross_Validation(self.X, self.Y, fraction_test=frac_test, n_folds=num_folds, n_kers=self.n_kers, threshold=self.threshold)
@@ -115,54 +120,6 @@ class Model(object):
 
 	def regression(self):
 
-		if len(self.Xtrain) == 2:
-			for n,item in enumerate(self.Xtrain):
-				if isinstance(item[0], str) == False:
-					Xtrain_num = np.asarray(item).reshape(-1,len(item[0]))
-					Xtest_num = np.asarray(self.Xtest[n]).reshape(-1,len(item[0]))
-#			Xtrain, Xtest = utils.remove_identical(Xtrain, Xtest)
-					Xtest_num = utils.normalize_centre(Xtrain_num, Xtest_num)
-					Xtrain_num = utils.normalize_centre(Xtrain_num)
-
-				else:
-					Xtrain_smiles = item
-					Xtest_smiles = self.Xtest[n]
-
-		elif isinstance(self.Xtrain[0], str) == False:
-			Xtrain = np.asarray(self.Xtrain).reshape(-1,1)
-			Xtest = np.asarray(self.Xtest).reshape(-1,1)
-#			Xtrain, Xtest = utils.remove_identical(Xtrain, Xtest)
-			
-			Xtest_num = utils.normalize_centre(Xtrain, Xtest)
-			Xtrain_num = utils.normalize_centre(Xtrain)
-
-		if self.pca == True:
-			Xtrain_num, W = GPy.util.linalg.pca(Xtrain_num, self.latent_dim)
-			jitter = 0.05*np.random.rand((Xtrain_num.shape[0]), (Xtrain_num.shape[1]))
-			jitter -= 0.025
-			Xtrain_num = Xtrain_num - jitter
-	
-			Xtest_num = np.dot(W,Xtest_num.T).T
-			jitter = 0.05*np.random.rand((Xtest_num.shape[0]), (Xtest_num.shape[1]))
-			jitter -= 0.025
-			Xtest_num = Xtest_num - jitter
-
-
-		if len(self.Xtrain) == 2:
-			self.Xtrain_reg = []
-			self.Xtrain_reg.append(Xtrain_num)
-			self.Xtrain_reg.append(Xtrain_smiles)
-			self.Xtest_reg = []
-			self.Xtest_reg.append(Xtest_num)
-			self.Xtest_reg.append(Xtest_smiles)
-		elif isinstance(self.Xtrain[0], str) == False:
-			self.Xtrain_reg = Xtrain_num
-			self.Xtest_reg = Xtest_num
-		elif isinstance(self.Xtrain[0], str) == True:
-			self.Xtrain_reg = self.Xtrain
-			self.Xtest_reg = self.Xtest
-
-
 
 		self.Ytrain_mean = np.mean(self.Ytrain)
 		if self.threshold is not None:
@@ -174,7 +131,7 @@ class Model(object):
 
 		Ytest = utils.centre(self.Ytrain, self.Ytest)
 
-		regress = regression.Regression(Ytrain, Ytest=Ytest, Xtrain=self.Xtrain_reg, Xtest=self.Xtest_reg, kernel=self.kernel, cent_threshold=c_threshold)
+		regress = regression.Regression(Ytrain, Ytest=Ytest, Xtrain=self.Xtrain, Xtest=self.Xtest, kernel=self.kernel, cent_threshold=c_threshold)
 
 		return regress
 
@@ -185,9 +142,9 @@ class Model(object):
 # CENTRE XTRAIN AGAIN?
 
 		if plot==False:
-			new_x, ind = self.acq_func.compute(self.Xtest_reg, self.Xtrain_reg, Ytrain, self.kernel, plot=False)
+			new_x, ind = self.acq_func.compute(self.Xtest, self.Xtrain, Ytrain, self.kernel, plot=False)
 		else:
-			new_x, ind = self.acq_func.compute(self.Xtest_reg, self.Xtrain_reg, Ytrain, self.kernel, plot=True)
+			new_x, ind = self.acq_func.compute(self.Xtest, self.Xtrain, Ytrain, self.kernel, plot=True)
 
 		new_obs = self.Ytest[ind]
 #		print new_x	
