@@ -44,10 +44,6 @@ class Model(object):
 		self.hparameter_choices = utils.LHS(parameters=n_kers*2)
 
 
-
-
-
-
 	def hyperparameters(self, frac_test=0.2, num_folds=10, max_ll=True, print_vals=True, split=False):
 		if split == True:
 			cross_val = cross_validation.Cross_Validation(self.X, self.Y, fraction_test=frac_test, n_folds=num_folds, n_kers=self.n_kers, threshold=self.threshold)
@@ -148,7 +144,7 @@ class Model(object):
 			new_x, ind = self.acq_func.compute(self.Xtest, self.Xtrain, Ytrain, self.kernel, plot=True)
 
 		new_obs = self.Ytest[ind]
-#		print new_x	
+
 		if len(self.Xtrain) != 2:
 			if isinstance(new_x, float) == True:
 				self.Xtrain = np.vstack((self.Xtrain, new_x))
@@ -161,10 +157,8 @@ class Model(object):
 			self.Xtrain[1].append(new_x[1])
 			self.Xtest[0] = np.delete(self.Xtest[0], ind, axis=0)
 			del self.Xtest[1][ind]
-#		self.Xtrain = np.vstack((self.Xtrain, new_x))
-		self.Ytrain = np.vstack((self.Ytrain, new_obs))
 
-#		self.Xtest = np.delete(self.Xtest, ind, axis=0)
+		self.Ytrain = np.vstack((self.Ytrain, new_obs))
 		self.Ytest = np.delete(self.Ytest, ind, axis=0)
 
 		return new_x
