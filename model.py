@@ -58,7 +58,8 @@ class Model(object):
 		if max_ll == True:
 			best_hparams = self.max_log_likelihood(print_vals=print_vals)
 		
-		print best_hparams
+		if print_vals == True:
+			print best_hparams
 
 	def max_log_likelihood(self, print_vals=True):
 
