@@ -3,9 +3,34 @@ import plotting
 from regression import Regression
 from scipy.stats import norm
 
+class Random(object):
+	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
+
+		if len(Xtest) != 2:
+			ind = np.random.randint(len(Xtest))
+			new_x = Xtest[ind]
+		else:
+			ind = np.random.randint(len(Xtest[0]))
+			new_x = []
+			new_x.append(Xtest[0][ind]) # new numerical value(s)
+			new_x.append(Xtest[1][ind]) # new smiles
+		
+		return new_x, ind
+
+class Chronological(object):
+	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
+		ind = 0
+		if len(Xtest) != 2:
+			new_x = Xtest[ind]
+		else:
+			ind = np.random.randint(len(Xtest[0]))
+			new_x = []
+			new_x.append(Xtest[0][ind]) # new numerical value(s)
+			new_x.append(Xtest[1][ind]) # new smiles
+		
+		return new_x, ind
+
 class Unc(object):
-	def __init__(self, eta=0.0):
-		self.eta = eta
 
 	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 		# Get posterior mean and standard deviation for test set
