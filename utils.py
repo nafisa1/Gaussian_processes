@@ -90,8 +90,10 @@ def normalize_centre(A, B=None):
 		B_centred = B.T - A_mu
 		Bcent_normalized = B_centred/A_sd
 		final_array = Bcent_normalized.T
-
 	return final_array		
+
+def test_function(name):
+	print len(name)
 
 def centre(A, B=None):
 	# Get mean
@@ -251,3 +253,31 @@ def LHS(parameters=2, n_choices=5, lower=[0.01,1], upper=[10.0,7.0], divisions=[
 
 	combinations = all_combs[np.random.randint(all_combs.shape[0], size=n_choices),:]
 	return combinations
+
+def enantiomers(smiles,output,descriptors=None):
+    import kernels
+    elim_ker = kernels.RBF()
+    elim_cov = elim_ker.compute(smiles, smiles)
+    new_descs = []
+    new_smiles = []
+    new_output = []
+    all_counts = []
+    for i,row in enumerate(elim_cov):
+        row_count = 0
+        for j in xrange(i+1,len(row)):
+            if row[j] == 1:
+                row_count+=1
+        all_counts.append(row_count)
+           
+    for x,number in enumerate(all_counts):
+        if number == 0:
+            if descriptors is not None:
+                new_descs.append(descriptors[x])
+            new_smiles.append(smiles[x])
+            new_output.append(output[x])
+    new_descs = np.asarray(new_descs)
+    new_output = np.asarray(new_output)
+    print len(new_smiles)
+    plt.scatter(np.linspace(0,len(smiles),len(smiles)),all_counts)
+    plt.show()
+    return new_smiles, new_output, new_descs
