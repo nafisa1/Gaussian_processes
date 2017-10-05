@@ -22,6 +22,7 @@ class Max_LL(object):
 		else:
 			determinant = np.linalg.det(cov)
 		log_l = (-0.5*self.Y.shape[0]*np.log(2*math.pi))-(0.5*np.log(determinant)) - (0.5*Yt_invcov_Y)
+		self.jitter = jitter
 		return log_l
 
 	def opt_hyp(self, hyp):
@@ -38,6 +39,7 @@ class Max_LL(object):
 			self.kernel.sig_var=hyp[1]
 	
 		log_l = self.log_lik()
+
 		return -log_l
 
 	def run_opt(self, hyp):
@@ -46,6 +48,6 @@ class Max_LL(object):
 		else:
 			min_hyp = minimize(self.opt_hyp, hyp, method='l-bfgs-b', bounds=((0.01,10.0),(0.5,7.0)), options={'disp':True}) 
 		#log_likelihoods = [] # save for plotting / get function values from optimizer?
-		return min_hyp.x, min_hyp.fun
+		return min_hyp.x, min_hyp.fun, self.jitter
 
 
