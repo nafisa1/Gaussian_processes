@@ -63,7 +63,7 @@ class Model(object):
 		log_likelihoods = []
 		centred_Ytrain = utils.centre(self.Ytrain.reshape(-1,1))
 
-		find_max_ll = max_likelihood.Max_LL(centred_Ytrain, self.kernel)
+		find_max_ll = max_likelihood.Max_LL(centred_Ytrain, self.kernel, self.print_jit)
 
 		default_starting_point = []
 		
