@@ -5,15 +5,16 @@ import utils
 from scipy.optimize import minimize 
 
 class Max_LL(object):
-	def __init__(self, Y, kernel):
+	def __init__(self, Y, kernel, print_jit):
 		self.Y = Y
 		self.kernel = kernel
+		self.print_jit = print_jit
 
 	def log_lik(self):
 		cov = self.kernel.compute(self.Y,self.Y, noise=False) # noise should be false but add jitter if returned by jitchol
-		chol_cov, jitter = kernels.jit_chol(cov, attempts=100,print_jit=False)
+		chol_cov, jitter = kernels.jit_chol(cov, attempts=100,print_jit=self.print_jit)
 		if jitter != 0:
-		    self.kernel.noise_var = jitter
+		    self.kernel.noise_var = self.kernel.noise_var + jitter
         	cov = self.kernel.compute(self.Y,self.Y, noise=True)
 		Yt_invcov_Y = np.dot(np.linalg.solve(chol_cov, self.Y).T, np.linalg.solve(chol_cov, self.Y))
 		if np.linalg.det(cov) == 0:
