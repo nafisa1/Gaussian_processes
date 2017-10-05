@@ -66,8 +66,7 @@ class Model(object):
 
 		find_max_ll = max_likelihood.Max_LL(centred_Ytrain, self.kernel, self.print_jit)
 
-		default_starting_point = []
-		
+		default_starting_point = []		
 		if isinstance(self.kernel, kernels.Composite):
 			for item in self.kernel.kers:
 				if item is not None:
@@ -82,7 +81,6 @@ class Model(object):
 			print final_point, ll
 		final_points.append(final_point)
 		log_likelihoods.append(ll)
-
 		for choice in self.hparameter_choices:
 			starting_point = []
 			if isinstance(self.kernel, kernels.Composite):
