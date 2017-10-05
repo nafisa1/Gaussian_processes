@@ -11,12 +11,14 @@ class Max_LL(object):
 		self.print_jit = print_jit
 
 	def log_lik(self):
+		original_noise = self.kernel.noise_var
 		cov = self.kernel.compute(self.Y,self.Y, noise=False) # noise should be false but add jitter if returned by jitchol
 		chol_cov, jitter = kernels.jit_chol(cov, attempts=100,print_jit=self.print_jit)
 		if jitter != 0:
 		    self.kernel.noise_var = self.kernel.noise_var + jitter
         	cov = self.kernel.compute(self.Y,self.Y, noise=True)
 		Yt_invcov_Y = np.dot(np.linalg.solve(chol_cov, self.Y).T, np.linalg.solve(chol_cov, self.Y))
+		self.kernel.noise_var = original_noise
 		if np.linalg.det(cov) == 0:
 			determinant = 3.0e-324
 		else:
@@ -48,6 +50,7 @@ class Max_LL(object):
 		else:
 			min_hyp = minimize(self.opt_hyp, hyp, method='l-bfgs-b', bounds=((0.01,10.0),(0.5,7.0)), options={'disp':True}) 
 		#log_likelihoods = [] # save for plotting / get function values from optimizer?
+		print self.jitter
 		return min_hyp.x, min_hyp.fun, self.jitter
 
 
