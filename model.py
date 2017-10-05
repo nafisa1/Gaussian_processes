@@ -61,6 +61,7 @@ class Model(object):
 
 		final_points = []
 		log_likelihoods = []
+		jitters = []
 		centred_Ytrain = utils.centre(self.Ytrain.reshape(-1,1))
 
 		find_max_ll = max_likelihood.Max_LL(centred_Ytrain, self.kernel, self.print_jit)
@@ -75,7 +76,8 @@ class Model(object):
 		else:
 			default_starting_point.append(self.kernel.lengthscale)
 			default_starting_point.append(self.kernel.sig_var)
-		final_point, ll = find_max_ll.run_opt(default_starting_point)
+		final_point, ll, jitter = find_max_ll.run_opt(default_starting_point)
+		jitters.append(jitter)
 		if print_vals==True:
 			print final_point, ll
 		final_points.append(final_point)
@@ -91,16 +93,19 @@ class Model(object):
 			else:
 				starting_point.append(choice[0])
 				starting_point.append(choice[1])
-			final_point, ll = find_max_ll.run_opt(starting_point)
-
+			final_point, ll, jitter = find_max_ll.run_opt(starting_point)
+			jitters.append(jitter)
 			if print_vals==True:
 				print final_point, ll
 			final_points.append(final_point)
 			log_likelihoods.append(ll)
 		index = np.argmin(log_likelihoods)
 		best_hparams = final_points[index]
+		best_jitter = jitters[index]
+		self.kernel.noise_var += best_jitter
 		if print_vals==True:
 			print "Best hyperparameters:", best_hparams
+			print "Noise variance =", self.kernel.noise_var
 
 		if isinstance(self.kernel, kernels.Composite):
 			count = 0
