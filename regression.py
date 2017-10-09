@@ -64,9 +64,6 @@ class Regression(object):
 			self.Xtrain = self.Xtrain
 			self.Xtest = self.Xtest
 
-
-
-
 		# Compute posterior mean vector
 		Xtrain_cov = self.kernel.compute(self.Xtrain, self.Xtrain, noise=True)
 		train_test_cov = self.kernel.compute(self.Xtrain, self.Xtest)
@@ -97,6 +94,7 @@ class Regression(object):
 		for i in xrange(len(self.Ytest)):
 			if len(self.Xtrain) == 2:
 				if self.Xtest[1][i] in self.Xtrain[1]:
+					print self.Xtest[i]
 					colours.append('y')
 				else:    
 					colours.append('r')
@@ -129,7 +127,7 @@ class Regression(object):
 		plt.scatter(index, Ytest, c=cmap, s=40)	
 		if self.cent_threshold is not None:
 			plt.plot([0, max(index)+1],[self.cent_threshold, self.cent_threshold])
-		plt.show()		
+		plt.show(block=True)		
 
 	def r_squared(self):
 		obs_mean = np.mean(self.Ytest)
