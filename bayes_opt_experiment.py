@@ -13,11 +13,10 @@ descriptor_names = ['CD_MOLWEIGHT','TPSA']#'LOGD','LOGP','TPSA']
 example = run_experiment.Experiment()
 smiles, pic50s, descriptors = example.get_data(filename, id_name, smiles_name, output_name, descriptor_names,upper_threshold=20000.0)
 
-training_size = 21
+training_size = 20
 test_size = 20
-optimise_over = None
 k = kernels.Composite(kernels.RBF(),kernels.Matern())
 noise = 0.01
 acq_func = acquisition.Chronological()
 
-modopt,modtest, r_sq = example.bayes_opt(training_size, test_size, k, acq_func, number_runs=20)
+modopt,modtest, r_sq = example.bayes_opt(training_size, test_size, k, acq_func, number_runs=None)
