@@ -53,8 +53,9 @@ class Experiment(object):
 
 	def bayes_opt(self,training_size, test_size, ker, acquisition_function, noise=0.01, number_runs=None, print_interim=False):
 	    start_test = len(self.output)-test_size
-	    if number_runs == 0:
-		number_runs = start_test = training_size
+	    if number_runs == None:
+		number_runs = start_test - training_size
+
 	    modopt = model.Model(n_kers=2, Xtrain=[self.descriptors[:training_size],self.smiles[:training_size]],Xtest=[self.descriptors[training_size:start_test],self.smiles[training_size:start_test]], Ytrain=self.output[:training_size], Ytest=self.output[training_size:start_test], kernel=ker) 
 	    r_sq = []
 	    modtest = model.Model(n_kers=2, Xtrain=modopt.Xtrain, Xtest=[self.descriptors[start_test:],self.smiles[start_test:]], Ytrain=modopt.Ytrain, Ytest=self.output[start_test:], kernel=ker) 
