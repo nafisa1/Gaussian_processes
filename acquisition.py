@@ -4,6 +4,9 @@ from regression import Regression
 from scipy.stats import norm
 
 class Random(object):
+	def __init__(self, abbreviation="rand"):
+		self.abbreviation = abbreviation
+
 	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 
 		if len(Xtest) != 2:
@@ -18,12 +21,14 @@ class Random(object):
 		return new_x, ind
 
 class Chronological(object):
+	def __init__(self, abbreviation="chron"):
+		self.abbreviation = abbreviation
+
 	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 		ind = 0
 		if len(Xtest) != 2:
 			new_x = Xtest[ind]
 		else:
-			ind = np.random.randint(len(Xtest[0]))
 			new_x = []
 			new_x.append(Xtest[0][ind]) # new numerical value(s)
 			new_x.append(Xtest[1][ind]) # new smiles
@@ -31,12 +36,13 @@ class Chronological(object):
 		return new_x, ind
 
 class Unc(object):
+	def __init__(self, abbreviation="unc"):
+		self.abbreviation = abbreviation
 
 	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 		# Get posterior mean and standard deviation for test set
 		run = Regression(Xtest=Xtest, Xtrain=Xtrain, Ytrain=Ytrain, add_noise=0.0, kernel=kern, Ytest=None)
 		sd = run.post_s
-		p_mean = run.post_mean
 
 		# Find maximum of acquisition function and corresponding test input
 		ind = np.argmax(sd)
@@ -50,8 +56,9 @@ class Unc(object):
 		return new_x, ind
 
 class PI(object):
-	def __init__(self, eta=0.0):
+	def __init__(self, eta=0.0, abbreviation="pi"):
 		self.eta = eta
+		self.abbreviation = abbreviation
 
 	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 		# Get posterior mean and standard deviation for test set
@@ -93,8 +100,9 @@ class PI(object):
 		return new_x, ind
 		
 class EI(object):
-	def __init__(self, eta=0.0):
+	def __init__(self, eta=0.0, abbreviation="ei"):
 		self.eta = eta
+		self.abbreviation = abbreviation
 
 	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 		# Get posterior mean and standard deviation for test set
@@ -136,9 +144,9 @@ class EI(object):
 		return new_x, ind
 
 class UCB(object):
-
-	def __init__(self, kappa=0.2):
+	def __init__(self, kappa=0.2, abbreviation="ucb"):
 		self.kappa = kappa
+		self.abbreviation = abbreviation
 
 	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 		# Get posterior mean and standard deviation for test set
@@ -170,8 +178,9 @@ class UCB(object):
 
 class LCB(object):
 
-	def __init__(self, kappa=0.2):
+	def __init__(self, kappa=0.2, abbreviation="lcb"):
 		self.kappa = kappa
+		self.abbreviation = abbreviation
 
 	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 		# Get posterior mean and standard deviation for test set
