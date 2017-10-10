@@ -55,6 +55,7 @@ class Experiment(object):
 	    start_test = len(self.output)-test_size
 	    if number_runs == None:
 		number_runs = start_test - training_size
+	    run = np.linspace(-1,number_runs+1,num=number_runs+1)
 
 	    modopt = model.Model(n_kers=2, Xtrain=[self.descriptors[:training_size],self.smiles[:training_size]],Xtest=[self.descriptors[training_size:start_test],self.smiles[training_size:start_test]], Ytrain=self.output[:training_size], Ytest=self.output[training_size:start_test], kernel=ker) 
 	    r_sq = []
@@ -83,6 +84,7 @@ class Experiment(object):
 #			regtest.plot_by_index()			
 			print "r squared",regtest.r_squared()
 		r_sq.append(regtest.r_squared())
-	    np.savetxt("/home/nafisa/Dropbox/DPhil/Gaussian_processes/results/rsq_" + acquisition_function.abbreviation + "_tr" + str(training_size) + "_te" + str(test_size) + ".txt", r_sq, fmt='%f')
+
+	    np.savetxt("/home/nafisa/Dropbox/DPhil/Gaussian_processes/results/rsq_" + acquisition_function.abbreviation + "_tr" + str(training_size) + "_te" + str(test_size) + "_runs" + str(number_runs) + ".txt", np.c_[run,r_sq], fmt='%i	%f')
 		
 	    return modopt,modtest,r_sq
