@@ -77,8 +77,9 @@ class Experiment(object):
 			print "r squared",regtest.r_squared()
 		elif i == number_runs-1:
 			print "Results using final training set"
-			regtest.plot_by_index()			
+#			regtest.plot_by_index()			
 			print "r squared",regtest.r_squared()
 		r_sq.append(regtest.r_squared())
+	    np.savetxt("/home/nafisa/Dropbox/DPhil/Gaussian_processes/results/rsq_" + a.abbreviation + "_tr" + training_size + "_te" + test_size + ".txt",r_sq)
 		
 	    return modopt,modtest,r_sq
