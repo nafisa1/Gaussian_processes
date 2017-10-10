@@ -60,7 +60,7 @@ class Experiment(object):
 	    modtest.hyperparameters(print_vals=False)
 	    regtest = modtest.regression()
 	    print "Results using initial training set"
-	    regtest.plot_by_index()
+#	    regtest.plot_by_index()
 	    r_sq.append(regtest.r_squared())
 	    print "Initial r squared",regtest.r_squared()
 	    
@@ -80,6 +80,6 @@ class Experiment(object):
 #			regtest.plot_by_index()			
 			print "r squared",regtest.r_squared()
 		r_sq.append(regtest.r_squared())
-	    np.savetxt("/home/nafisa/Dropbox/DPhil/Gaussian_processes/results/rsq_" + a.abbreviation + "_tr" + training_size + "_te" + test_size + ".txt",r_sq)
+	    np.savetxt("/home/nafisa/Dropbox/DPhil/Gaussian_processes/results/rsq_" + acquisition_function.abbreviation + "_tr" + str(training_size) + "_te" + str(test_size) + ".txt", r_sq, fmt='%f')
 		
 	    return modopt,modtest,r_sq
