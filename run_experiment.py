@@ -46,19 +46,22 @@ class Experiment(object):
 	    print 'Compounds have been sorted by EVOTEC ID'
 
 	    if output_type == 'pic50':
-		pic50s = utils.pIC50(new_output, -9)
+		pic50s = utils.pIC50(new_output, -6)
 
 	    self.smiles, self.output, self.descriptors = utils.enantiomers(new_smiles, pic50s, new_desc)
 	    return self.smiles, self.output, self.descriptors
 
-	def bayes_opt(self,training_size, test_size, ker, acquisition_function, noise=0.01, number_runs=None, print_interim=False):
+	def bayes_opt(self,training_size, test_size, ker, acquisition_function, noise=0.01, number_runs=None, end_train=None, print_interim=False):
+
 	    start_test = len(self.output)-test_size
+	    if end_train == None:
+		end_train = start_test
 	    if number_runs == None:
 		number_runs = start_test - training_size
 	
 	    run = np.linspace(-1,number_runs-1,num=number_runs+1)
 
-	    modopt = model.Model(n_kers=2, Xtrain=[self.descriptors[:training_size],self.smiles[:training_size]],Xtest=[self.descriptors[training_size:start_test],self.smiles[training_size:start_test]], Ytrain=self.output[:training_size], Ytest=self.output[training_size:start_test], kernel=ker) 
+	    modopt = model.Model(n_kers=2, Xtrain=[self.descriptors[:training_size],self.smiles[:training_size]],Xtest=[self.descriptors[training_size:end_train],self.smiles[training_size:end_train]], Ytrain=self.output[:training_size], Ytest=self.output[training_size:end_train], kernel=ker) 
 	    r_sq = []
 	    modtest = model.Model(n_kers=2, Xtrain=modopt.Xtrain, Xtest=[self.descriptors[start_test:],self.smiles[start_test:]], Ytrain=modopt.Ytrain, Ytest=self.output[start_test:], kernel=ker) 
 	    modtest.kernel.noise_var = noise
@@ -76,6 +79,8 @@ class Experiment(object):
 		newx = modopt.optimization()  
 		modtest.Xtrain = modopt.Xtrain
 		modtest.Ytrain = modopt.Ytrain 
+	        modtest.kernel.noise_var = noise  ##################
+
 		modtest.hyperparameters(print_vals=False)
 		regtest = modtest.regression()
                 if i != number_runs-1 and print_interim == True:
@@ -84,7 +89,7 @@ class Experiment(object):
 			print "Results using final training set"
 #			regtest.plot_by_index()			
 			print "r squared",regtest.r_squared()
-		print i, regtest.r_squared()
+
 		r_sq.append(regtest.r_squared())
 
 	    np.savetxt("/home/nafisa/Dropbox/DPhil/Gaussian_processes/results/rsq_" + acquisition_function.abbreviation + "_tr" + str(training_size) + "_te" + str(test_size) + "_runs" + str(number_runs) + ".txt", np.c_[run,r_sq], fmt='%i	%f')
