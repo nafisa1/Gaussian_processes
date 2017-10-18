@@ -62,60 +62,63 @@ class Cross_Validation(object):
 	    print len(self.x_test_set), self.y_test_set.shape, len(self.cv_x), self.cv_y.shape
 	    return self.x_test_set, self.y_test_set, self.cv_x, self.cv_y		
 
-	def get_stratified_folds(self):
-	    x_all_folds = []
-	    y_all_folds = []
+	def random_folds(self, array, folds, scrambled_indices=None):
+	    indices = np.arange(len(array))
+	    if scrambled_indices == None:
+        	scrambled_indices = np.random.permutation(indices)
+	    rearranged_array = array[scrambled_indices]
+	    splits = np.array_split(rearranged_array, folds)
+    
+	    validation_sets = []
+	    training_sets = []
+	    for i in xrange(folds):
+        	training = []
+	        for fold_number in xrange(folds):
+        	    if i == fold_number:
+        	        validation_sets.append(splits[fold_number])
+        	    else:
+        	        training.append(splits[fold_number])
+        	training_sets.append(training)
+
+	    validation_sets = np.asarray(validation_sets)
+	    training_sets = np.asarray(training_sets)
+
+	    return validation_sets, training_sets, scrambled_indices
+
+
+	def stratified_folds(self, array):
+	    all_folds = []
 	    for fold_number in xrange(self.n_folds):
-	        x_fold = []
-		y_fold = []
+	        fold = []
 		
-		if isinstance(self.cv_x,np.ndarray):
+	        for number in xrange(self.array.shape[0]/self.n_folds):
 			position = fold_number
-			for number in xrange(self.cv_x.shape[0]/self.n_folds):
-				x_fold.append(self.cv_x[position])    
-	            		position += self.n_folds	
-		elif isinstance(self.cv_x, list):
-			position = fold_number
-			for number in xrange(len(self.cv_x)/self.n_folds):
-				x_fold.append(self.cv_x[position])    
-	            		position += self.n_folds
-	        for number in xrange(self.cv_y.shape[0]/self.n_folds):
-			position = fold_number
-			y_fold.append(self.cv_y[position])    
+			fold.append(self.array[position])    
 			position += self.n_folds
-	        x_all_folds.append(x_fold)
-		y_all_folds.append(y_fold)
+	        all_folds.append(fold)
         
-	    x_validation_sets = []
-	    x_training_sets = []
-	    y_validation_sets = []
-	    y_training_sets = []
+	    validation_sets = []
+	    training_sets = []
 	    for i in xrange(self.n_folds):
-	        x_training = []
-		y_training = []
+	        training = []
 	        for fold in xrange(self.n_folds):
 	            if i == fold:
-	                x_validation_sets.append(x_all_folds[fold])
-			y_validation_sets.append(y_all_folds[fold])
+	                validation_sets.append(all_folds[fold])
 	            else:
-	                x_training.append(x_all_folds[fold])
-			y_training.append(y_all_folds[fold])
-	        x_training_sets.append(x_training)
-		y_training_sets.append(y_training)
+	                training.append(all_folds[fold])
+	        training_sets.append(training)
 	
-	    x_validation_sets = np.asarray(x_validation_sets)
-	    x_training_sets = np.asarray(x_training_sets)
-	    y_validation_sets = np.asarray(y_validation_sets)
-	    y_training_sets = np.asarray(y_training_sets)
+	    validation_sets = np.asarray(validation_sets)
+	    training_sets = np.asarray(training_sets)
 	
-	    return x_validation_sets, x_training_sets, y_validation_sets, y_training_sets
+	    return validation_sets, training_sets
 	
-	def get_binned_folds(self, iteration=0):
+	def binned_folds(self, iteration=0):
 	    active_x = []
 	    inactive_x = []
 	    active_y = []
 	    inactive_y = []
-	      
+
 	    for i,number in enumerate(self.cv_y):
 	        if number > self.threshold:
 	            active_y.append(number)
@@ -124,56 +127,29 @@ class Cross_Validation(object):
 	        else:
 	            inactive_y.append(number)
 	            inactive_x.append(self.cv_x[i])
+
 	    if iteration == 0:
 		    print "active x:", len(active_x), "inactive x:", len(inactive_x), "active y:", len	(active_y), "inactive y:", len(inactive_y)
   
 	    p = np.random.permutation(len(active_y))
-	    shuf_active_x = [active_x[i] for i in p]
-	    shuf_active_y = [active_y[i] for i in p]
+	    shuf_active_x = (np.asarray(active_x))[p]#[active_x[i] for i in p]
+	    shuf_active_y = (np.asarray(active_y))[p]
 	
 	    q = np.random.permutation(len(inactive_y))
-	    shuf_inactive_x = [inactive_x[i] for i in q]
-	    shuf_inactive_y = [inactive_y[i] for i in q]
+	    shuf_inactive_x = (np.asarray(inactive_x))[q]
+	    shuf_inactive_y = (np.asarray(inactive_y))[q]
 	
-	    act_position=0
-	    inact_position=0
-	
-	    x_active_folds = []
-	    y_active_folds = []
-	    active_step = len(shuf_active_y)//self.n_folds
-	    x_inactive_folds = []
-	    y_inactive_folds = []
-	    inactive_step = len(shuf_inactive_y)//self.n_folds
-
-	    for i in xrange(self.n_folds):
-	        x_act_fold = shuf_active_x[act_position:act_position+active_step]
-	        y_act_fold = shuf_active_y[act_position:act_position+active_step]
-	        act_position += active_step
-	        x_active_folds.append(x_act_fold) 
-	        y_active_folds.append(y_act_fold)
-	        x_inact_fold = shuf_inactive_x[inact_position:inact_position+inactive_step]
-	        y_inact_fold = shuf_inactive_y[inact_position:inact_position+inactive_step]
-	        inact_position += inactive_step
-	        x_inactive_folds.append(x_inact_fold) 
-	        y_inactive_folds.append(y_inact_fold) 
-	    
-	    for i,value in enumerate(shuf_active_x[active_step*self.n_folds:]):
-	        x_active_folds[i].append(value)
-	
-	    for i,value in enumerate(shuf_active_y[active_step*self.n_folds:]):
-	        y_active_folds[i].append(value)
-	
-	    for i,value in enumerate(shuf_inactive_x[inactive_step*self.n_folds:]):
-	        x_inactive_folds[i].append(value)
-	
-	    for i,value in enumerate(shuf_inactive_y[inactive_step*self.n_folds:]):
-	        y_inactive_folds[i].append(value)
+	    x_active_folds = np.array_split(shuf_active_x,self.n_folds)
+	    y_active_folds = np.array_split(shuf_active_y,self.n_folds)
+	    x_inactive_folds = np.array_split(shuf_inactive_x,self.n_folds)
+	    y_inactive_folds = np.array_split(shuf_inactive_y,self.n_folds)
 	
 	    x_folds = []
 	    y_folds = []
 	    for i in xrange(self.n_folds):
-	        x_folds.append(x_active_folds[i]+x_inactive_folds[i])
-	        y_folds.append(y_active_folds[i]+y_inactive_folds[i])
+	        x_folds.append(np.concatenate((x_active_folds[i],x_inactive_folds[i])))
+	        y_folds.append(np.concatenate((y_active_folds[i],y_inactive_folds[i])))
+	    print x_folds
 	
 	    x_validation_sets = []
 	    x_training_sets = []
@@ -200,46 +176,44 @@ class Cross_Validation(object):
 	    
 	    return x_validation_sets, x_training_sets, y_validation_sets, y_training_sets
 
-	def perform_cv(self, kern, x_validation_sets, x_training_sets, y_validation_sets, 	y_training_sets):
+	def perform_cv(self, y, fold_type, kern, descs=None, smiles=None):
 	    r_sq = []
+
+	    y_val_sets, y_tr_sets, si = fold_type(y, folds)
+
+	    if descs is not None:
+	        desc_val_sets, desc_tr_sets, si = fold_type(descs, folds, si)
+	    if smiles is not None:
+	        smiles_val_sets, smiles_tr_sets, si = fold_type(np.array(smiles), folds, si)
+
 	
 	    for i in xrange(self.n_folds):
-	        run = model.Model(Ytrain=y_training_sets[i], Ytest=y_validation_sets[i], smiles_train=x_training_sets[i], smiles_test=x_validation_sets[i], kernel=kern, threshold=self.threshold)
+		if descs is None:
+			run = model.Model(Ytrain=y_training_sets[i], Ytest=y_validation_sets[i], Xtrain=np.ndarray.tolist(smiles_training_sets[i]), Xtest=np.ndarray.tolist(smiles_validation_sets[i]), kernel=kern, threshold=self.threshold)
+		if smiles is None:
+			run = model.Model(Ytrain=y_training_sets[i], Ytest=y_validation_sets[i], Xtrain=desc_training_sets[i], Xtest=desc_validation_sets[i], kernel=kern, threshold=self.threshold)
+		else:
+	        	run = model.Model(Ytrain=y_training_sets[i], Ytest=y_validation_sets[i], Xtrain=[desc_training_sets[i],np.ndarray.tolist(smiles_training_sets[i])], Xtest=[desc_validation_sets[i],np.ndarray.tolist(smiles_validation_sets[i])], kernel=kern, threshold=self.threshold)
+		run.hyperparameters()
 	        run_regression = run.regression()
 	        r_sq.append(run_regression.r_squared())
-	    return np.mean(r_sq)
+	    return r_sq, si
 
-	def repeated_CV(self, default_kern, hparams, iterations=10, lhs_kern=None):
+	def repeated_CV(self, kern, y, descs=None, smiles=None, iterations=10, lhs_kern=None):
 		
 		iteration_means = []
 		for i in xrange(iterations):
-			iteration_mean = []
-			x_validation_sets, x_training_sets, y_validation_sets, y_training_sets = self.get_binned_folds(iteration=i) # ALLOW OPTION FOR BINNED OR STRATIFIED
 			print "Iteration ", i
-			default_r_sq = self.perform_cv(default_kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets)
-			iteration_mean.append(default_r_sq)
+			r_sq = self.perform_cv(y, kern, descs=descs, smiles=smiles)
+			iteration_means.append(r_sq)
 			    
-			for j in xrange(len(hparams)):
-				# if isinstance(self.kernel, kernels.Composite): 
-				# for i in xrange(self.n_kers):
-				# lhs_kern.kers[i].lengthscale=
-				# lhs_kern.kers[i].sig_var=
-				# else:
-				lhs_kern.noise_var=hparams[j][2] #change to hparams
-	    			r_sq = self.perform_cv(lhs_kern, x_validation_sets, x_training_sets, y_validation_sets, y_training_sets)
-				iteration_mean.append(r_sq)
-		    	iteration_means.append(iteration_mean)	
 
 		means = (np.asarray(iteration_means)).T
 		self.means_over_iters = np.mean(means, axis=1)
 
-		index = np.argmax(self.means_over_iters)
-		if index == 0:
-			best_noise = default_kern.noise_var
-		else:
-			best_noise = hparams[index-1][2] # corrected?
+		#index = np.argmax(self.means_over_iters)
 
-		return best_noise, means, self.means_over_iters	
+		return means, self.means_over_iters	
 
 	def test_set_results(self, test_kern):
 		index = np.argmax(self.means_over_iters)
