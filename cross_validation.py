@@ -90,13 +90,16 @@ class Cross_Validation(object):
 	    all_folds = []
 	    for fold_number in xrange(self.n_folds):
 	        fold = []
-		
-	        for number in xrange(self.array.shape[0]/self.n_folds):
-			position = fold_number
-			fold.append(self.array[position])    
-			position += self.n_folds
+	        position = fold_number
+	        for number in xrange(array.shape[0]/self.n_folds):
+	            fold.append(array[position])    
+	            position += self.n_folds
 	        all_folds.append(fold)
-        
+    	
+	    if len(array) % n_folds != 0:
+	        for i,value in enumerate(array[(array.shape[0] - array.shape[0]%n_folds):]):
+	            all_folds[i].append(value)     
+
 	    validation_sets = []
 	    training_sets = []
 	    for i in xrange(self.n_folds):
@@ -111,75 +114,57 @@ class Cross_Validation(object):
 	    validation_sets = np.asarray(validation_sets)
 	    training_sets = np.asarray(training_sets)
 	
-	    return validation_sets, training_sets
+	    return validation_sets, training_sets, None
 	
-	def binned_folds(self, iteration=0):
-	    active_x = []
-	    inactive_x = []
-	    active_y = []
-	    inactive_y = []
+	def binned_folds(self, array, iteration=0):
+	    active = []
+	    inactive = []
 
-	    for i,number in enumerate(self.cv_y):
+	    for i,number in enumerate(array):
 	        if number > self.threshold:
-	            active_y.append(number)
-	            active_x.append(self.cv_x[i])
+	            active.append(number)
         
 	        else:
-	            inactive_y.append(number)
-	            inactive_x.append(self.cv_x[i])
+	            inactive.append(number)
 
 	    if iteration == 0:
-		    print "active x:", len(active_x), "inactive x:", len(inactive_x), "active y:", len	(active_y), "inactive y:", len(inactive_y)
+		    print "active:", len(active), "inactive:", len(inactive)
   
-	    p = np.random.permutation(len(active_y))
-	    shuf_active_x = (np.asarray(active_x))[p]#[active_x[i] for i in p]
-	    shuf_active_y = (np.asarray(active_y))[p]
+	    p = np.random.permutation(len(active))
+	    shuf_active = (np.asarray(active))[p]
 	
-	    q = np.random.permutation(len(inactive_y))
-	    shuf_inactive_x = (np.asarray(inactive_x))[q]
-	    shuf_inactive_y = (np.asarray(inactive_y))[q]
+	    q = np.random.permutation(len(inactive))
+	    shuf_inactive = (np.asarray(inactive))[q]
 	
-	    x_active_folds = np.array_split(shuf_active_x,self.n_folds)
-	    y_active_folds = np.array_split(shuf_active_y,self.n_folds)
-	    x_inactive_folds = np.array_split(shuf_inactive_x,self.n_folds)
-	    y_inactive_folds = np.array_split(shuf_inactive_y,self.n_folds)
+	    active_folds = np.array_split(shuf_active,self.n_folds)
+	    inactive_folds = np.array_split(shuf_inactive,self.n_folds)
 	
-	    x_folds = []
-	    y_folds = []
+	    all_folds = []
 	    for i in xrange(self.n_folds):
-	        x_folds.append(np.concatenate((x_active_folds[i],x_inactive_folds[i])))
-	        y_folds.append(np.concatenate((y_active_folds[i],y_inactive_folds[i])))
-	    print x_folds
+	        all_folds.append(np.concatenate((active_folds[i],inactive_folds[i])))
 	
-	    x_validation_sets = []
-	    x_training_sets = []
-	    y_validation_sets = []
-	    y_training_sets = []
-	
+	    validation_sets = []
+	    training_sets = []
+	    	
 	    for i in xrange(self.n_folds):
-	        x_training = []
-	        y_training = []
-	        for fold in xrange(self.n_folds):
-	            if i == fold:
-	                x_validation_sets.append(x_folds[fold])
-	                y_validation_sets.append(np.asarray(y_folds[fold]))
+	        training = []
+	        for j,fold in enumerate(all_folds):#fold in xrange(self.n_folds):
+	            if i == j:
+	                validation_sets.append(fold)
 	            else:
-	                x_training.append(x_folds[fold])
-	                y_training.append(y_folds[fold])
-	        x_training = [item for sublist in x_training for item in sublist]
-	        y_training = np.array([item for sublist in y_training for item in sublist])
-	        x_training_sets.append(x_training)
-	        y_training_sets.append(y_training)
+	                training.append(fold)
+	        training = [item for sublist in training for item in sublist]
+	        training_sets.append(training)
 	        
-	    y_validation_sets = np.asarray(y_validation_sets)
-	    y_training_sets = np.asarray(y_training_sets)
+	    validation_sets = np.asarray(validation_sets)
+	    indices = np.concatenate((p,q))
 	    
-	    return x_validation_sets, x_training_sets, y_validation_sets, y_training_sets
+	    return validation_sets, training_sets, indices
 
-	def perform_cv(self, y, fold_type, kern, descs=None, smiles=None):
+	def perform_cv(self, y, fold_type=self.random_folds, kern, descs=None, smiles=None):
 	    r_sq = []
 
-	    y_val_sets, y_tr_sets, si = fold_type(y, folds)
+	    y_val_sets, y_tr_sets, indices = fold_type(y, folds)
 
 	    if descs is not None:
 	        desc_val_sets, desc_tr_sets, si = fold_type(descs, folds, si)
