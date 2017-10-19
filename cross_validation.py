@@ -4,12 +4,13 @@ import utils
 
 class Cross_Validation(object):
 
-	def __init__(self, x, y, fraction_test=0.2, n_folds=10, n_kers=1, threshold=None):
-		self.x = x
+	def __init__(self, y, fraction_test=0.2, n_folds=10, n_kers=1, descs=None, smiles=None, threshold=None):
 		self.y = y
 		self.fraction_test = fraction_test
 		self.n_folds = n_folds
 		self.n_kers = n_kers
+		self.descs = descs
+		self.smiles = smiles
 		self.threshold = threshold	
 
 #		change_vars = raw_input("Would you like to change values of the default latin hypercube sampling variables? Enter y or n: ")
@@ -62,18 +63,18 @@ class Cross_Validation(object):
 	    print len(self.x_test_set), self.y_test_set.shape, len(self.cv_x), self.cv_y.shape
 	    return self.x_test_set, self.y_test_set, self.cv_x, self.cv_y		
 
-	def random_folds(self, array, folds, scrambled_indices=None):
+	def random_folds(self, array, scrambled_indices=None):
 	    indices = np.arange(len(array))
 	    if scrambled_indices == None:
         	scrambled_indices = np.random.permutation(indices)
 	    rearranged_array = array[scrambled_indices]
-	    splits = np.array_split(rearranged_array, folds)
+	    splits = np.array_split(rearranged_array, self.n_folds)
     
 	    validation_sets = []
 	    training_sets = []
-	    for i in xrange(folds):
+	    for i in xrange(self.n_folds):
         	training = []
-	        for fold_number in xrange(folds):
+	        for fold_number in xrange(self.n_folds):
         	    if i == fold_number:
         	        validation_sets.append(splits[fold_number])
         	    else:
@@ -161,28 +162,28 @@ class Cross_Validation(object):
 	    
 	    return validation_sets, training_sets, indices
 
-	def perform_cv(self, y, fold_type=self.random_folds, kern, descs=None, smiles=None):
+	def perform_cv(self, y, kern, fold_type, descs=None, smiles=None):
 	    r_sq = []
-
-	    y_val_sets, y_tr_sets, indices = fold_type(y, folds)
+	    fold_type=self.random_folds
+	    y_val_sets, y_tr_sets, indices = fold_type(y)
 
 	    if descs is not None:
-	        desc_val_sets, desc_tr_sets, si = fold_type(descs, folds, si)
+	        desc_val_sets, desc_tr_sets, indices = fold_type(descs, indices)
 	    if smiles is not None:
-	        smiles_val_sets, smiles_tr_sets, si = fold_type(np.array(smiles), folds, si)
+	        smiles_val_sets, smiles_tr_sets, indices = fold_type(np.array(smiles), indices)
 
 	
 	    for i in xrange(self.n_folds):
 		if descs is None:
-			run = model.Model(Ytrain=y_training_sets[i], Ytest=y_validation_sets[i], Xtrain=np.ndarray.tolist(smiles_training_sets[i]), Xtest=np.ndarray.tolist(smiles_validation_sets[i]), kernel=kern, threshold=self.threshold)
+			run = model.Model(Ytrain=y_tr_sets[i], Ytest=y_val_sets[i], Xtrain=np.ndarray.tolist(smiles_tr_sets[i]), Xtest=np.ndarray.tolist(smiles_val_sets[i]), kernel=kern, threshold=self.threshold)
 		if smiles is None:
-			run = model.Model(Ytrain=y_training_sets[i], Ytest=y_validation_sets[i], Xtrain=desc_training_sets[i], Xtest=desc_validation_sets[i], kernel=kern, threshold=self.threshold)
+			run = model.Model(Ytrain=y_tr_sets[i], Ytest=y_val_sets[i], Xtrain=desc_tr_sets[i], Xtest=desc_val_sets[i], kernel=kern, threshold=self.threshold)
 		else:
-	        	run = model.Model(Ytrain=y_training_sets[i], Ytest=y_validation_sets[i], Xtrain=[desc_training_sets[i],np.ndarray.tolist(smiles_training_sets[i])], Xtest=[desc_validation_sets[i],np.ndarray.tolist(smiles_validation_sets[i])], kernel=kern, threshold=self.threshold)
+	        	run = model.Model(Ytrain=y_tr_sets[i], Ytest=y_val_sets[i], Xtrain=[desc_tr_sets[i],np.ndarray.tolist(smiles_tr_sets[i])], Xtest=[desc_val_sets[i],np.ndarray.tolist(smiles_val_sets[i])], kernel=kern, threshold=self.threshold)
 		run.hyperparameters()
 	        run_regression = run.regression()
 	        r_sq.append(run_regression.r_squared())
-	    return r_sq, si
+	    return r_sq, indices
 
 	def repeated_CV(self, kern, y, descs=None, smiles=None, iterations=10, lhs_kern=None):
 		
