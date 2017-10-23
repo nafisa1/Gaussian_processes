@@ -18,10 +18,7 @@ class Cross_Validation(object):
 #		if change_vars == "y":
 			
 #			n_parameters = input("Enter the number of hyperparameters, not including noise variance: ")
-#			n_samples = input("Enter the number of samples from the hyperparameter space: ")
-#			lowb = input("Enter the lower bounds for the hyperparameters as a list [(lengthscale, signal variance)*number of hyperparameters, noise variance]: ")
-#			upb = input("Enter the upper bounds for the hyperparameters as a list [(lengthscale, signal variance)*number of hyperparameters, noise variance]: ")
-#			divs = input("Enter the number of evenly-spaced samples for each hyperparameter, in one list: ")
+
 #			self.hparameter_choices = utils.LHS(parameters=n_parameters, n_choices=n_samples, lower=lowb, upper=upb, divisions=divs).combinations
 
 #		elif change_vars == "n":
@@ -79,7 +76,11 @@ class Cross_Validation(object):
         	        validation_sets.append(splits[fold_number])
         	    else:
         	        training.append(splits[fold_number])
-        	training_sets.append(training)
+		if len(splits[0].shape) == 1:
+		        training_sets.append(np.hstack(training))
+		elif len(splits[0].shape) == 2:
+		        training_sets.append(np.vstack(training))
+
 
 	    validation_sets = np.asarray(validation_sets)
 	    training_sets = np.asarray(training_sets)
@@ -180,7 +181,7 @@ class Cross_Validation(object):
 			run = model.Model(Ytrain=y_tr_sets[i], Ytest=y_val_sets[i], Xtrain=desc_tr_sets[i], Xtest=desc_val_sets[i], kernel=kern, threshold=self.threshold)
 		else:
 	        	run = model.Model(Ytrain=y_tr_sets[i], Ytest=y_val_sets[i], Xtrain=[desc_tr_sets[i],np.ndarray.tolist(smiles_tr_sets[i])], Xtest=[desc_val_sets[i],np.ndarray.tolist(smiles_val_sets[i])], kernel=kern, threshold=self.threshold)
-		run.hyperparameters()
+		run.hyperparameters(print_vals=False)
 	        run_regression = run.regression()
 	        r_sq.append(run_regression.r_squared())
 	    return r_sq, indices
