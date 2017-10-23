@@ -79,7 +79,7 @@ class Experiment(object):
 		newx = modopt.optimization()  
 		modtest.Xtrain = modopt.Xtrain
 		modtest.Ytrain = modopt.Ytrain 
-	        modtest.kernel.noise_var = noise  ##################
+	        modtest.kernel.noise_var = noise
 
 		modtest.hyperparameters(print_vals=False)
 		regtest = modtest.regression()
@@ -95,3 +95,43 @@ class Experiment(object):
 	    np.savetxt("/home/nafisa/Dropbox/DPhil/Gaussian_processes/results/rsq_" + acquisition_function.abbreviation + "_tr" + str(training_size) + "_te" + str(test_size) + "_runs" + str(number_runs) + ".txt", np.c_[run,r_sq], fmt='%i	%f')
 		
 	    return modopt,modtest,r_sq
+	    
+	def q_squared(self, start_number):
+		# Take e.g. 10 molecules
+		# Use acquisition function to select next molecule
+		# Predict activity of new molecule using first 10
+		# Add actual value
+		# Repeat from step 2
+		# 
+		pass
+		
+		
+
+	    modold = model.Model(n_kers=2, Xtrain=[self.descriptors[:training_size],self.smiles[:training_size]],Xtest=[self.descriptors[training_size:],self.smiles[training_size:]], Ytrain=self.output[:training_size], Ytest=self.output[training_size:], kernel=ker) 
+	    r_sq = []
+	    modnew = modold
+	    
+	    modtest.kernel.noise_var = noise
+	    modtest.hyperparameters(print_vals=False)
+
+	    
+	    for i in xrange(number_runs):
+		if i%10 == 0:
+		    print "Iteration",i,"..."
+		modopt.acq_func = acquisition_function
+		newx = modopt.optimization()  
+		modtest.Xtrain = modopt.Xtrain
+		modtest.Ytrain = modopt.Ytrain 
+	        modtest.kernel.noise_var = noise
+
+		modtest.hyperparameters(print_vals=False)
+		regtest = modtest.regression()
+                if i != number_runs-1 and print_interim == True:
+			print "r squared",regtest.r_squared()
+		elif i == number_runs-1:
+			print "Results using final training set"
+#			regtest.plot_by_index()			
+			print "r squared",regtest.r_squared()
+
+		r_sq.append(regtest.r_squared())
+	
