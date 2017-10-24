@@ -165,7 +165,7 @@ class Model(object):
 		self.Ytrain = np.vstack((self.Ytrain, new_obs))
 		self.Ytest = np.delete(self.Ytest, ind, axis=0)
 
-		return new_x
+		return new_x, new_obs
 
 	# This is done after regression etc			
 	def correction(self):
