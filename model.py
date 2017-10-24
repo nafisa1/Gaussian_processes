@@ -33,8 +33,9 @@ class Model(object):
 		else:
 			if len(Ytrain.shape) != 2:
 				self.Ytrain = Ytrain.reshape(-1,1)	
-			if len(Ytest.shape) != 2:
-				self.Ytest = Ytest.reshape(-1,1)
+			if Ytest is not None:
+				if len(Ytest.shape) != 2:
+					self.Ytest = Ytest.reshape(-1,1)
 
 		if prior_train is not None:
 			prior_train = prior_train.reshape(-1,1)
@@ -65,7 +66,6 @@ class Model(object):
 		centred_Ytrain = utils.centre(self.Ytrain.reshape(-1,1))
 
 		find_max_ll = max_likelihood.Max_LL(centred_Ytrain, self.kernel, self.print_jit)
-
 		default_starting_point = []		
 		if isinstance(self.kernel, kernels.Composite):
 			for item in self.kernel.kers:
@@ -103,6 +103,7 @@ class Model(object):
 		self.kernel.noise_var += best_jitter
 		if print_vals==True:
 			print "Best hyperparameters:", best_hparams
+			print "Jitter", best_jitter
 			print "Noise variance =", self.kernel.noise_var
 
 		if isinstance(self.kernel, kernels.Composite):
