@@ -96,42 +96,24 @@ class Experiment(object):
 		
 	    return modopt,modtest,r_sq
 	    
-	def q_squared(self, start_number):
+	def q_squared(self, training_size, ker, acquisition_function, noise):
 		# Take e.g. 10 molecules
 		# Use acquisition function to select next molecule
 		# Predict activity of new molecule using first 10
 		# Add actual value
 		# Repeat from step 2
 		# 
-		pass
-		
-		
 
-	    modold = model.Model(n_kers=2, Xtrain=[self.descriptors[:training_size],self.smiles[:training_size]],Xtest=[self.descriptors[training_size:],self.smiles[training_size:]], Ytrain=self.output[:training_size], Ytest=self.output[training_size:], kernel=ker) 
-	    r_sq = []
+	    modold = model.Model(n_kers=2, Xtrain=[self.descriptors[:training_size],self.smiles[:training_size]],Xtest=[self.descriptors[training_size:],self.smiles[training_size:]], Ytrain=self.output)
 	    modnew = modold
+	    modnew.acq_func = acquisition_function
+	    newx = modnew.optimization()
+	    modold.Xtest = modnew.Xtrain[-1]
+	    modold.Ytest = modnew.Ytrain[-1]
+	    modold.kernel.noise_var = noise
 	    
-	    modtest.kernel.noise_var = noise
-	    modtest.hyperparameters(print_vals=False)
-
-	    
-	    for i in xrange(number_runs):
-		if i%10 == 0:
-		    print "Iteration",i,"..."
-		modopt.acq_func = acquisition_function
-		newx = modopt.optimization()  
-		modtest.Xtrain = modopt.Xtrain
-		modtest.Ytrain = modopt.Ytrain 
-	        modtest.kernel.noise_var = noise
-
-		modtest.hyperparameters(print_vals=False)
-		regtest = modtest.regression()
-                if i != number_runs-1 and print_interim == True:
-			print "r squared",regtest.r_squared()
-		elif i == number_runs-1:
-			print "Results using final training set"
-#			regtest.plot_by_index()			
-			print "r squared",regtest.r_squared()
-
-		r_sq.append(regtest.r_squared())
+	    modold.hyperparameters(print_vals=False)
+	    regold = modold.regression()
+	    print regold.post_mean
+	    print regold.Ytest
 	
