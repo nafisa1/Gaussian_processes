@@ -104,15 +104,21 @@ class Experiment(object):
 		# Repeat from step 2
 		# 
 
-	    modold = model.Model(n_kers=2, Xtrain=[self.descriptors[:training_size],self.smiles[:training_size]],Xtest=[self.descriptors[training_size:],self.smiles[training_size:]], Ytrain=self.output)
+	    modold = model.Model(n_kers=2, kernel=ker, Xtrain=[self.descriptors[:training_size],self.smiles[:training_size]],Xtest=[self.descriptors[training_size:],self.smiles[training_size:]], Ytrain=self.output[:training_size], Ytest=self.output[training_size:])
 	    modnew = modold
+	    modnew.kernel.noise_var = noise
+   	    modnew.hyperparameters(print_vals=False)
 	    modnew.acq_func = acquisition_function
-	    newx = modnew.optimization()
-	    modold.Xtest = modnew.Xtrain[-1]
-	    modold.Ytest = modnew.Ytrain[-1]
-	    modold.kernel.noise_var = noise
-	    
+   	    print len(modold.Xtrain[1])
+	    newx, newobs = modnew.optimization()
+   	    print len(modold.Xtrain[1])
+	    modold.Xtest = newx
+	    modold.Ytest = newobs
+
+	    modold.kernel.noise_var = noise	    
 	    modold.hyperparameters(print_vals=False)
+	    print len(modold.Xtrain[1])
+	    print modold.Xtest[1]
 	    regold = modold.regression()
 	    print regold.post_mean
 	    print regold.Ytest
