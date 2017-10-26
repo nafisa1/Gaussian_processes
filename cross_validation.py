@@ -186,12 +186,12 @@ class Cross_Validation(object):
 				run.hyperparameters(print_vals=False)
 				run_regression = run.regression()
 				r_sq.append(run_regression.r_squared())
-				print i
 				observed.append(run_regression.Ytest)
 				predicted.append(run_regression.post_mean)
+			print i
 
-#		if q2==True:
-#			return observed, predicted
+        if q2==True:
+            return observed, predicted
 #		else:
 #			return r_sq, indices
 
