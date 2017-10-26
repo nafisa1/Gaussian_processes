@@ -2,6 +2,7 @@ import numpy as np
 import utils
 import xlrd
 import model
+import cross_validation
 
 class Experiment(object):
 	
@@ -99,27 +100,22 @@ class Experiment(object):
 	def q_squared(self, training_size, ker, acquisition_function, noise):
 		# Take e.g. 10 molecules
 		# Use acquisition function to select next molecule
-		# Predict activity of new molecule using first 10
-		# Add actual value
+		# calculate q2
+		# 
 		# Repeat from step 2
 		# 
 
-	    modold = model.Model(n_kers=2, kernel=ker, Xtrain=[self.descriptors[:training_size],self.smiles[:training_size]],Xtest=[self.descriptors[training_size:],self.smiles[training_size:]], Ytrain=self.output[:training_size], Ytest=self.output[training_size:])
-	    modnew = modold
-	    modnew.kernel.noise_var = noise
-   	    modnew.hyperparameters(print_vals=False)
-	    modnew.acq_func = acquisition_function
-   	    print len(modold.Xtrain[1])
-	    newx, newobs = modnew.optimization()
-   	    print len(modold.Xtrain[1])
-	    modold.Xtest = newx
-	    modold.Ytest = newobs
+#	    mod = model.Model(n_kers=2, kernel=ker, Xtrain=[self.descriptors[:training_size],self.smiles[:training_size]],Xtest=[self.descriptors[training_size:],self.smiles[training_size:]], Ytrain=self.output[:training_size], Ytest=self.output[training_size:])
+#	    mod.kernel.noise_var = noise
+#  	    mod.hyperparameters(print_vals=False)
+#	    mod.acq_func = acquisition_function
+#  	    print len(mod.Xtrain[1])
+#	    newx, newobs = mod.optimization()
+#  	    print len(mod.Xtrain[1])
+	    
+	    cv = cross_validation.Cross_Validation(self.output, descs=self.descriptors, smiles=self.smiles)
+	    obs, pred = cv.perform_cv(cv.y, ker, cv.random_folds, q2=True, descs=cv.descs, smiles=cv.smiles)
+	    return obs, pred
 
-	    modold.kernel.noise_var = noise	    
-	    modold.hyperparameters(print_vals=False)
-	    print len(modold.Xtrain[1])
-	    print modold.Xtest[1]
-	    regold = modold.regression()
-	    print regold.post_mean
-	    print regold.Ytest
+	    
 	
