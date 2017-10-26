@@ -163,9 +163,9 @@ class Cross_Validation(object):
 	    
 	    return validation_sets, training_sets, indices
 
-	def perform_cv(self, y, kern, fold_type, descs=None, smiles=None):
+	def perform_cv(self, y, kern, fold_type, q2=False, descs=None, smiles=None):
 	    r_sq = []
-	    fold_type=self.random_folds
+#	    fold_type=self.random_folds
 	    y_val_sets, y_tr_sets, indices = fold_type(y)
 
 	    if descs is not None:
@@ -173,18 +173,27 @@ class Cross_Validation(object):
 	    if smiles is not None:
 	        smiles_val_sets, smiles_tr_sets, indices = fold_type(np.array(smiles), indices)
 
-	
+		observed = []
+		predicted = []
+			
 	    for i in xrange(self.n_folds):
-		if descs is None:
-			run = model.Model(Ytrain=y_tr_sets[i], Ytest=y_val_sets[i], Xtrain=np.ndarray.tolist(smiles_tr_sets[i]), Xtest=np.ndarray.tolist(smiles_val_sets[i]), kernel=kern, threshold=self.threshold)
-		if smiles is None:
-			run = model.Model(Ytrain=y_tr_sets[i], Ytest=y_val_sets[i], Xtrain=desc_tr_sets[i], Xtest=desc_val_sets[i], kernel=kern, threshold=self.threshold)
-		else:
-	        	run = model.Model(Ytrain=y_tr_sets[i], Ytest=y_val_sets[i], Xtrain=[desc_tr_sets[i],np.ndarray.tolist(smiles_tr_sets[i])], Xtest=[desc_val_sets[i],np.ndarray.tolist(smiles_val_sets[i])], kernel=kern, threshold=self.threshold)
-		run.hyperparameters(print_vals=False)
-	        run_regression = run.regression()
-	        r_sq.append(run_regression.r_squared())
-	    return r_sq, indices
+			if descs is None:
+				run = model.Model(Ytrain=y_tr_sets[i], Ytest=y_val_sets[i], Xtrain=np.ndarray.tolist(smiles_tr_sets[i]), Xtest=np.ndarray.tolist(smiles_val_sets[i]), kernel=kern, threshold=self.threshold)
+			if smiles is None:
+				run = model.Model(Ytrain=y_tr_sets[i], Ytest=y_val_sets[i], Xtrain=desc_tr_sets[i], Xtest=desc_val_sets[i], kernel=kern, threshold=self.threshold)
+			else:
+				run = model.Model(Ytrain=y_tr_sets[i], Ytest=y_val_sets[i], Xtrain=[desc_tr_sets[i],np.ndarray.tolist(smiles_tr_sets[i])], Xtest=[desc_val_sets[i],np.ndarray.tolist(smiles_val_sets[i])], kernel=kern, threshold=self.threshold)
+				run.hyperparameters(print_vals=False)
+				run_regression = run.regression()
+				r_sq.append(run_regression.r_squared())
+				print i
+				observed.append(run_regression.Ytest)
+				predicted.append(run_regression.post_mean)
+
+#		if q2==True:
+#			return observed, predicted
+#		else:
+#			return r_sq, indices
 
 	def repeated_CV(self, kern, y, descs=None, smiles=None, iterations=10, lhs_kern=None):
 		
