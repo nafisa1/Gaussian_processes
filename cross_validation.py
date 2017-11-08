@@ -62,6 +62,7 @@ class Cross_Validation(object):
 
 	def random_folds(self, array, scrambled_indices=None):
 	    indices = np.arange(len(array))
+	    print type(scrambled_indices)
 	    if scrambled_indices == None:
         	scrambled_indices = np.random.permutation(indices)
 	    rearranged_array = array[scrambled_indices]
@@ -169,9 +170,9 @@ class Cross_Validation(object):
 	    y_val_sets, y_tr_sets, indices = fold_type(y)
 
 	    if descs is not None:
-	        desc_val_sets, desc_tr_sets, indices = fold_type(descs, indices)
+	        desc_val_sets, desc_tr_sets, indices = fold_type(descs, scrambled_indices=indices)
 	    if smiles is not None:
-	        smiles_val_sets, smiles_tr_sets, indices = fold_type(np.array(smiles), indices)
+	        smiles_val_sets, smiles_tr_sets, indices = fold_type(np.array(smiles), scrambled_indices=indices)
 
 		observed = []
 		predicted = []
@@ -190,8 +191,8 @@ class Cross_Validation(object):
 				predicted.append(run_regression.post_mean)
 			print i
 
-        if q2==True:
-            return observed, predicted
+            if q2==True:
+                return observed, predicted
 #		else:
 #			return r_sq, indices
 
