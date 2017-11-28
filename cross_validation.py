@@ -62,7 +62,6 @@ class Cross_Validation(object):
 
 	def random_folds(self, array, scrambled_indices=None):
 	    indices = np.arange(len(array))
-	    print type(scrambled_indices)
 	    if scrambled_indices is None:
         	scrambled_indices = np.random.permutation(indices)
 	    rearranged_array = array[scrambled_indices]
@@ -186,13 +185,14 @@ class Cross_Validation(object):
 				run = model.Model(Ytrain=y_tr_sets[i], Ytest=y_val_sets[i], Xtrain=[desc_tr_sets[i],np.ndarray.tolist(smiles_tr_sets[i])], Xtest=[desc_val_sets[i],np.ndarray.tolist(smiles_val_sets[i])], kernel=kern, threshold=self.threshold)
 			run.hyperparameters(print_vals=False)
 			run_regression = run.regression()
+			print run_regression.r_squared()
 			r_sq.append(run_regression.r_squared())
 			observed.append(run_regression.Ytest)
 			predicted.append(run_regression.post_mean)
 			print i
 
             if q2==True:
-                return observed, predicted
+                return r_sq#observed, predicted
 #		else:
 #			return r_sq, indices
 
