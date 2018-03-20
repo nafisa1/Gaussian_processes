@@ -185,11 +185,10 @@ class Cross_Validation(object):
 				run = model.Model(Ytrain=y_tr_sets[i], Ytest=y_val_sets[i], Xtrain=[desc_tr_sets[i],np.ndarray.tolist(smiles_tr_sets[i])], Xtest=[desc_val_sets[i],np.ndarray.tolist(smiles_val_sets[i])], kernel=kern, threshold=self.threshold)
 			run.hyperparameters(print_vals=False)
 			run_regression = run.regression()
-			print run_regression.r_squared()
+			print run_regression.post_mean, ",", run_regression.Ytest, ",", i
 			r_sq.append(run_regression.r_squared())
 			observed.append(run_regression.Ytest)
 			predicted.append(run_regression.post_mean)
-			print i
 
             if q2==True:
                 return r_sq#observed, predicted
