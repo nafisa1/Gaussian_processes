@@ -164,19 +164,19 @@ class Cross_Validation(object):
 	    return validation_sets, training_sets, indices
 
 	def perform_cv(self, y, kern, fold_type, q2=False, descs=None, smiles=None):
-	    r_sq = []
-#	    fold_type=self.random_folds
-	    y_val_sets, y_tr_sets, indices = fold_type(y)
 
-	    if descs is not None:
-	        desc_val_sets, desc_tr_sets, indices = fold_type(descs, scrambled_indices=indices)
-	    if smiles is not None:
-	        smiles_val_sets, smiles_tr_sets, indices = fold_type(np.array(smiles), scrambled_indices=indices)
+#		fold_type=self.random_folds
+		y_val_sets, y_tr_sets, indices = fold_type(y)
 
-	    observed = []
-	    predicted = []
+		if descs is not None:
+			desc_val_sets, desc_tr_sets, indices = fold_type(descs, scrambled_indices=indices)
+		if smiles is not None:
+			smiles_val_sets, smiles_tr_sets, indices = fold_type(np.array(smiles), scrambled_indices=indices)
+
+		observed = []
+		predicted = []
 			
-	    for i in xrange(self.n_folds):
+		for i in xrange(self.n_folds):
 			if descs is None:
 				run = model.Model(Ytrain=y_tr_sets[i], Ytest=y_val_sets[i], Xtrain=np.ndarray.tolist(smiles_tr_sets[i]), Xtest=np.ndarray.tolist(smiles_val_sets[i]), kernel=kern, threshold=self.threshold)
 			if smiles is None:
@@ -185,15 +185,22 @@ class Cross_Validation(object):
 				run = model.Model(Ytrain=y_tr_sets[i], Ytest=y_val_sets[i], Xtrain=[desc_tr_sets[i],np.ndarray.tolist(smiles_tr_sets[i])], Xtest=[desc_val_sets[i],np.ndarray.tolist(smiles_val_sets[i])], kernel=kern, threshold=self.threshold)
 			run.hyperparameters(print_vals=False)
 			run_regression = run.regression()
-			print run_regression.post_mean, ",", run_regression.Ytest, ",", i
-			r_sq.append(run_regression.r_squared())
+			
 			observed.append(run_regression.Ytest)
 			predicted.append(run_regression.post_mean)
 
-            if q2==True:
-                return r_sq#observed, predicted
-#		else:
-#			return r_sq, indices
+		observed = np.array(observed)
+		predicted = np.array(predicted)
+
+		if q2==True:
+			obs_mean = np.mean(observed)
+			ss_tot = np.sum((observed-obs_mean)**2)
+			ss_res = np.sum((observed-predicted)**2)
+			q_sq = 1 - (ss_res/ss_tot)
+			print 'Q squared is: ', q_sq
+			print observed
+			print predicted
+	                return q_sq, observed, predicted
 
 	def repeated_CV(self, kern, y, descs=None, smiles=None, iterations=10, lhs_kern=None):
 		
