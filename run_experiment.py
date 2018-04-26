@@ -33,11 +33,11 @@ class Experiment(object):
 	    new_desc = []
 
 	    for i, name in enumerate(names):
-		if name != '' and output[i] != '' and output[i] < upper_threshold:
-		    new_names.append(name[4:])
-		    new_output.append(output[i])
-		    new_desc.append(list(descriptors[i]))
-		    new_smiles.append(str(smiles[i]).split()[0])
+        	if name != '' and output[i] != '' and '' not in descriptors[i] and output[i] < upper_threshold:
+		        new_names.append(name[4:])
+		        new_output.append(output[i])
+		        new_desc.append(list(descriptors[i]))
+		        new_smiles.append(str(smiles[i]).split()[0])
 	    print len(new_names),"compounds left after removing missing compounds and inactive compounds"
 	    
 	    zipped = zip(new_names, new_output, new_smiles, new_desc)
@@ -49,8 +49,8 @@ class Experiment(object):
 	    if output_type == 'pic50':
 		pic50s = utils.pIC50(new_output, -6)
 
-	    self.smiles, self.output, self.descriptors = utils.enantiomers(new_smiles, pic50s, new_desc)
-	    return self.smiles, self.output, self.descriptors
+	    self.smiles, self.output, self.names, self.descriptors = utils.enantiomers(new_smiles, pic50s, new_names, new_desc)
+	    return self.smiles, self.output, self.names, self.descriptors
 
 	def bayes_opt(self,training_size, test_size, ker, acquisition_function, noise=0.01, number_runs=None, end_train=None, print_interim=False):
 
@@ -113,9 +113,9 @@ class Experiment(object):
 #	    newx, newobs = mod.optimization()
 #  	    print len(mod.Xtrain[1])
 	    
-	    cv = cross_validation.Cross_Validation(self.output, descs=self.descriptors, smiles=self.smiles)
-	    obs, pred = cv.perform_cv(cv.y, ker, cv.random_folds, q2=True, descs=cv.descs, smiles=cv.smiles)
-	    return obs, pred
+	    cv = cross_validation.Cross_Validation(self.output[:10], descs=self.descriptors[:10], smiles=self.smiles[:10])
+	    r_sq = cv.perform_cv(cv.y, ker, cv.random_folds, q2=True, descs=cv.descs, smiles=cv.smiles)
+	    return r_sq
 
 	    
 	
