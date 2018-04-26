@@ -254,13 +254,14 @@ def LHS(parameters=2, n_choices=5, lower=[0.01,1], upper=[10.0,7.0], divisions=[
 	combinations = all_combs[np.random.randint(all_combs.shape[0], size=n_choices),:]
 	return combinations
 
-def enantiomers(smiles,output,descriptors=None):
+def enantiomers(smiles,output,names,descriptors=None):
     import kernels
     elim_ker = kernels.RBF()
     elim_cov = elim_ker.compute(smiles, smiles)
     new_descs = []
     new_smiles = []
     new_output = []
+    new_names = []
     all_counts = []
     for i,row in enumerate(elim_cov):
         row_count = 0
@@ -275,9 +276,10 @@ def enantiomers(smiles,output,descriptors=None):
                 new_descs.append(descriptors[x])
             new_smiles.append(smiles[x])
             new_output.append(output[x])
+            new_names.append(names[x])
     new_descs = np.asarray(new_descs)
     new_output = np.asarray(new_output)
-    print len(new_smiles)
-    plt.scatter(np.linspace(0,len(smiles),len(smiles)),all_counts)
-    plt.show()
-    return new_smiles, new_output, new_descs
+    print len(smiles)-len(new_smiles),"enantiomers"
+    print len(new_smiles),"remaining compounds"
+    return new_smiles, new_output, new_names, new_descs
+
