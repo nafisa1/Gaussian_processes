@@ -186,8 +186,8 @@ class Cross_Validation(object):
 			run.hyperparameters(print_vals=False)
 			run_regression = run.regression()
 			
-			observed.append(run_regression.Ytest)
-			predicted.append(run_regression.post_mean)
+			observed.append(float(run_regression.Ytest))
+			predicted.append(float(run_regression.post_mean))
 
 		observed = np.array(observed)
 		predicted = np.array(predicted)
@@ -198,9 +198,11 @@ class Cross_Validation(object):
 			ss_res = np.sum((observed-predicted)**2)
 			q_sq = 1 - (ss_res/ss_tot)
 			print 'Q squared is: ', q_sq
+			print 'Observed values:'
 			print observed
+			print 'Predicted values:'
 			print predicted
-	                return q_sq, observed, predicted
+			return q_sq, observed, predicted
 
 	def repeated_CV(self, kern, y, descs=None, smiles=None, iterations=10, lhs_kern=None):
 		
