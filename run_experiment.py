@@ -60,7 +60,9 @@ class Experiment(object):
 		end_train = start_test
 	    if number_runs == None:
 		number_runs = start_test - training_size
-	
+	    print training_size, " initial training compounds"
+	    print test_size, " compounds in fixed test set"	
+	    print number_runs, " compounds out of", start_test - training_size, " will be used for optimisation"
 	    run = np.linspace(-1,number_runs-1,num=number_runs+1)
 
 	    modopt = model.Model(n_kers=2, Xtrain=[self.descriptors[:training_size],self.smiles[:training_size]],Xtest=[self.descriptors[training_size:end_train],self.smiles[training_size:end_train]], Ytrain=self.output[:training_size], Ytest=self.output[training_size:end_train], kernel=ker) 
@@ -114,7 +116,7 @@ class Experiment(object):
 #	    newx, newobs = mod.optimization()
 #  	    print len(mod.Xtrain[1])
 	    
-	    cv = cross_validation.Cross_Validation(self.output[:training_size], descs=self.descriptors[:training_size], smiles=self.smiles[:training_size], n_folds=15)
+	    cv = cross_validation.Cross_Validation(self.output[:training_size], descs=self.descriptors[:training_size], smiles=self.smiles[:training_size], n_folds=training_size)
 	    q_sq, observed, predicted = cv.perform_cv(cv.y, ker, cv.random_folds, q2=True, descs=cv.descs, smiles=cv.smiles)
 	    return q_sq, observed, predicted  #r_sq
 
