@@ -158,8 +158,10 @@ class Model(object):
 				del self.Xtest[ind]
 		else:
 			self.Xtrain[0] = np.vstack((self.Xtrain[0], new_x[0]))
-			self.Xtrain[1].append(new_x[1])
+			self.Xtrain[1] = list(self.Xtrain[1])
+			self.Xtrain[1].append(new_x[1])		
 			self.Xtest[0] = np.delete(self.Xtest[0], ind, axis=0)
+			self.Xtest[1] = list(self.Xtest[1])
 			del self.Xtest[1][ind]
 
 		self.Ytrain = np.vstack((self.Ytrain, new_obs))
