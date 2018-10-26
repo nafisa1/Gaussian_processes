@@ -8,7 +8,7 @@ import regression
 
 class Model(object):
 
-	def __init__(self, n_kers=1, pca=False, print_jit=False, latent_dim=None, X=None, Y=None, Ytrain=None, Ytest=None, Xtrain=None, Xtest=None, kernel=None, prior_train=None, prior_test=None, acq_func=None, threshold=None):
+  def __init__(self, n_kers=1, pca=False, print_jit=False, latent_dim=None, X=None, Y=None, Ytrain=None, Ytest=None, Xtrain=None, Xtest=None, kernel=None, prior_train=None, prior_test=None, acq_func=None, threshold=None):
 
 		self.n_kers = n_kers # Update kernel module so number of kernels is given
 		self.pca = pca
@@ -45,7 +45,7 @@ class Model(object):
 		self.hparameter_choices = utils.LHS(parameters=n_kers*2)
 
 
-	def hyperparameters(self, frac_test=0.2, num_folds=10, max_ll=True, print_vals=True, split=False):
+  def hyperparameters(self, frac_test=0.2, num_folds=10, max_ll=True, print_vals=True, split=False):
 		if split == True:
 			cross_val = cross_validation.Cross_Validation(self.X, self.Y, fraction_test=frac_test, n_folds=num_folds, n_kers=self.n_kers, threshold=self.threshold)
 			cross_val.order()
@@ -58,7 +58,7 @@ class Model(object):
 		if print_vals == True:
 			print best_hparams
 
-	def max_log_likelihood(self, print_vals=True):
+  def max_log_likelihood(self, print_vals=True):
 
 		final_points = []
 		log_likelihoods = []
@@ -119,7 +119,7 @@ class Model(object):
 
 		return best_hparams
 
-	def regression(self):
+  def regression(self):
 
 
 		self.Ytrain_mean = np.mean(self.Ytrain)
@@ -136,41 +136,44 @@ class Model(object):
 
 		return regress
 
-	def optimization(self, plot=False):
+  def optimization(self, plot=False):
 
-		Ytrain = utils.centre(self.Ytrain)
-
+    Ytrain = utils.centre(self.Ytrain)
+		
+    run = regression.Regression(Xtest=self.Xtest, Xtrain=self.Xtrain, Ytrain=Ytrain, add_noise=0.0, kernel=self.kernel, Ytest=None)
+    sd = run.post_s
+    p_mean = run.post_mean
 # CENTRE XTRAIN AGAIN?
 
-		if plot==False:
-			new_x, ind = self.acq_func.compute(self.Xtest, self.Xtrain, Ytrain, self.kernel, plot=False)
-		else:
-			new_x, ind = self.acq_func.compute(self.Xtest, self.Xtrain, Ytrain, self.kernel, plot=True)
+    if plot==False:
+      new_x, ind = self.acq_func.compute(self.Xtest, self.Xtrain, Ytrain, sd, p_mean, plot=False)
+    else:
+      new_x, ind = self.acq_func.compute(self.Xtest, self.Xtrain, Ytrain, sd, p_mean, plot=True)
+      
+    new_obs = self.Ytest[ind]
 
-		new_obs = self.Ytest[ind]
-
-		if len(self.Xtrain) != 2:
-			if isinstance(new_x, float) == True:
-				self.Xtrain = np.vstack((self.Xtrain, new_x))
-				self.Xtest = np.delete(self.Xtest, ind, axis=0)
-			else:
-				self.Xtrain.append(new_x)
-				del self.Xtest[ind]
-		else:
-			self.Xtrain[0] = np.vstack((self.Xtrain[0], new_x[0]))
-			self.Xtrain[1] = list(self.Xtrain[1])
-			self.Xtrain[1].append(new_x[1])		
-			self.Xtest[0] = np.delete(self.Xtest[0], ind, axis=0)
-			self.Xtest[1] = list(self.Xtest[1])
-			del self.Xtest[1][ind]
-
-		self.Ytrain = np.vstack((self.Ytrain, new_obs))
-		self.Ytest = np.delete(self.Ytest, ind, axis=0)
-
-		return new_x, new_obs
+    if len(self.Xtrain) != 2:
+      if isinstance(new_x, float) == True:
+        self.Xtrain = np.vstack((self.Xtrain, new_x))
+        self.Xtest = np.delete(self.Xtest, ind, axis=0)
+      else:
+        self.Xtrain.append(new_x)
+        del self.Xtest[ind]
+    else:
+      self.Xtrain[0] = np.vstack((self.Xtrain[0], new_x[0]))
+      self.Xtrain[1] = list(self.Xtrain[1])
+      self.Xtrain[1].append(new_x[1])
+      self.Xtest[0] = np.delete(self.Xtest[0], ind, axis=0)
+      self.Xtest[1] = list(self.Xtest[1])
+      del self.Xtest[1][ind]
+      
+    self.Ytrain = np.vstack((self.Ytrain, new_obs))
+    self.Ytest = np.delete(self.Ytest, ind, axis=0)
+    
+    return new_x, new_obs
 
 	# This is done after regression etc			
-	def correction(self):
+  def correction(self):
 		assert prior is not None, "Posterior mean correction is not required for a zero mean prior."
 		# add test prior mean to posterior mean
 		self.Ytest = self.Ytest + self.prior_test
