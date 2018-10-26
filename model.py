@@ -1,16 +1,16 @@
 import numpy as np
 import utils
 import GPy
-import kernels
 import cross_validation # CIRCULAR IMPORT
 import max_likelihood
 import regression
 
 class Model(object):
 
-  def __init__(self, n_kers=1, pca=False, print_jit=False, latent_dim=None, X=None, Y=None, Ytrain=None, Ytest=None, Xtrain=None, Xtest=None, kernel=None, prior_train=None, prior_test=None, acq_func=None, threshold=None):
+  def __init__(self, n_kers=1, composite_ker=True, pca=False, print_jit=False, latent_dim=None, X=None, Y=None, Ytrain=None, Ytest=None, Xtrain=None, Xtest=None, kernel=None, prior_train=None, prior_test=None, acq_func=None, threshold=None):
 
 		self.n_kers = n_kers # Update kernel module so number of kernels is given
+		self.composite_ker = composite_ker
 		self.pca = pca
 		self.print_jit = print_jit
 		self.latent_dim = latent_dim
@@ -67,7 +67,7 @@ class Model(object):
 
 		find_max_ll = max_likelihood.Max_LL(centred_Ytrain, self.kernel, self.print_jit)
 		default_starting_point = []		
-		if isinstance(self.kernel, kernels.Composite):
+		if self.composite_ker==True: #isinstance(self.kernel, kernels.Composite):
 			for item in self.kernel.kers:
 				if item is not None:
 					default_starting_point.append(item.lengthscale)
@@ -83,7 +83,7 @@ class Model(object):
 		log_likelihoods.append(ll)
 		for choice in self.hparameter_choices:
 			starting_point = []
-			if isinstance(self.kernel, kernels.Composite):
+			if self.composite_ker==True: #isinstance(self.kernel, kernels.Composite):
 				for item in self.kernel.kers:
 					if item is not None:
 						starting_point.append(choice[0])
@@ -106,7 +106,7 @@ class Model(object):
 			print "Jitter", best_jitter
 			print "Noise variance =", self.kernel.noise_var
 
-		if isinstance(self.kernel, kernels.Composite):
+		if self.composite_ker==True: #isinstance(self.kernel, kernels.Composite):
 			count = 0
 			for item in self.kernel.kers:
 				if item is not None:
