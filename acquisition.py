@@ -4,8 +4,6 @@ from regression import Regression
 from scipy.stats import norm
 
 class Random(object):
-	def __init__(self, abbreviation="rand"):
-		self.abbreviation = abbreviation
 
 	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 
@@ -21,8 +19,6 @@ class Random(object):
 		return new_x, ind
 
 class Chronological(object):
-	def __init__(self, abbreviation="chron"):
-		self.abbreviation = abbreviation
 
 	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 		ind = 0
@@ -36,8 +32,6 @@ class Chronological(object):
 		return new_x, ind
 
 class Unc(object):
-	def __init__(self, abbreviation="unc"):
-		self.abbreviation = abbreviation
 
 	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 		# Get posterior mean and standard deviation for test set
@@ -56,9 +50,8 @@ class Unc(object):
 		return new_x, ind
 
 class PI(object):
-	def __init__(self, eta=0.0, abbreviation="pi"):
+	def __init__(self, eta=0.0):
 		self.eta = eta
-		self.abbreviation = abbreviation
 
 	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 		# Get posterior mean and standard deviation for test set
@@ -100,9 +93,8 @@ class PI(object):
 		return new_x, ind
 		
 class EI(object):
-	def __init__(self, eta=0.0, abbreviation="ei"):
+	def __init__(self, eta=0.0):
 		self.eta = eta
-		self.abbreviation = abbreviation
 
 	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 		# Get posterior mean and standard deviation for test set
@@ -144,9 +136,8 @@ class EI(object):
 		return new_x, ind
 
 class UCB(object):
-	def __init__(self, kappa=0.2, abbreviation="ucb"):
+	def __init__(self, kappa=0.2):
 		self.kappa = kappa
-		self.abbreviation = abbreviation
 
 	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 		# Get posterior mean and standard deviation for test set
@@ -178,9 +169,8 @@ class UCB(object):
 
 class LCB(object):
 
-	def __init__(self, kappa=0.2, abbreviation="lcb"):
+	def __init__(self, kappa=0.2):
 		self.kappa = kappa
-		self.abbreviation = abbreviation
 
 	def compute(self, Xtest, Xtrain, Ytrain, kern, plot=False):
 		# Get posterior mean and standard deviation for test set
