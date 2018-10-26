@@ -1,6 +1,5 @@
 import numpy as np
 import plotting
-from regression import Regression
 from scipy.stats import norm
 
 class Random(object):
