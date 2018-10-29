@@ -1,7 +1,6 @@
 import math
 import numpy as np
 import kernels
-import utils
 from scipy.optimize import minimize 
 
 class Max_LL(object):
