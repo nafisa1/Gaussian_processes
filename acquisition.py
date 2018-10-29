@@ -1,5 +1,4 @@
 import numpy as np
-import plotting
 from scipy.stats import norm
 
 class Random(object):
