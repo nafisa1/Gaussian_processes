@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import kernels
 import random
-import plotting
 import utils
 
 class Regression(object):
@@ -48,7 +47,6 @@ class Regression(object):
 #			jitter = 0.05*np.random.rand((Xtest_num.shape[0]), (Xtest_num.shape[1]))
 #			jitter -= 0.025
 #			Xtest_num = Xtest_num - jitter
-
 
 		if len(self.Xtrain) == 2:
 			self.Xtrain = []
@@ -167,19 +165,19 @@ class Regression(object):
 		plt.show()
 				
     
-	def plot_prior(self): # UPDATE FOR SMILES
-		if self.Xtrain.shape[1] == 1:
-			plotting.plot_prior_1D(self.Xtest, self.test_cov, Ytest=self.Ytest)
-		elif self.Xtrain.shape[1] == 2:
-			plotting.plot_prior_2D(self.Xtest, self.test_cov, Ytest=self.Ytest)
-		else:
-			print "The dimensionality of the input space is too high to visualize."
+#	def plot_prior(self): # UPDATE FOR SMILES
+	#	if self.Xtrain.shape[1] == 1:
+		#	plotting.plot_prior_1D(self.Xtest, self.test_cov, Ytest=self.Ytest)
+#		elif self.Xtrain.shape[1] == 2:
+	#		plotting.plot_prior_2D(self.Xtest, self.test_cov, Ytest=self.Ytest)
+	#	else:
+	#		print "The dimensionality of the input space is too high to visualize."
         
-	def plot_posterior(self): # UPDATE FOR SMILES
-		if self.Xtrain.shape[1] == 1:
-			plotting.plot_posterior_1D(self.Xtest, self.Xtrain, self.Ytrain, self.post_mean, self.post_s, self.cov_post, Ytest=self.Ytest)
-		elif self.Xtrain.shape[1] == 2:
-			plotting.plot_posterior_2D(self.Xtest, self.Xtrain, self.Ytrain, self.post_mean, self.post_s, Ytest=self.Ytest)
-		else:
-			print "The dimensionality of the input space is too high to visualize. Use plot_by_index instead."
+#	def plot_posterior(self): # UPDATE FOR SMILES
+#		if self.Xtrain.shape[1] == 1:
+#			plotting.plot_posterior_1D(self.Xtest, self.Xtrain, self.Ytrain, self.post_mean, self.post_s, self.cov_post, Ytest=self.Ytest)
+	#	elif self.Xtrain.shape[1] == 2:
+		#	plotting.plot_posterior_2D(self.Xtest, self.Xtrain, self.Ytrain, self.post_mean, self.post_s, Ytest=self.Ytest)
+	#	else:
+		#	print "The dimensionality of the input space is too high to visualize. Use plot_by_index instead."
 
