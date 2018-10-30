@@ -1,7 +1,6 @@
 import numpy as np
 import utils
 import GPy
-import cross_validation # CIRCULAR IMPORT
 import max_likelihood
 import regression
 
@@ -45,13 +44,13 @@ class Model(object):
 		self.hparameter_choices = utils.LHS(parameters=n_kers*2)
 
 
-  def hyperparameters(self, frac_test=0.2, num_folds=10, max_ll=True, print_vals=True, split=False):
-		if split == True:
-			cross_val = cross_validation.Cross_Validation(self.X, self.Y, fraction_test=frac_test, n_folds=num_folds, n_kers=self.n_kers, threshold=self.threshold)
-			cross_val.order()
-			self.Xtest, self.Ytest, self.Xtrain, self.Ytrain = cross_val.get_test_set()
-			best_noise_var, all_means, iteration_means = cross_val.repeated_CV(self.kernel, self.hparameter_choices, iterations=1, lhs_kern=self.kernel) # EDIT BACK TO 10 ITERATIONS
-			self.kernel.noise_var = best_noise_var
+  def hyperparameters(self, frac_test=0.2, num_folds=10, max_ll=True, print_vals=True): #, split=False
+#		if split == True:
+#			cross_val = cross_validation.Cross_Validation(self.X, self.Y, fraction_test=frac_test, n_folds=num_folds, n_kers=self.n_kers, threshold=self.threshold)
+#			cross_val.order()
+#			self.Xtest, self.Ytest, self.Xtrain, self.Ytrain = cross_val.get_test_set()
+#			best_noise_var, all_means, iteration_means = cross_val.repeated_CV(self.kernel, self.hparameter_choices, iterations=1, lhs_kern=self.kernel) # EDIT BACK TO 10 ITERATIONS
+#			self.kernel.noise_var = best_noise_var
 		if max_ll == True:
 			best_hparams = self.max_log_likelihood(print_vals=print_vals)
 		
