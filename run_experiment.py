@@ -5,9 +5,8 @@ import model
 import cross_validation
 
 class Experiment(object):
-	
-	# EXTRACT COMPOUNDS, DESCRIPTORS AND ACTIVITIES FROM .CSV FILE
-	def get_data(self,filename, id_name, smiles_name, output_name, descriptor_names, output_type='pic50', upper_threshold=None):
+  # EXTRACT COMPOUNDS, DESCRIPTORS AND ACTIVITIES FROM .CSV FILE
+  def get_data(self,filename, id_name, smiles_name, output_name, descriptor_names, output_type='pic50', upper_threshold=None):
 	    workbook = xlrd.open_workbook(filename, on_demand=True)
 	    sheet = workbook.sheet_by_index(0)
 	    
@@ -69,98 +68,87 @@ class Experiment(object):
 
 	    return self.smiles, self.output, self.names, self.descriptors
 
-	def bayes_opt(self,training_size, test_size, ker, acquisition_function, noise=0.01, number_runs=None, end_train=None, print_interim=False):
+  def bayes_opt(self,training_size, test_size, ker, acquisition_function, noise=0.01, number_runs=None, end_train=None, print_interim=False):
 
-	    # POINT WHERE TEST SET STARTS IS DEFINED AS THE LAST x COMPOUNDS WHERE x IS THE SIZE OF THE TEST SET
-	    # IF IT IS NOT DEFINED, SET END OF OPTIMISING SET TO START OF TEST SET
-	    start_test = len(self.output)-test_size
-	    if end_train == None:
-		end_train = start_test
+    # POINT WHERE TEST SET STARTS IS DEFINED AS THE LAST x COMPOUNDS WHERE x IS THE SIZE OF THE TEST SET
+    # IF IT IS NOT DEFINED, SET END OF OPTIMISING SET TO START OF TEST SET
+    start_test = len(self.output)-test_size
+    if end_train == None:
+		  end_train = start_test
 
-	    # IF NUMBER OF RUNS IS NOT DEFINED, SET IT TO MAXIMUM POSSIBLE (THE NUMBER OF COMPOUNDS BEING OPTIMISED OVER)
-	    if number_runs == None:
-		number_runs = start_test - training_size
+    # IF NUMBER OF RUNS IS NOT DEFINED, SET IT TO MAXIMUM POSSIBLE (THE NUMBER OF COMPOUNDS BEING OPTIMISED OVER)
+    if number_runs == None:
+      number_runs = start_test - training_size
+      
+    print training_size, " initial training compounds"
+    print test_size, " compounds in fixed test set"	
+    print number_runs, " compounds out of", start_test - training_size, " will be used for optimisation"
 
-	    print training_size, " initial training compounds"
-	    print test_size, " compounds in fixed test set"	
-	    print number_runs, " compounds out of", start_test - training_size, " will be used for optimisation"
-
-	    # CREATE MODEL FOR SELECTING THE NEXT COMPOUND
-	    modopt = model.Model(n_kers=2, Xtrain=[self.descriptors[:training_size],self.smiles[:training_size]],Xtest=[self.descriptors[training_size:end_train],self.smiles[training_size:end_train]], Ytrain=self.output[:training_size], Ytest=self.output[training_size:end_train], kernel=ker) 
-
-	    # CREATE MODEL TO MAKE PREDICTIONS ON TEST SET USING UPDATED TRAINING SET
-	    modtest = model.Model(n_kers=2, Xtrain=modopt.Xtrain, Xtest=[self.descriptors[start_test:],self.smiles[start_test:]], Ytrain=modopt.Ytrain, Ytest=self.output[start_test:], kernel=ker) 
-
-	    # PERFORM REGRESSION ON TEST SET USING INITIAL TRAINING SET
-	    modtest.kernel.noise_var = noise
-	    modtest.hyperparameters(print_vals=False)
-	    regtest = modtest.regression()
-	    print "Results on test set using initial training set"
-#	    regtest.plot_by_index()
-
-	    # KEEP TEST SET R SQUARED VALUES IN A LIST, THE FIRST VALUE IS THE R SQUARED VALUE FOR PREDICTIONS ON THE TEST SET USING THE ORIGINAL TRAINING SET BEFORE BAYESIAN OPTIMISATION
-	    r_sq = []
-	    r_sq.append(regtest.r_squared())
-	    print "Initial r squared",regtest.r_squared()
+    # CREATE MODEL FOR SELECTING THE NEXT COMPOUND
+    modopt = model.Model(n_kers=2, Xtrain=[self.descriptors[:training_size],self.smiles[:training_size]],Xtest=[self.descriptors[training_size:end_train],self.smiles[training_size:end_train]], Ytrain=self.output[:training_size], Ytest=self.output[training_size:end_train], kernel=ker)
+    # SET ACQUISITION FUNCTION
+    modopt.acq_func = acquisition_function
+    print "initial hps",modopt.kernel.kers[0].sig_var, modopt.kernel.kers[0].lengthscale, modopt.kernel.kers[1].sig_var, modopt.kernel.kers[1].lengthscale
+    
+    # CREATE MODEL TO MAKE PREDICTIONS ON TEST SET USING UPDATED TRAINING SET
+    modtest = model.Model(n_kers=2, Xtrain=modopt.Xtrain, Xtest=[self.descriptors[start_test:],self.smiles[start_test:]], Ytrain=modopt.Ytrain, Ytest=self.output[start_test:], kernel=ker) 
+    
+    # PERFORM REGRESSION ON TEST SET USING INITIAL TRAINING SET
+    modtest.kernel.noise_var = noise
+    modtest.hyperparameters(print_vals=False)
+    regtest = modtest.regression()
+    print "Results on test set using initial training set"
+    
+    # KEEP TEST SET R SQUARED VALUES IN A LIST, THE FIRST VALUE IS THE R SQUARED VALUE FOR PREDICTIONS ON THE TEST SET USING THE ORIGINAL TRAINING SET BEFORE BAYESIAN OPTIMISATION 
+    r_sq = []
+    r_sq.append(regtest.r_squared())
+    print "Initial r squared",regtest.r_squared()
+    
+    # BEGIN BAYESIAN OPTIMISATION
+    for i in xrange(number_runs):
+      # EVERY 10 RUNS, PRINT THE NUMBER OF THE RUN THE MODEL IS ON CURRENTLY
+      if i%10 == 0:
+        print "Iteration",i,"..."
+        
+      # RUN OPTIMISATION FUNCTION TO FIND THE NEW INPUT VALUE, AUTOMATICALLY ADDED TO THE TRAINING SET AND REMOVED FROM THE OPTIMISATION SET
+      modopt.hyperparameters(print_vals=False) #######################?????????????????????
+      print modopt.kernel.kers[0].sig_var, modopt.kernel.kers[0].lengthscale, modopt.kernel.kers[1].sig_var, modopt.kernel.kers[1].lengthscale
+      newx = modopt.optimization()
+      
+      # RESET TRAINING SET OF THE TEST SET MODEL
+      modtest.Xtrain = modopt.Xtrain
+      modtest.Ytrain = modopt.Ytrain
+      
+      # RESET THE HYPERPARAMETERS OF THE TEST SET MODEL AS THE TRAINING SET HAS CHANGED
+      modtest.hyperparameters(print_vals=False)
+      
+      # PERFORM REGRESSION ON THE TEST SET USING THE UPDATED TRAINING SET
+      regtest = modtest.regression()
+      r_sq.append(regtest.r_squared())
+      
+      # PRINT R SQUARED FOR EACH RUN IF IT IS REQUESTED
+      if i != number_runs-1 and print_interim == True:
+        print "r squared",regtest.r_squared()
+        
+      # PRINT R SQUARED FOR FINAL RUN
+      elif i == number_runs-1:
+        print "Results using final training set"
+        print "r squared",regtest.r_squared()
+        
+    # ARRAY STARTING AT 0 FOR THE RUN BEFORE OPTIMISATION BEGINS
+    run = np.linspace(0,number_runs,num=number_runs+1)
+      
+    # SAVE R SQUARED FOR EACH RUN IN A TEXT FILE
+    np.savetxt("/home/nafisa/Dropbox/DPhil/Gaussian_processes/results/rsq_" + acquisition_function.abbreviation + "_tr" + str(training_size) + "_te" + str(test_size) + "_runs" + str(number_runs) + ".txt", np.c_[run,r_sq], fmt='%i	%f')
+      
+    return modopt,modtest,r_sq
 	    
-	    # BEGIN BAYESIAN OPTIMISATION
-	    for i in xrange(number_runs):
-		# EVERY 10 RUNS, PRINT THE NUMBER OF THE RUN THE MODEL IS ON CURRENTLY
-		if i%10 == 0:
-		    print "Iteration",i,"..."
-		# SET ACQUISITION FUNCTION
-		modopt.acq_func = acquisition_function
-
-		# RUN OPTIMISATION FUNCTION TO FIND THE NEW INPUT VALUE, AUTOMATICALLY ADDED TO THE TRAINING SET AND REMOVED FROM THE OPTIMISATION SET
-		newx = modopt.optimization()  
-
-		# RESET TRAINING SET OF THE TEST SET MODEL
-		modtest.Xtrain = modopt.Xtrain
-		modtest.Ytrain = modopt.Ytrain 
-	        modtest.kernel.noise_var = noise # IS THIS NEEDED
-
-		# RESET THE HYPERPARAMETERS OF THE TEST SET MODEL AS THE TRAINING SET HAS CHANGED
-		modtest.hyperparameters(print_vals=False)
-
-		# PERFORM REGRESSION ON THE TEST SET USING THE UPDATED TRAINING SET
-		regtest = modtest.regression()
-
-		# PRINT R SQUARED FOR EACH RUN IF IT IS REQUESTED
-                if i != number_runs-1 and print_interim == True:
-			print "r squared",regtest.r_squared()
-
-		# PRINT R SQUARED FOR FINAL RUN
-		elif i == number_runs-1:
-			print "Results using final training set"
-#			regtest.plot_by_index()			
-			print "r squared",regtest.r_squared()
-
-		r_sq.append(regtest.r_squared())
-
-	    # ARRAY STARTING AT -1 FOR THE RUN BEFORE OPTIMISATION BEGINS
-	    run = np.linspace(-1,number_runs-1,num=number_runs+1)
-
-	    # SAVE R SQUARED FOR EACH RUN IN A TEXT FILE
-	    np.savetxt("/home/nafisa/Dropbox/DPhil/Gaussian_processes/results/rsq_" + acquisition_function.abbreviation + "_tr" + str(training_size) + "_te" + str(test_size) + "_runs" + str(number_runs) + ".txt", np.c_[run,r_sq], fmt='%i	%f')
-		
-	    return modopt,modtest,r_sq
-	    
-	def q_squared(self, training_size, ker, acquisition_function, noise):
+  def q_squared(self, training_size, ker, acquisition_function):
 		# Take e.g. 10 molecules
 		# Use acquisition function to select next molecule
 		# calculate q2
-		# 
 		# Repeat from step 2
-		# 
-
-#	    mod = model.Model(n_kers=2, kernel=ker, Xtrain=[self.descriptors[:training_size],self.smiles[:training_size]],Xtest=[self.descriptors[training_size:],self.smiles[training_size:]], Ytrain=self.output[:training_size], Ytest=self.output[training_size:])
-#	    mod.kernel.noise_var = noise
-#  	    mod.hyperparameters(print_vals=False)
-#	    mod.acq_func = acquisition_function
-#  	    print len(mod.Xtrain[1])
-#	    newx, newobs = mod.optimization()
-#  	    print len(mod.Xtrain[1])
-	    
+		   
 	    cv = cross_validation.Cross_Validation(self.output[:training_size], descs=self.descriptors[:training_size], smiles=self.smiles[:training_size], n_folds=training_size)
 	    q_sq, observed, predicted = cv.perform_cv(cv.y, ker, cv.random_folds, q2=True, descs=cv.descs, smiles=cv.smiles)
 	    return q_sq, observed, predicted  #r_sq
