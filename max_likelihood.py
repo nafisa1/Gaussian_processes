@@ -45,7 +45,7 @@ class Max_LL(object):
 
 	def run_opt(self, hyp):
 		if isinstance(self.kernel, kernels.Composite):
-			min_hyp = minimize(self.opt_hyp, hyp, method='l-bfgs-b', bounds=((0.01,2.0),(0.5,7.0),(0.01,2.0),(0.5,7.0)), options={'disp':False}) 
+			min_hyp = minimize(self.opt_hyp, hyp, method='l-bfgs-b', bounds=((0.01,10.0),(0.5,10.0),(0.01,10.0),(0.5,10.0)), options={'disp':False}) 
 		else:
 			min_hyp = minimize(self.opt_hyp, hyp, method='l-bfgs-b', bounds=((0.01,10.0),(0.5,7.0)), options={'disp':False}) 
 		#log_likelihoods = [] # save for plotting / get function values from optimizer?
