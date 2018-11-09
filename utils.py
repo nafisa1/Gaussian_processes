@@ -238,21 +238,20 @@ def classif(pred,ytest,t,roc=False):
 
 # Latin hypercube sampling
 
-def LHS(parameters=2, n_choices=5, lower=[0.01,1], upper=[10.0,7.0], divisions=[11,11]):
+def LHS(parameters=2, n_choices=200, lower=[0.01,1], upper=[10.0,10.0], divisions=[11,11]):
 	
-	import itertools
-	scales = []
-	for i in xrange(parameters):
-		if i % 2 == 0:
-			scale = np.linspace(lower[0],upper[0],divisions[0])
-		else:
-			scale = np.linspace(lower[1],upper[1],divisions[1])
-		scales.append(scale)
+  import itertools
+  scales = []
+  for i in xrange(parameters):
+    if i % 2 == 0:
+      scale = np.linspace(lower[0],upper[0],divisions[0])
+    else:
+      scale = np.linspace(lower[1],upper[1],divisions[1])
+    scales.append(scale)
 
-	all_combs = np.asarray(list(itertools.product(*scales)))
-
-	combinations = all_combs[np.random.randint(all_combs.shape[0], size=n_choices),:]
-	return combinations
+  all_combs = np.asarray(list(itertools.product(*scales)))
+  combinations = all_combs[np.random.randint(all_combs.shape[0], size=n_choices),:]
+  return combinations
 
 def enantiomers(smiles,output,names,descriptors=None):
     import kernels
@@ -282,4 +281,16 @@ def enantiomers(smiles,output,names,descriptors=None):
     print len(smiles)-len(new_smiles),"enantiomers"
     print len(new_smiles),"remaining compounds"
     return new_smiles, new_output, new_names, new_descs
+    
+#		if self.pca == True:
+#			Xtrain_num, W = GPy.util.linalg.pca(Xtrain_num, self.latent_dim)
+#			jitter = 0.05*np.random.rand((Xtrain_num.shape[0]), (Xtrain_num.shape[1]))
+#			jitter -= 0.025
+#			Xtrain_num = Xtrain_num - jitter
+#	
+#			Xtest_num = np.dot(W,Xtest_num.T).T
+#			jitter = 0.05*np.random.rand((Xtest_num.shape[0]), (Xtest_num.shape[1]))
+#			jitter -= 0.025
+#			Xtest_num = Xtest_num - jitter
+
 
