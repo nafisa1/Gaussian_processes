@@ -6,51 +6,28 @@ import regression
 
 class Model(object):
 
-  def __init__(self, n_kers=1, composite_ker=True, pca=False, print_jit=False, latent_dim=None, X=None, Y=None, Ytrain=None, Ytest=None, Xtrain=None, Xtest=None, kernel=None, prior_train=None, prior_test=None, acq_func=None, threshold=None):
+  def __init__(self, n_kers=2, composite_ker=True, print_jit=False, Y=None, Ytrain=None, Ytest=None, Xtrain=None, Xtest=None, kernel=None, acq_func=None, threshold=None):
 
 		self.n_kers = n_kers # Update kernel module so number of kernels is given
 		self.composite_ker = composite_ker
-		self.pca = pca
 		self.print_jit = print_jit
-		self.latent_dim = latent_dim
-		self.X = X
-		self.Y = Y
 		self.Xtrain = Xtrain
 		self.Xtest = Xtest
 		self.Ytrain = Ytrain
 		self.Ytest = Ytest
 		self.kernel = kernel
-		self.prior_train = prior_train
-		self.prior_test = prior_test
 		self.acq_func = acq_func
 		self.threshold = threshold
 
-		# Sanity check
-		if Y is not None:
-			if len(Y.shape) != 2:
-				self.Y = Y.reshape(-1,1)
-		else:
-			if len(Ytrain.shape) != 2:
-				self.Ytrain = Ytrain.reshape(-1,1)	
-			if Ytest is not None:
-				if len(Ytest.shape) != 2:
-					self.Ytest = Ytest.reshape(-1,1)
-
-		if prior_train is not None:
-			prior_train = prior_train.reshape(-1,1)
-			# subtract training prior mean from Ytrain values
-			self.Ytrain = self.Ytrain - prior_train
+		if len(Ytrain.shape) != 2:
+			self.Ytrain = Ytrain.reshape(-1,1)	
+		if Ytest is not None:
+			if len(Ytest.shape) != 2:
+				self.Ytest = Ytest.reshape(-1,1)
 		
 		self.hparameter_choices = utils.LHS(parameters=n_kers*2)
 
-
-  def hyperparameters(self, frac_test=0.2, num_folds=10, max_ll=True, print_vals=True): #, split=False
-#		if split == True:
-#			cross_val = cross_validation.Cross_Validation(self.X, self.Y, fraction_test=frac_test, n_folds=num_folds, n_kers=self.n_kers, threshold=self.threshold)
-#			cross_val.order()
-#			self.Xtest, self.Ytest, self.Xtrain, self.Ytrain = cross_val.get_test_set()
-#			best_noise_var, all_means, iteration_means = cross_val.repeated_CV(self.kernel, self.hparameter_choices, iterations=1, lhs_kern=self.kernel) # EDIT BACK TO 10 ITERATIONS
-#			self.kernel.noise_var = best_noise_var
+  def hyperparameters(self, max_ll=True, print_vals=True):
 		if max_ll == True:
 			best_hparams = self.max_log_likelihood(print_vals=print_vals)
 		
@@ -66,7 +43,7 @@ class Model(object):
 
 		find_max_ll = max_likelihood.Max_LL(centred_Ytrain, self.kernel, self.print_jit)
 		default_starting_point = []		
-		if self.composite_ker==True: #isinstance(self.kernel, kernels.Composite):
+		if self.composite_ker==True: 
 			for item in self.kernel.kers:
 				if item is not None:
 					default_starting_point.append(item.lengthscale)
@@ -82,7 +59,7 @@ class Model(object):
 		log_likelihoods.append(ll)
 		for choice in self.hparameter_choices:
 			starting_point = []
-			if self.composite_ker==True: #isinstance(self.kernel, kernels.Composite):
+			if self.composite_ker==True: 
 				for item in self.kernel.kers:
 					if item is not None:
 						starting_point.append(choice[0])
@@ -105,7 +82,7 @@ class Model(object):
 			print "Jitter", best_jitter
 			print "Noise variance =", self.kernel.noise_var
 
-		if self.composite_ker==True: #isinstance(self.kernel, kernels.Composite):
+		if self.composite_ker==True: 
 			count = 0
 			for item in self.kernel.kers:
 				if item is not None:
@@ -135,7 +112,7 @@ class Model(object):
 
 		return regress
 
-  def optimization(self, plot=False):
+  def optimization(self):
 
     Ytrain = utils.centre(self.Ytrain)
 		
@@ -144,11 +121,8 @@ class Model(object):
     p_mean = run.post_mean
 # CENTRE XTRAIN AGAIN?
 
-    if plot==False:
-      new_x, ind = self.acq_func.compute(self.Xtest, self.Xtrain, Ytrain, sd, p_mean, plot=False)
-    else:
-      new_x, ind = self.acq_func.compute(self.Xtest, self.Xtrain, Ytrain, sd, p_mean, plot=True)
-      
+    new_x, ind = self.acq_func.compute(self.Xtest, self.Xtrain, Ytrain, sd, p_mean, plot=False)
+
     new_obs = self.Ytest[ind]
 
     if len(self.Xtrain) != 2:
@@ -171,9 +145,7 @@ class Model(object):
     
     return new_x, new_obs
 
-	# This is done after regression etc			
-  def correction(self):
-		assert prior is not None, "Posterior mean correction is not required for a zero mean prior."
-		# add test prior mean to posterior mean
-		self.Ytest = self.Ytest + self.prior_test
-		# will also have to apply correction to random draws
+# subtract training prior mean from Ytrain values
+# Correction - done after regression etc			
+# add test prior mean to posterior mean
+# will also have to apply correction to random draws
