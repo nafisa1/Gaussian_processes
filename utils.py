@@ -212,33 +212,47 @@ def pIC50(values, power):
 
 def classif(pred,ytest,t,roc=False):
     count = 0
-    tp = 0
-    tn = 0
-    tp_correct = 0
-    tn_correct = 0
+    positive = 0
+    negative = 0
+    true_p = 0
+    true_n = 0
+    labels = []
+    tpr = []
+    fpr = [] # for roc plot
+    
     for n in xrange(pred.shape[0]):
-        if ytest[n] >= t:
-            tp += 1
-            if pred[n] >= t:
-                count += 1
-                tp_correct +=1
-        else: 
-            tn += 1
-            if pred[n] <= t:
-                count += 1
-                tn_correct +=1
+      if ytest[n] >= t:
+        positive += 1
+        labels.append(1)
+        if pred[n] >= t:
+          count += 1
+          true_p +=1
+      else: 
+        negative += 1
+        labels.append(0)
+        if pred[n] <= t:
+          count += 1
+          true_n +=1
 
     correct = float(count)/pred.shape[0]
-    sensitivity = float(tp_correct)/tp
-    specificity = float(tn_correct)/tn
+    sensitivity = float(true_p)/positive
+    specificity = float(true_n)/negative
         
-    print ('%d compounds out of %d (%f) were classified correctly. The sensitivity is %f (%d out of %d) and the specificity is %f (%d out of %d).' %(count,pred.shape[0],correct,sensitivity,tp_correct,tp,specificity,tn_correct,tn))
+    print ('%d compounds out of %d (%f) were classified correctly. The sensitivity is %f (%d out of %d) and the specificity is %f (%d out of %d).' %(count,pred.shape[0],correct,sensitivity,true_p,positive,specificity,true_n,negative))
+    
+    from sklearn.metrics import roc_curve
+    fpr, tpr, thresholds = roc_curve(labels, pred.flatten())
+    import matplotlib.pyplot as plt
+    
+    plt.plot([0,1],[0,1], linestyle='--')
+    plt.plot(fpr,tpr, marker='.')
+    plt.show()
     if roc == True:
-        return tp,tn
+        return tpr,fpr,positive,true_p,negative,true_n#tp,tn,tp_correct,tn_correct
 
 # Latin hypercube sampling
 
-def LHS(parameters=2, n_choices=200, lower=[0.01,1], upper=[10.0,10.0], divisions=[11,11]):
+def LHS(parameters=2, n_choices=100, lower=[1.0,1.0], upper=[20.0,20.0], divisions=[12,12]): # 2 4 3 8
 	
   import itertools
   scales = []
@@ -250,6 +264,7 @@ def LHS(parameters=2, n_choices=200, lower=[0.01,1], upper=[10.0,10.0], division
     scales.append(scale)
 
   all_combs = np.asarray(list(itertools.product(*scales)))
+#  return all_combs
   combinations = all_combs[np.random.randint(all_combs.shape[0], size=n_choices),:]
   return combinations
 
