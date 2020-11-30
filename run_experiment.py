@@ -6,7 +6,7 @@ import cross_validation
 
 class Experiment(object):
   # EXTRACT COMPOUNDS, DESCRIPTORS AND ACTIVITIES FROM .CSV FILE
-  def get_data(self,filename, id_name, smiles_name, output_name, descriptor_names, output_type='pic50', upper_threshold=None):
+  def get_data(self,filename, evotecIDs, smiles_name, output_name, descriptor_names, output_type='pic50', upper_threshold=None):
     workbook = xlrd.open_workbook(filename, on_demand=True)
     sheet = workbook.sheet_by_index(0)
 	    
@@ -19,7 +19,7 @@ class Experiment(object):
     
     # IF A FIELD NAME MATCHES A REQUIRED PROPERTY, CREATE A VARIABLE FOR THAT COLUMN (VALUES ONLY)
     for i,item in enumerate(properties):
-      if item == id_name:
+      if item == evotecIDs:
 		    names = sheet.col_values(i)[1:]
       elif item == output_name:
         output = sheet.col_values(i)[1:]
@@ -100,7 +100,7 @@ class Experiment(object):
     modopt.acq_func = acquisition_function
     
     modtrain = model.Model(n_kers=2, Xtrain=modopt.Xtrain, Xtest=modopt.Xtrain, Ytrain=modopt.Ytrain, Ytest=modopt.Ytrain, kernel=modopt.kernel)  
-    modtrain.mse_hyperparameters(print_vals=True)  
+    modtrain.hyperparameters(print_vals=True)  
 #    modopt.mse_hyperparameters(print_vals=False)  
 
     modopt.kernel = modtrain.kernel
