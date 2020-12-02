@@ -1,75 +1,9 @@
 import numpy as np
 import utils
-import xlrd
 import model
 import cross_validation
 
 class Experiment(object):
-  # EXTRACT COMPOUNDS, DESCRIPTORS AND ACTIVITIES FROM .CSV FILE
-  def get_data(self,filename, evotecIDs, smiles_name, output_name, descriptor_names, output_type='pic50', upper_threshold=None):
-    workbook = xlrd.open_workbook(filename, on_demand=True)
-    sheet = workbook.sheet_by_index(0)
-	    
-    # FIELD NAMES ARE FIRST ROW
-    properties = sheet.row_values(0)
-        
-    # DESCRIPTORS ARE REORDERED ACCORDING TO THE ORDER THEY APPEAR IN THE FILE
-    reordered_descriptor_names = []
-    descriptors = []
-    
-    # IF A FIELD NAME MATCHES A REQUIRED PROPERTY, CREATE A VARIABLE FOR THAT COLUMN (VALUES ONLY)
-    for i,item in enumerate(properties):
-      if item == evotecIDs:
-		    names = sheet.col_values(i)[1:]
-      elif item == output_name:
-        output = sheet.col_values(i)[1:]
-      elif item == smiles_name:
-        smiles = sheet.col_values(i)[1:]
-		    
-    # PRINT DESCRIPTOR NAME AND ROW NUMBER, CREATE NEW LIST AND ARRAY OF NAMES AND VALUES
-      elif str(item) in descriptor_names:
-        print item, i
-        reordered_descriptor_names.append(item)
-        descriptors.append(list(sheet.col_values(i)[1:]))
-    descriptors = np.asarray(descriptors).T
-    print len(names),"compounds initially"
-
-    new_names = []
-    new_output = []
-    new_smiles = []
-    new_desc = []
-
-    # ONLY KEEP COMPOUNDS WITH NAME, OUTPUT, ALL DESCRIPTOR VALUES AND OUTPUT BELOW THRESHOLD
-    for i, name in enumerate(names):
-      if name != '' and output[i] != '' and '' not in descriptors[i] and output[i] < upper_threshold:
-        new_names.append(int(name[4:]))
-        new_output.append(output[i])
-        new_desc.append([float(x) for x in descriptors[i]])
-        new_smiles.append(str(smiles[i]).split()[0])
-        
-    print len(new_names),"compounds left after removing missing compounds and inactive compounds"
-
-    dest = new_names[:5]+new_names[110:]+new_names[5:10]+new_names[105:110]+new_names[10:20]+new_names[90:105]+new_names[20:30]+new_names[80:90]+new_names[30:40]+new_names[70:80]+new_names[40:50]+new_names[60:70]+new_names[50:60]
-    print len(dest)
-    
-    # SORT REMAINING NAMES, OUTPUT AND INPUT ACCORDING TO EVOTEC ID    
-    new_names, new_output, new_smiles, new_desc = zip(*sorted(zip(dest, new_output, new_smiles, new_desc))) # dest was new_names
-    new_desc = np.asarray(new_desc)
-    
-    print 'Compounds have been sorted by EVOTEC ID'
-    
-    # CONVERT IC50 TO PIC50
-    if output_type == 'pic50':
-      new_output = utils.pIC50(new_output, -6)
-
-    self.smiles, self.output, self.names, self.descriptors = new_smiles, new_output, new_names, new_desc
-    # REMOVE ENANTIOMERS 
-    self.smiles, self.output, self.names, self.descriptors = utils.enantiomers(new_smiles, new_output, new_names, new_desc)
-    
-#    p = np.random.permutation(len(self.smiles))
-#    self.smiles, self.output, self.names, self.descriptors = [self.smiles[i] for i in p], self.output[p], [self.names[i] for i in p], [self.descriptors[i] for i in p]
-
-    return self.smiles, self.output, self.names, self.descriptors
 
   def bayes_opt(self,training_size, test_size, ker, acquisition_function, noise=0.01, number_runs=None, end_train=None, print_interim=False):
   
