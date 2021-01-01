@@ -5,28 +5,39 @@ import cross_validation
 
 class Experiment(object):
 
-  def bayes_opt(self,training_size, test_size, ker, acquisition_function, noise=0.01, number_runs=None, end_train=None, print_interim=False):
+  def __init__(self, total_compounds, training_size, test_size, ker, acquisition_function, noise=0.01, number_runs=None, print_interim=False):
+
+    self.total_compounds = total_compounds
+    self.training_size = training_size
+    self.test_size = test_size
+    self.ker = ker
+    self.acquisition_function = acquisition_function
+    self.noise = noise
+    self.number_runs = number_runs
+    self.print_interim = print_interim
+    
+    self.start_test = total_compounds-test_size
+
+    
+    # IF NUMBER OF RUNS IS NOT DEFINED, SET IT TO MAXIMUM POSSIBLE (THE NUMBER OF COMPOUNDS BEING OPTIMISED OVER)
+    if number_runs == None:
+      self.number_runs = self.start_test - training_size
+      
+    print training_size, " initial training compounds"
+    print test_size, " compounds in fixed test set"	
+    print number_runs, " compounds out of", start_test - training_size, " will be used for optimisation"
+
+
+  def bayes_opt(self):
   
 #    p = np.random.permutation(len(self.smiles))
 #    self.smiles, self.output, self.descriptors = [self.smiles[i] for i in p], self.output[p], [self.descriptors[i] for i in p]
 
     # POINT WHERE TEST SET STARTS IS DEFINED AS THE LAST x COMPOUNDS WHERE x IS THE SIZE OF THE TEST SET
     # IF IT IS NOT DEFINED, SET END OF OPTIMISING SET TO START OF TEST SET
-    start_test = len(self.output)-test_size
-
-    if end_train == None:
-		  end_train = start_test
-    
-    # IF NUMBER OF RUNS IS NOT DEFINED, SET IT TO MAXIMUM POSSIBLE (THE NUMBER OF COMPOUNDS BEING OPTIMISED OVER)
-    if number_runs == None:
-      number_runs = start_test - training_size
-      
-    print training_size, " initial training compounds"
-    print test_size, " compounds in fixed test set"	
-    print number_runs, " compounds out of", start_test - training_size, " will be used for optimisation"
 
     # CREATE MODEL FOR SELECTING THE NEXT COMPOUND
-    modopt = model.Model(n_kers=2, Xtrain=[self.descriptors[:training_size],self.smiles[:training_size]],Xtest=[self.descriptors[training_size:end_train],self.smiles[training_size:end_train]], Ytrain=self.output[:training_size], Ytest=self.output[training_size:end_train], kernel=ker)
+    modopt = model.Model(n_kers=2, Xtrain=[self.descriptors[:training_size],self.smiles[:training_size]],Xtest=[self.descriptors[training_size:start_test],self.smiles[training_size:start_test]], Ytrain=self.output[:training_size], Ytest=self.output[training_size:start_test], kernel=ker)
     modopt.kernel.noise_var = noise
 #    modopt.hyperparameters(print_vals=False)
  
