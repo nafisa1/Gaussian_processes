@@ -5,8 +5,12 @@ import cross_validation
 
 class Experiment(object):
 
-  def __init__(self, total_compounds, training_size, test_size, ker, acquisition_function, noise=0.01, number_runs=None, print_interim=False):
+  def __init__(self, smiles, pic50s, names, descriptors, total_compounds, training_size, test_size, ker, acquisition_function, noise=0.01, number_runs=None, print_interim=False):
 
+    self.smiles = smiles
+    self.pic50s = pic50s
+    self.names = names
+    self.descriptors = descriptors
     self.total_compounds = total_compounds
     self.training_size = training_size
     self.test_size = test_size
@@ -39,16 +43,12 @@ class Experiment(object):
     # CREATE MODEL FOR SELECTING THE NEXT COMPOUND
     modopt = model.Model(n_kers=2, Xtrain=[self.descriptors[:training_size],self.smiles[:training_size]],Xtest=[self.descriptors[training_size:start_test],self.smiles[training_size:start_test]], Ytrain=self.output[:training_size], Ytest=self.output[training_size:start_test], kernel=ker)
     modopt.kernel.noise_var = noise
-#    modopt.hyperparameters(print_vals=False)
+    modopt.hyperparameters(print_vals=True)
  
     # SET ACQUISITION FUNCTION   
     modopt.acq_func = acquisition_function
-    
-    modtrain = model.Model(n_kers=2, Xtrain=modopt.Xtrain, Xtest=modopt.Xtrain, Ytrain=modopt.Ytrain, Ytest=modopt.Ytrain, kernel=modopt.kernel)  
-    modtrain.hyperparameters(print_vals=True)  
 #    modopt.mse_hyperparameters(print_vals=False)  
 
-    modopt.kernel = modtrain.kernel
     print "initial hps",modopt.kernel.kers[0].sig_var, modopt.kernel.kers[0].lengthscale, modopt.kernel.kers[1].sig_var, modopt.kernel.kers[1].lengthscale
    
     # CREATE MODEL TO MAKE PREDICTIONS ON TEST SET USING UPDATED TRAINING SET
@@ -64,7 +64,7 @@ class Experiment(object):
     print "Initial r squared",regtest.r_squared()
    
     # BEGIN BAYESIAN OPTIMISATION
-    for i in xrange(number_runs):
+    for i in xrange(number_runs): 
 
       # EVERY 10 RUNS, PRINT THE NUMBER OF THE RUN THE MODEL IS ON CURRENTLY
       if i%10 == 0:
@@ -78,17 +78,12 @@ class Experiment(object):
       # RESET TRAINING SET OF THE TEST SET MODEL
       modtest.Xtrain = modopt.Xtrain
       modtest.Ytrain = modopt.Ytrain
-      
-      modtrain = model.Model(n_kers=2, Xtrain=modopt.Xtrain, Xtest=modopt.Xtrain, Ytrain=modopt.Ytrain, Ytest=modopt.Ytrain, kernel=modopt.kernel)  
- #     modtrain.mse_hyperparameters(print_vals=False)  
- #     modopt.kernel = modtrain.kernel
         
       
       # RESET THE HYPERPARAMETERS OF THE TEST SET MODEL AS THE TRAINING SET HAS CHANGED
   #    modopt.kernel.noise_var = noise
 #      modopt.mse_hyperparameters(print_vals=False)
-      modtest.kernel = modtrain.kernel
-      
+
       # PERFORM REGRESSION ON THE TEST SET USING THE UPDATED TRAINING SET
       regtest = modtest.regression()
       r_sq.append(regtest.r_squared())
@@ -107,7 +102,6 @@ class Experiment(object):
     print "training set mse: ", modopt.regression().mse()
     print "test set mse: ", modtest.regression().mse()
     modtest.regression().plot_by_index()
-#    print modtrain.regression().post_s
 #    modopt.regression().plot_by_index()
         
     # ARRAY STARTING AT 0 FOR THE RUN BEFORE OPTIMISATION BEGINS
