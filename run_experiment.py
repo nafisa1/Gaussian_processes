@@ -30,6 +30,19 @@ class Experiment(object):
     print training_size, " initial training compounds"
     print test_size, " compounds in fixed test set"	
     print number_runs, " compounds out of", start_test - training_size, " will be used for optimisation"
+    
+    self.modopt = model.Model(n_kers=2, Xtrain=[descriptors[:training_size],smiles[:training_size]],Xtest=[descriptors[training_size:start_test],smiles[training_size:start_test]], Ytrain=output[:training_size], Ytest=output[training_size:start_test], kernel=ker)
+    self.modopt.kernel.noise_var = noise
+    self.modopt.hyperparameters(print_vals=True)
+ 
+    # SET ACQUISITION FUNCTION   
+    self.modopt.acq_func = acquisition_function
+#    modopt.mse_hyperparameters(print_vals=False)  
+
+    print "initial hps",self.modopt.kernel.kers[0].sig_var, self.modopt.kernel.kers[0].lengthscale, self.modopt.kernel.kers[1].sig_var, self.modopt.kernel.kers[1].lengthscale
+   
+    # CREATE MODEL TO MAKE PREDICTIONS ON TEST SET USING UPDATED TRAINING SET
+    self.modtest = model.Model(n_kers=2, Xtrain=self.modopt.Xtrain, Xtest=[descriptors[-test_size:],smiles[-test_size:]], Ytrain=self.modopt.Ytrain, Ytest=output[-test_size:], kernel=self.modopt.kernel) ## changed kernel from opt to train 
 
 
   def bayes_opt(self):
