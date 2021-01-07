@@ -11,7 +11,7 @@ smiles_name = 'CD_SMILES'
 descriptor_names = ['CD_MOLWEIGHT','TPSA']#'LOGD','LOGP','TPSA']
 
 
-example = run_experiment.Experiment()
+
 extractor = dataextraction.Extract()
 
 # EXTRACT DATA
@@ -23,12 +23,16 @@ test_size = 80
 k = kernels.Composite(kernels.RBF(),kernels.Matern())
 n = 0.01
 acq_func = acquisition.Random()
+runs = 5
 
 total_compounds = len(names)
 
 # SET UP MODELS
 
-modopt,modtest = example.bayes_opt(total_compounds, training_size, test_size, k, acq_func, noise=n, end_train=None, number_runs=5, print_interim=True)
+example = run_experiment.Experiment(smiles, pic50s, names, descriptors, total_compounds, training_size, test_size, k, acq_func, noise=n, end_train=None, number_runs=runs, print_interim=True)
+
+for i in xrange(runs):
+  modopt,modtest = example.bayes_opt()
 
 #r = modtest.regression()
 #r.plot_all()
